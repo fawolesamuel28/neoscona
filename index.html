@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Neoscona - Build Scalable Web2 & Web3 Products</title>
-  <meta content="We partner with startups and businesses to design, develop, and launch high-performance web applications, mobile apps, and blockchain products - from MVP to scale." name="description" />
+  <title>Neoscona — AI automation, ready to run</title>
+  <meta content="Neoscona gives African businesses ready-to-run AI workers — a receptionist, a lead agent, a follow-up worker — live on WhatsApp and voice in minutes. Pre-trained. Locally compliant. It never makes things up." name="description" />
   <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <meta property="og:title" content="Neoscona — AI automation, ready to run" />
+  <meta property="og:description" content="Hire your first AI worker today. Ready-to-run AI on the channels Africa actually uses." />
+  <meta property="og:type" content="website" />
   <link href="https://fonts.googleapis.com" rel="preconnect" />
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <style>
     /* ─── RESET & BASE ──────────────────────────────────────────────────────────── */
@@ -26,22 +29,23 @@
     img { display: block; max-width: 100%; }
     button { cursor: pointer; border: none; background: none; font-family: inherit; }
 
-    /* ─── COLOR TOKENS ──────────────────────────────────────────────────────────── */
+    /* ─── COLOR TOKENS — ink + white + one violet (Brand Bible §4.3) ─────────────── */
     :root {
-      --bg:             #1f1e1b;
-      --bg-input:       #26241f;
-      --border:         #2e2c27;
-      --bg-hover:       #3e3c37;
-      --graphics:       #3e3c37;
-      --copy:           #888681;
-      --copy-75:        #bdbbb5;
-      --heading:        #f1efe8;
-      --primary:        #6d28d9;   /* purple replacing blue */
-      --primary-light:  #c4b5fd;
-      --primary-dark:   #4c1d95;
-      --primary-text:   #edeae4;
-      --nav-bg:         #1f1e1b99;
-      --frame:          #2e2c27;
+      --bg:             #0A0A0F;   /* ink — the canvas */
+      --bg-input:       #121119;
+      --border:         #221F2E;
+      --bg-hover:       #1A1824;
+      --graphics:       #2A2640;
+      --copy:           #8B879B;
+      --copy-75:        #C3C0D0;
+      --heading:        #FAFAF7;   /* warm off-white */
+      --primary:        #6D45FF;   /* the Neoscona violet — the one accent */
+      --primary-light:  #B9A6FF;
+      --primary-dark:   #5A33E0;
+      --primary-text:   #FFFFFF;
+      --live:           #34D399;   /* the "working right now" green — used sparingly */
+      --nav-bg:         #0A0A0Fcc;
+      --frame:          #221F2E;
     }
 
     /* ─── TYPOGRAPHY ────────────────────────────────────────────────────────────── */
@@ -62,6 +66,19 @@
       border-radius: 999px;
       padding: 0.35rem 0.85rem;
       margin-bottom: 1.5rem;
+    }
+
+    /* ─── LIVE STATUS DOT — the Neoscona signature (Brand Bible §6.3) ───────────── */
+    .nd-live-dot {
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--live); margin-right: 0.5rem; position: relative; top: -1px;
+      box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+      animation: live-pulse 2s infinite;
+    }
+    @keyframes live-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+      70%  { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
     }
 
     /* ─── LAYOUT HELPERS ────────────────────────────────────────────────────────── */
@@ -92,8 +109,8 @@
       gap: 2rem;
     }
     .nd-nav-logo {
-      font-weight: 700; font-size: 1.1rem; letter-spacing: -0.04em;
-      color: var(--heading);
+      font-weight: 800; font-size: 1.15rem; letter-spacing: -0.04em;
+      color: var(--heading); display: inline-flex; align-items: center;
     }
     .nd-nav-links { display: flex; gap: 2rem; align-items: center; }
     .nd-nav-link {
@@ -123,87 +140,97 @@
       text-align: center; position: relative; z-index: 1;
       padding: 8rem 2rem 5rem;
     }
-    .nd-hero-content { max-width: 720px; }
-    .nd-hero h1 { font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: 1.08; margin-bottom: 1.5rem; }
-    .nd-hero p { font-size: 1.0625rem; color: var(--copy-75); max-width: 520px; margin: 0 auto 2.5rem; line-height: 1.7; }
-    .nd-hero-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
-    .nd-btn-primary-lg {
-      font-size: 0.875rem; font-weight: 600;
-      background: var(--primary); color: var(--primary-text);
-      border-radius: 6px; padding: 0.8rem 1.8rem;
-      display: inline-block; transition: background 0.2s;
+    .nd-hero::after {
+      content: ''; position: absolute; top: 18%; left: 50%; transform: translateX(-50%);
+      width: 680px; height: 420px; max-width: 90vw;
+      background: radial-gradient(ellipse at center, rgba(109,69,255,0.16), transparent 70%);
+      pointer-events: none; z-index: -1; filter: blur(8px);
     }
-    .nd-btn-primary-lg:hover { background: var(--primary-dark); }
+    .nd-hero-content { max-width: 760px; }
+    .nd-hero h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: 1.06; margin-bottom: 1.5rem; }
+    .nd-hero p { font-size: 1.0625rem; color: var(--copy-75); max-width: 560px; margin: 0 auto 2.5rem; line-height: 1.7; }
+    .nd-hero-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .nd-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em;
+      color: var(--copy-75); border: 1px solid var(--border);
+      border-radius: 999px; padding: 0.4rem 0.95rem; margin-bottom: 1.75rem;
+      background: var(--bg-input);
+    }
+    .nd-btn-primary-lg {
+      font-size: 0.9rem; font-weight: 600;
+      background: var(--primary); color: var(--primary-text);
+      border-radius: 7px; padding: 0.85rem 1.9rem;
+      display: inline-block; transition: background 0.2s, transform 0.15s;
+    }
+    .nd-btn-primary-lg:hover { background: var(--primary-dark); transform: translateY(-1px); }
     .nd-btn-outline-lg {
-      font-size: 0.875rem; font-weight: 500;
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 0.8rem 1.8rem; color: var(--heading);
+      font-size: 0.9rem; font-weight: 500;
+      border: 1px solid var(--border); border-radius: 7px;
+      padding: 0.85rem 1.9rem; color: var(--heading);
       display: inline-block; transition: background 0.2s;
     }
     .nd-btn-outline-lg:hover { background: var(--bg-hover); }
 
     /* ─── SECTION TAG & HEAD ────────────────────────────────────────────────────── */
-    .nd-section-head { max-width: 540px; margin-bottom: 3.5rem; }
-    .nd-section-head p { color: var(--copy); margin-top: 0.75rem; }
+    .nd-section-head { max-width: 600px; margin-bottom: 3.5rem; }
+    .nd-section-head.center { margin-left: auto; margin-right: auto; text-align: center; }
+    .nd-section-head p { color: var(--copy); margin-top: 0.75rem; font-size: 0.95rem; }
     .nd-section-head-split { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3.5rem; gap: 2rem; flex-wrap: wrap; }
-    .nd-section-head-split h2 { max-width: 500px; }
-    .nd-section-head-split p { max-width: 320px; color: var(--copy); font-size: 0.9rem; }
+    .nd-section-head-split h2 { max-width: 520px; }
+    .nd-section-head-split p { max-width: 340px; color: var(--copy); font-size: 0.9rem; }
 
     /* ─── DIVIDER ───────────────────────────────────────────────────────────────── */
     .nd-hr { border: none; border-top: 1px solid var(--border); margin: 0; }
 
-    /* ─── ABOUT SPLIT ───────────────────────────────────────────────────────────── */
-    .nd-split {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;
-    }
-    .nd-split-visual {
-      aspect-ratio: 1; border: 1px solid var(--border); border-radius: 12px;
-      overflow: hidden; background: var(--bg-input);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .nd-split-visual img { width: 100%; height: 100%; object-fit: contain; opacity: 0.6; }
-    .nd-split-text .nd-tag { display: inline-flex; align-items: center; gap: 0.5rem; }
-    .nd-split-text h1 { font-size: clamp(2.2rem, 4.5vw, 3.5rem); margin-bottom: 1.25rem; }
-    .nd-split-text p { color: var(--copy-75); max-width: 440px; line-height: 1.75; }
-    .nd-primary-accent { color: var(--primary-light); }
+    /* ─── THREE PROMISES ────────────────────────────────────────────────────────── */
+    .nd-promises { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .nd-promise { background: var(--bg); padding: 2.5rem 2rem; transition: background 0.2s; }
+    .nd-promise:hover { background: var(--bg-hover); }
+    .nd-promise .nd-icon-frame { margin-bottom: 1.25rem; }
+    .nd-promise h3 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .nd-promise p { font-size: 0.9rem; color: var(--copy); line-height: 1.65; }
 
-    /* ─── THREE TILES (PORTFOLIO) ──────────────────────────────────────────────── */
-    .nd-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .nd-tile {
-      background: var(--bg); padding: 2.5rem 2rem;
-      transition: background 0.2s;
+    /* ─── WORKERS GRID (the catalog) ────────────────────────────────────────────── */
+    .nd-workers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .nd-worker {
+      background: var(--bg); padding: 2.5rem; transition: background 0.2s;
+      display: flex; flex-direction: column; gap: 0.85rem; min-height: 230px; position: relative;
     }
-    .nd-tile:hover { background: var(--bg-hover); }
-    .nd-tile-num { font-size: 0.8rem; color: var(--copy); font-weight: 500; margin-bottom: 1.5rem; }
-    .nd-tile-img { width: 100%; max-height: 140px; object-fit: contain; opacity: 0.7; margin-bottom: 1.5rem; }
-    .nd-tile h3 { font-size: 1.1rem; margin-bottom: 0.6rem; }
-    .nd-tile p { font-size: 0.875rem; color: var(--copy); line-height: 1.65; }
+    .nd-worker:hover { background: var(--bg-hover); }
+    .nd-worker-top { display: flex; align-items: center; justify-content: space-between; }
+    .nd-worker-name { font-size: 1.15rem; color: var(--heading); font-weight: 700; letter-spacing: -0.02em; }
+    .nd-worker-name small { display:block; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-light); margin-top: 0.3rem; }
+    .nd-worker p { font-size: 0.9rem; color: var(--copy); line-height: 1.65; }
+    .nd-worker-status {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--copy-75); display: inline-flex; align-items: center;
+    }
+    .nd-worker-status.soon { color: var(--copy); }
+    .nd-worker-status.soon .nd-live-dot { background: var(--copy); animation: none; box-shadow: none; }
+    .nd-q-icon { font-size: 1.5rem; color: var(--primary-light); }
 
-    /* ─── USE CASE CAROUSEL STRIP ──────────────────────────────────────────────── */
-    .nd-use-cases-strip {
-      overflow: hidden; position: relative;
-    }
+    /* ─── CHANNEL STRIP ────────────────────────────────────────────────────────── */
+    .nd-use-cases-strip { overflow: hidden; position: relative; }
     .nd-use-cases-strip::before, .nd-use-cases-strip::after {
       content: ''; position: absolute; top: 0; width: 80px; height: 100%; z-index: 2; pointer-events: none;
     }
     .nd-use-cases-strip::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
     .nd-use-cases-strip::after  { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
-    .nd-use-cases-track {
-      display: flex; gap: 0; animation: scroll-left 28s linear infinite;
-      width: max-content;
-    }
+    .nd-use-cases-track { display: flex; gap: 0; animation: scroll-left 32s linear infinite; width: max-content; }
     @keyframes scroll-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     .nd-use-case-pill {
       font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.03em;
       color: var(--copy-75); border: 1px solid var(--border);
-      border-radius: 999px; padding: 0.5rem 1.2rem; white-space: nowrap;
-      margin: 0 0.4rem;
+      border-radius: 999px; padding: 0.5rem 1.2rem; white-space: nowrap; margin: 0 0.4rem;
     }
 
-    /* ─── PROCESS / USE CASES LIST ─────────────────────────────────────────────── */
+    /* ─── HOW IT WORKS LIST ────────────────────────────────────────────────────── */
     .nd-use-list-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
-    .nd-use-list-visual { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg-input); }
-    .nd-use-list-visual img { width: 100%; object-fit: contain; opacity: 0.6; }
+    .nd-use-list-visual {
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      background: var(--bg-input); padding: 2.5rem; position: sticky; top: 6rem;
+    }
     .nd-use-cases-list { display: flex; flex-direction: column; gap: 0; }
     .nd-use-case-item {
       display: grid; grid-template-columns: 56px 1fr; gap: 1.25rem; align-items: start;
@@ -213,70 +240,59 @@
     .nd-icon-frame {
       width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      color: var(--primary-light); font-size: 1.2rem; flex-shrink: 0;
+      color: var(--primary-light); font-size: 1.2rem; flex-shrink: 0; background: var(--bg-input);
     }
     .nd-use-case-item h3 { font-size: 1rem; margin-bottom: 0.35rem; }
     .nd-use-case-item p  { font-size: 0.875rem; color: var(--copy); line-height: 1.65; }
 
-    /* ─── QUADRANT / BENTO SERVICES ────────────────────────────────────────────── */
+    /* ─── CHAT MOCK (show, don't tell) ─────────────────────────────────────────── */
+    .nd-chat-head { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+    .nd-chat-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; }
+    .nd-chat-who { font-size: 0.9rem; color: var(--heading); font-weight: 600; }
+    .nd-chat-who span { display:block; font-size:0.7rem; color: var(--copy); font-weight:400; }
+    .nd-bubble { font-size: 0.875rem; line-height: 1.55; padding: 0.7rem 1rem; border-radius: 12px; margin-bottom: 0.6rem; max-width: 85%; }
+    .nd-bubble.them { background: var(--bg); border: 1px solid var(--border); color: var(--copy-75); border-bottom-left-radius: 4px; }
+    .nd-bubble.us { background: var(--primary); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+    .nd-chat-note { font-size: 0.7rem; color: var(--copy); margin-top: 0.75rem; display:flex; align-items:center; gap:0.4rem; }
+
+    /* ─── BENTO (enterprise + marketplace) ─────────────────────────────────────── */
     .nd-quadrants { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
     .nd-quadrant {
-      background: var(--bg); padding: 2.5rem; min-height: 300px;
-      display: flex; flex-direction: column; gap: 1rem;
-      transition: background 0.2s;
+      background: var(--bg); padding: 2.5rem; min-height: 280px;
+      display: flex; flex-direction: column; gap: 1rem; transition: background 0.2s;
     }
     .nd-quadrant:hover { background: var(--bg-hover); }
-    .nd-quadrant-title { background: var(--bg-input); justify-content: flex-end; border-right: none; }
-    .nd-quadrant h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
+    .nd-quadrant h2 { font-size: clamp(1.4rem, 2.5vw, 1.9rem); }
     .nd-quadrant h3 { font-size: 1.05rem; }
-    .nd-quadrant p  { font-size: 0.875rem; color: var(--copy); line-height: 1.65; }
-    .nd-quadrant .nd-btn-primary { align-self: flex-start; margin-top: 0.5rem; }
-    .nd-q-icon { font-size: 1.4rem; color: var(--primary-light); }
-    .nd-q-visual { flex: 1; display: flex; align-items: center; justify-content: center; }
-    .nd-q-visual img { width: 100%; max-height: 160px; object-fit: contain; opacity: 0.65; }
+    .nd-quadrant p  { font-size: 0.9rem; color: var(--copy); line-height: 1.65; }
+    .nd-quadrant .nd-btn-primary, .nd-quadrant .nd-btn-secondary { align-self: flex-start; margin-top: 0.5rem; }
 
     /* ─── CTA BANNER ────────────────────────────────────────────────────────────── */
     .nd-cta-wrap {
-      border: 1px solid var(--border); border-radius: 12px;
-      background: var(--bg-input); padding: 4rem 3rem;
+      border: 1px solid var(--border); border-radius: 16px;
+      background: var(--bg-input); padding: 4.5rem 3rem;
       text-align: center; position: relative; overflow: hidden;
     }
-    .nd-cta-wrap h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); margin-bottom: 0.75rem; }
-    .nd-cta-wrap p  { color: var(--copy-75); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .nd-cta-wrap::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(109,69,255,0.12), transparent 70%);
+      pointer-events: none;
+    }
+    .nd-cta-wrap > * { position: relative; z-index: 1; }
+    .nd-cta-wrap h2 { font-size: clamp(1.7rem, 3vw, 2.6rem); margin-bottom: 0.75rem; }
+    .nd-cta-wrap p  { color: var(--copy-75); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
     .nd-cta-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 
     /* ─── STATS ─────────────────────────────────────────────────────────────────── */
     .nd-stats { display: flex; gap: 3rem; flex-wrap: wrap; margin-top: 2rem; }
-    .nd-stat p { font-size: 1.6rem; font-weight: 700; color: var(--heading); }
+    .nd-stat p { font-size: 1.7rem; font-weight: 700; color: var(--heading); }
     .nd-stat span { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--copy); }
-
-    /* ─── JOURNAL / PROOF CAROUSEL ─────────────────────────────────────────────── */
-    .nd-cards { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
-    .nd-cards::-webkit-scrollbar { height: 3px; }
-    .nd-cards::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .nd-card {
-      min-width: 340px; background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; scroll-snap-align: start;
-      flex-shrink: 0; transition: border-color 0.2s;
-    }
-    .nd-card:hover { border-color: var(--primary); }
-    .nd-card-thumb { height: 180px; overflow: hidden; }
-    .nd-card-thumb img { width: 100%; height: 100%; object-fit: contain; opacity: 0.55; background: var(--bg); }
-    .nd-card-body { padding: 1.5rem; }
-    .nd-card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-    .nd-card-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary-light); }
-    .nd-card-date  { font-size: 0.6875rem; color: var(--copy); letter-spacing: 0.06em; text-transform: uppercase; }
-    .nd-card h4    { font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .nd-card p     { font-size: 0.875rem; color: var(--copy); line-height: 1.6; margin-bottom: 1rem; }
-    .nd-card-link  { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-light); display: inline-flex; align-items: center; gap: 0.4rem; transition: gap 0.2s; }
-    .nd-card-link:hover { gap: 0.7rem; }
 
     /* ─── NEWSLETTER ────────────────────────────────────────────────────────────── */
     .nd-newsletter {
       display: flex; gap: 3rem; align-items: center; flex-wrap: wrap;
       border: 1px solid var(--border); border-radius: 12px;
-      background: var(--bg-input); padding: 2.5rem;
-      margin-top: 2.5rem;
+      background: var(--bg-input); padding: 2.5rem; margin-top: 2.5rem;
     }
     .nd-newsletter h3    { font-size: 1.1rem; margin-bottom: 0.3rem; }
     .nd-newsletter p     { font-size: 0.875rem; color: var(--copy); }
@@ -290,17 +306,14 @@
     .nd-newsletter input::placeholder { color: var(--copy); }
 
     /* ─── FOOTER ────────────────────────────────────────────────────────────────── */
-    .nd-footer {
-      border-top: 1px solid var(--border);
-      background: var(--bg); padding: 4rem 2rem 2rem;
-    }
+    .nd-footer { border-top: 1px solid var(--border); background: var(--bg); padding: 4rem 2rem 2rem; }
     .nd-footer-inner { max-width: 1240px; margin: 0 auto; }
     .nd-footer-grid  {
-      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3rem;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
       padding-bottom: 3rem; border-bottom: 1px solid var(--border);
     }
-    .nd-footer-logo  { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.04em; color: var(--heading); margin-bottom: 0.75rem; }
-    .nd-footer-tagline { font-size: 0.875rem; color: var(--copy); line-height: 1.6; max-width: 220px; }
+    .nd-footer-logo  { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.04em; color: var(--heading); margin-bottom: 0.75rem; }
+    .nd-footer-tagline { font-size: 0.875rem; color: var(--copy); line-height: 1.6; max-width: 260px; }
     .nd-footer-col h5 { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary-light); margin-bottom: 1rem; }
     .nd-footer-col a  { display: block; font-size: 0.875rem; color: var(--copy); padding: 0.3rem 0; transition: color 0.2s; }
     .nd-footer-col a:hover { color: var(--heading); }
@@ -311,17 +324,14 @@
     .nd-footer-legal a:hover { color: var(--heading); }
 
     /* ─── MATERIAL ICONS ────────────────────────────────────────────────────────── */
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-    }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
 
     /* ─── RESPONSIVE ────────────────────────────────────────────────────────────── */
     @media (max-width: 900px) {
-      .nd-split { grid-template-columns: 1fr; }
-      .nd-split-visual { display: none; }
-      .nd-tiles { grid-template-columns: 1fr; }
+      .nd-promises { grid-template-columns: 1fr; }
+      .nd-workers { grid-template-columns: 1fr; }
       .nd-use-list-wrap { grid-template-columns: 1fr; }
-      .nd-use-list-visual { display: none; }
+      .nd-use-list-visual { position: static; }
       .nd-quadrants { grid-template-columns: 1fr; }
       .nd-footer-grid { grid-template-columns: 1fr 1fr; }
       .nd-nav-links { display: none; }
@@ -348,15 +358,15 @@
   <div class="nd-nav-inner">
     <a href="#" class="nd-nav-logo">Neoscona</a>
     <div class="nd-nav-links">
-      <a href="#services" class="nd-nav-link">Services</a>
-      <a href="#process" class="nd-nav-link">Process</a>
-      <a href="#portfolio" class="nd-nav-link">Portfolio</a>
+      <a href="#workers" class="nd-nav-link">Workers</a>
+      <a href="#how" class="nd-nav-link">How it works</a>
+      <a href="#enterprise" class="nd-nav-link">Enterprise</a>
+      <a href="#marketplace" class="nd-nav-link">Marketplace</a>
       <a href="/blog" class="nd-nav-link">Blog</a>
-      <a href="#contact" class="nd-nav-link">Contact</a>
     </div>
     <div class="nd-nav-right">
-      <a href="mailto:hello@neoscona.xyz" class="nd-btn-secondary">Contact Us</a>
-      <a href="mailto:hello@neoscona.xyz" class="nd-btn-primary">Start a Project</a>
+      <a href="mailto:hello@neoscona.xyz?subject=Talk%20to%20Neoscona" class="nd-btn-secondary">Talk to us</a>
+      <a href="#workers" class="nd-btn-primary">Hire a worker</a>
     </div>
   </div>
 </nav>
@@ -367,154 +377,176 @@
   <!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
   <section class="nd-hero">
     <div class="nd-hero-content">
-      <div class="nd-tag">Product Engineering Studio</div>
-      <h1>Build Scalable Web2 &amp; Web3 Products - Without the Guesswork</h1>
-      <p>We partner with startups and businesses to design, develop, and launch high-performance web applications, mobile apps, and blockchain products - from MVP to scale.</p>
+      <div class="nd-hero-eyebrow"><span class="nd-live-dot"></span> AI automation, ready to run</div>
+      <h1>Hire your first<br />AI worker today.</h1>
+      <p>Neoscona gives you ready-to-run AI — a receptionist, a lead agent, a follow-up worker — live on WhatsApp and voice in minutes. Pre-trained. Locally compliant. It never makes things up.</p>
       <div class="nd-hero-btns">
-        <a href="mailto:hello@neoscona.xyz" class="nd-btn-primary-lg">Start Your Project</a>
-        <a href="mailto:hello@neoscona.xyz" class="nd-btn-outline-lg">Book a Call</a>
+        <a href="#workers" class="nd-btn-primary-lg">See the workers</a>
+        <a href="mailto:hello@neoscona.xyz?subject=Custom%20automation%20for%20my%20business" class="nd-btn-outline-lg">Talk to us about custom</a>
       </div>
     </div>
   </section>
 
   <hr class="nd-hr">
 
-  <!-- ─── ABOUT ─────────────────────────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="about">
-    <div class="nd-split">
-      <div class="nd-split-visual">
-        <img src="/static/images/wir-2-purple.svg" alt="Geometric wireframe" />
+  <!-- ─── THREE PROMISES ───────────────────────────────────────────────────── -->
+  <section class="nd-section nd-container">
+    <div class="nd-section-head center">
+      <div class="nd-tag">Why Neoscona</div>
+      <h2>The Twilio of AI automation — built for Africa.</h2>
+      <p>Twilio gave developers the building blocks of communication. Neoscona gives every business a finished worker — and lets the ambitious build their own.</p>
+    </div>
+    <div class="nd-promises">
+      <div class="nd-promise">
+        <div class="nd-icon-frame"><span class="material-symbols-outlined">bolt</span></div>
+        <h3>Live in minutes, not months</h3>
+        <p>Pick a worker, connect your channel, go. No code, no agency, no six-week build. It's working before lunch.</p>
       </div>
-      <div class="nd-split-text">
-        <div class="nd-tag">
-          <span class="material-symbols-outlined" style="font-size:0.85rem">apartment</span>
-          Organization
-        </div>
-        <h1>About <span class="nd-primary-accent">Us.</span></h1>
-        <p>We are a product engineering studio focused on building modern digital products across Web2 and Web3. Our goal is simple - help founders and businesses turn ideas into scalable, high-quality products. We combine engineering, product thinking, and blockchain expertise to deliver solutions that are not only functional, but built to last.</p>
+      <div class="nd-promise">
+        <div class="nd-icon-frame"><span class="material-symbols-outlined">verified</span></div>
+        <h3>Grounded in your truth</h3>
+        <p>Every price and fact is cross-checked against your real data. Your AI only ever says what's actually true about your business.</p>
+      </div>
+      <div class="nd-promise">
+        <div class="nd-icon-frame"><span class="material-symbols-outlined">public</span></div>
+        <h3>Built for here</h3>
+        <p>WhatsApp-first, with Telegram, Instagram and voice. Naira pricing, Paystack billing, and data handling that respects NDPR.</p>
       </div>
     </div>
   </section>
 
   <hr class="nd-hr">
 
-  <!-- ─── KEY BENEFITS / PORTFOLIO ─────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="portfolio">
+  <!-- ─── WORKERS (the catalog) ────────────────────────────────────────────── -->
+  <section class="nd-section nd-container" id="workers">
     <div class="nd-section-head">
-      <div class="nd-tag">Portfolio</div>
-      <h2>What we've built for our clients</h2>
-      <p>Multiple products successfully designed and developed from scratch.</p>
+      <div class="nd-tag">The catalog</div>
+      <h2>Meet your new team.</h2>
+      <p>Each Neoscona worker does a real job — like a star hire who never sleeps, never forgets, and never lies. Switch one on today.</p>
     </div>
-    <div class="nd-tiles">
-      <div class="nd-tile">
-        <div class="nd-tile-num">01</div>
-        <img class="nd-tile-img" src="/static/images/wir-3-white.svg" alt="" />
-        <h3>SMS Spam Detection API</h3>
-        <p>Designed and deployed a highly accurate machine learning system using TF-IDF vectorization and Logistic Regression.</p>
+    <div class="nd-workers">
+      <!-- Voice -->
+      <div class="nd-worker">
+        <div class="nd-worker-top">
+          <div class="nd-q-icon"><span class="material-symbols-outlined">call</span></div>
+          <span class="nd-worker-status"><span class="nd-live-dot"></span>Live</span>
+        </div>
+        <div class="nd-worker-name">Neoscona Voice <small>AI Receptionist</small></div>
+        <p>Answers every call, qualifies the caller, and books the appointment — 24/7, in your business's voice. Never miss a call again.</p>
       </div>
-      <div class="nd-tile">
-        <div class="nd-tile-num">02</div>
-        <img class="nd-tile-img" src="/static/images/wir-4-white.svg" alt="" />
-        <h3>Parking Occupancy Predictor</h3>
-        <p>Built an IoT-integrated predictive analytics platform utilizing Random Forest to forecast parking availability.</p>
+      <!-- Reva -->
+      <div class="nd-worker">
+        <div class="nd-worker-top">
+          <div class="nd-q-icon"><span class="material-symbols-outlined">apartment</span></div>
+          <span class="nd-worker-status"><span class="nd-live-dot"></span>Live</span>
+        </div>
+        <div class="nd-worker-name">Neoscona Reva <small>Real-Estate Lead Engine</small></div>
+        <p>Replies in seconds, qualifies the lead, matches listings, and follows up until they book a viewing. Meet Amara — your tireless lead agent.</p>
       </div>
-      <div class="nd-tile">
-        <div class="nd-tile-num">03</div>
-        <img class="nd-tile-img" src="/static/images/wir-5-white.svg" alt="" />
-        <h3>Aegis Protocol</h3>
-        <p>Intent-level authorization and on-chain policy enforcement for autonomous AI agent payments on Stellar.</p>
+      <!-- Reach -->
+      <div class="nd-worker">
+        <div class="nd-worker-top">
+          <div class="nd-q-icon"><span class="material-symbols-outlined">forum</span></div>
+          <span class="nd-worker-status"><span class="nd-live-dot"></span>Live</span>
+        </div>
+        <div class="nd-worker-name">Neoscona Reach <small>One Inbox, Every Channel</small></div>
+        <p>WhatsApp, Telegram, Instagram — your AI handles them all in one place, with a human takeover the moment a person steps in.</p>
       </div>
-      <div class="nd-tile">
-        <div class="nd-tile-num">04</div>
-        <img class="nd-tile-img" src="/static/images/wir-1-purple.svg" alt="" />
-        <h3>Whistleblower Infra</h3>
-        <p>Trustless whistleblower platform powered by AI agents and autonomous payments, built for the Cronos ecosystem.</p>
+      <!-- Flow -->
+      <div class="nd-worker">
+        <div class="nd-worker-top">
+          <div class="nd-q-icon"><span class="material-symbols-outlined">account_tree</span></div>
+          <span class="nd-worker-status soon"><span class="nd-live-dot"></span>Custom builds</span>
+        </div>
+        <div class="nd-worker-name">Neoscona Flow <small>Custom Workflows</small></div>
+        <p>Outgrown off-the-shelf? We design bespoke AI systems and automated workflows around your business — built by Neoscona, owned by you.</p>
       </div>
     </div>
   </section>
 
   <hr class="nd-hr">
 
-  <!-- ─── USE CASE SCROLL STRIP ──────────────────────────────────────────────── -->
+  <!-- ─── CHANNEL / CAPABILITY STRIP ──────────────────────────────────────────── -->
   <section class="nd-section-sm">
-    <div class="nd-tag" style="margin: 0 auto 1.5rem; display:block; text-align:center; width:fit-content">Use Cases</div>
+    <div class="nd-tag" style="margin: 0 auto 1.5rem; display:block; text-align:center; width:fit-content">One platform, every channel</div>
     <div class="nd-use-cases-strip">
       <div class="nd-use-cases-track">
-        <!-- duplicated for infinite scroll -->
-        <span class="nd-use-case-pill">Web App Development</span>
-        <span class="nd-use-case-pill">Mobile Apps</span>
-        <span class="nd-use-case-pill">SaaS Platforms</span>
-        <span class="nd-use-case-pill">Smart Contracts</span>
-        <span class="nd-use-case-pill">NFT Platforms</span>
-        <span class="nd-use-case-pill">DeFi Products</span>
-        <span class="nd-use-case-pill">Startup MVPs</span>
-        <span class="nd-use-case-pill">Blockchain dApps</span>
-        <span class="nd-use-case-pill">Product Design</span>
-        <span class="nd-use-case-pill">API Architecture</span>
-        <span class="nd-use-case-pill">Wallet Integrations</span>
-        <span class="nd-use-case-pill">Token Creation</span>
-        <!-- duplicate set -->
-        <span class="nd-use-case-pill">Web App Development</span>
-        <span class="nd-use-case-pill">Mobile Apps</span>
-        <span class="nd-use-case-pill">SaaS Platforms</span>
-        <span class="nd-use-case-pill">Smart Contracts</span>
-        <span class="nd-use-case-pill">NFT Platforms</span>
-        <span class="nd-use-case-pill">DeFi Products</span>
-        <span class="nd-use-case-pill">Startup MVPs</span>
-        <span class="nd-use-case-pill">Blockchain dApps</span>
-        <span class="nd-use-case-pill">Product Design</span>
-        <span class="nd-use-case-pill">API Architecture</span>
-        <span class="nd-use-case-pill">Wallet Integrations</span>
-        <span class="nd-use-case-pill">Token Creation</span>
+        <span class="nd-use-case-pill">WhatsApp</span>
+        <span class="nd-use-case-pill">Voice calls</span>
+        <span class="nd-use-case-pill">Telegram</span>
+        <span class="nd-use-case-pill">Instagram DMs</span>
+        <span class="nd-use-case-pill">Lead qualification</span>
+        <span class="nd-use-case-pill">Appointment booking</span>
+        <span class="nd-use-case-pill">Follow-up &amp; nurture</span>
+        <span class="nd-use-case-pill">Human handoff</span>
+        <span class="nd-use-case-pill">CRM sync</span>
+        <span class="nd-use-case-pill">Paystack billing</span>
+        <span class="nd-use-case-pill">Anti-hallucination</span>
+        <span class="nd-use-case-pill">NDPR-aware</span>
+        <!-- duplicate set for infinite scroll -->
+        <span class="nd-use-case-pill">WhatsApp</span>
+        <span class="nd-use-case-pill">Voice calls</span>
+        <span class="nd-use-case-pill">Telegram</span>
+        <span class="nd-use-case-pill">Instagram DMs</span>
+        <span class="nd-use-case-pill">Lead qualification</span>
+        <span class="nd-use-case-pill">Appointment booking</span>
+        <span class="nd-use-case-pill">Follow-up &amp; nurture</span>
+        <span class="nd-use-case-pill">Human handoff</span>
+        <span class="nd-use-case-pill">CRM sync</span>
+        <span class="nd-use-case-pill">Paystack billing</span>
+        <span class="nd-use-case-pill">Anti-hallucination</span>
+        <span class="nd-use-case-pill">NDPR-aware</span>
       </div>
     </div>
   </section>
 
   <hr class="nd-hr">
 
-  <!-- ─── PROCESS ───────────────────────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="process">
+  <!-- ─── HOW IT WORKS ───────────────────────────────────────────────────────── -->
+  <section class="nd-section nd-container" id="how">
     <div class="nd-use-list-wrap">
+      <!-- live chat mock — show, don't tell -->
       <div class="nd-use-list-visual">
-        <img src="/static/images/wir-1-purple.svg" alt="Geometric wireframe" />
+        <div class="nd-chat-head">
+          <div class="nd-chat-avatar">A</div>
+          <div class="nd-chat-who">Amara · Neoscona Reva <span><span class="nd-live-dot"></span>Working now · replies in seconds</span></div>
+        </div>
+        <div class="nd-bubble them">Hi, is the 3-bedroom in Lekki still available? What's the price?</div>
+        <div class="nd-bubble us">Yes, it is! The 3-bedroom at Lekki Phase 1 is ₦85m. It has 24/7 power and a BQ. Would you like to see it this week?</div>
+        <div class="nd-bubble them">Saturday works.</div>
+        <div class="nd-bubble us">Booked you for Saturday 11am. I'll send a reminder and the agent's number shortly. 🙂</div>
+        <div class="nd-chat-note"><span class="material-symbols-outlined" style="font-size:0.95rem; color:var(--live)">verified</span> Price &amp; details checked against live inventory — no guessing.</div>
       </div>
       <div>
-        <div class="nd-tag">Process</div>
-        <h2 style="margin-bottom:2rem">How we work</h2>
+        <div class="nd-tag">How it works</div>
+        <h2 style="margin-bottom:2rem">Live in minutes. Working all day.</h2>
         <div class="nd-use-cases-list">
           <div class="nd-use-case-item">
-            <div class="nd-icon-frame"><span class="material-symbols-outlined">explore</span></div>
+            <div class="nd-icon-frame"><span class="material-symbols-outlined">touch_app</span></div>
             <div>
-              <h3>1. Discovery &amp; Strategy</h3>
-              <p>We understand your idea, users, and business goals - then define a clear product roadmap.</p>
+              <h3>1. Pick a worker</h3>
+              <p>Choose a ready-made template — Voice, Reva, Reach — or tell us what you need built.</p>
             </div>
           </div>
           <div class="nd-use-case-item">
-            <div class="nd-icon-frame"><span class="material-symbols-outlined">design_services</span></div>
+            <div class="nd-icon-frame"><span class="material-symbols-outlined">link</span></div>
             <div>
-              <h3>2. Product Design</h3>
-              <p>We design intuitive, high-performance user experiences and interfaces.</p>
+              <h3>2. Connect your channel</h3>
+              <p>Link WhatsApp, a phone number, Telegram or Instagram in a guided flow. No developer required.</p>
             </div>
           </div>
           <div class="nd-use-case-item">
-            <div class="nd-icon-frame"><span class="material-symbols-outlined">code</span></div>
+            <div class="nd-icon-frame"><span class="material-symbols-outlined">school</span></div>
             <div>
-              <h3>3. Development</h3>
-              <p>Our engineers build scalable, secure systems using modern technologies.</p>
+              <h3>3. It learns your business</h3>
+              <p>Point it at your listings, prices, and FAQs. It only ever says what's true about you.</p>
             </div>
           </div>
           <div class="nd-use-case-item">
-            <div class="nd-icon-frame"><span class="material-symbols-outlined">verified_user</span></div>
+            <div class="nd-icon-frame"><span class="material-symbols-outlined">rocket_launch</span></div>
             <div>
-              <h3>4. Testing &amp; Security</h3>
-              <p>We rigorously test everything - including smart contract security where applicable.</p>
-            </div>
-          </div>
-          <div class="nd-use-case-item">
-            <div class="nd-icon-frame"><span class="material-symbols-outlined">flight_takeoff</span></div>
-            <div>
-              <h3>5. Launch &amp; Scale</h3>
-              <p>We deploy, monitor, and help you scale your product post-launch.</p>
+              <h3>4. Go live</h3>
+              <p>Your worker starts answering, qualifying, and booking — and hands off to you the moment it matters.</p>
             </div>
           </div>
         </div>
@@ -524,207 +556,53 @@
 
   <hr class="nd-hr">
 
-  <!-- ─── SERVICES (QUADRANT BENTO) ────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="services">
+  <!-- ─── ENTERPRISE + MARKETPLACE ───────────────────────────────────────────── -->
+  <section class="nd-section nd-container" id="enterprise">
     <div class="nd-quadrants">
-      <!-- Title cell -->
-      <div class="nd-quadrant nd-quadrant-title">
-        <div class="nd-tag">Capabilities</div>
-        <h2>The engineering stack for modern products</h2>
-        <p style="color:var(--copy-75)">Web2 and Web3 expertise under one roof. For founders who need more than off-the-shelf.</p>
-        <a href="mailto:hello@neoscona.xyz" class="nd-btn-primary">Start Here</a>
-      </div>
-      <!-- Web2 -->
+      <!-- Enterprise -->
       <div class="nd-quadrant">
-        <div class="nd-q-icon"><span class="material-symbols-outlined">layers</span></div>
-        <div class="nd-q-visual"><img src="/static/images/wir-2-purple.svg" alt="" /></div>
-        <h3>Web2 Development</h3>
-        <p>Full-stack apps · Mobile (iOS &amp; Android) · SaaS · Backend &amp; APIs · Internal tools</p>
+        <div class="nd-q-icon"><span class="material-symbols-outlined">corporate_fare</span></div>
+        <div class="nd-tag" style="margin-bottom:0.5rem">Enterprise</div>
+        <h2>Your business is not a template.</h2>
+        <p>Outgrown off-the-shelf? Neoscona Flow designs custom AI systems and automated workflows for teams that need more — same platform, same compliance, built around you.</p>
+        <a href="mailto:hello@neoscona.xyz?subject=Enterprise%20custom%20automation" class="nd-btn-primary">Book an enterprise call</a>
       </div>
-      <!-- Web3 -->
-      <div class="nd-quadrant">
-        <div class="nd-q-icon"><span class="material-symbols-outlined">currency_bitcoin</span></div>
-        <div class="nd-q-visual"><img src="/static/images/wir-3-white.svg" alt="" /></div>
-        <h3>Web3 Development</h3>
-        <p>Smart contracts · Security audits · ERC-20 / ERC-721 tokens · NFT platforms · dApps &amp; wallets</p>
-      </div>
-      <!-- AI -->
-      <div class="nd-quadrant">
-        <div class="nd-q-icon"><span class="material-symbols-outlined">memory</span></div>
-        <div class="nd-q-visual"><img src="/static/images/wir-4-white.svg" alt="" /></div>
-        <h3>AI Engineering</h3>
-        <p>Deploying LLMs, predictive models, and automation pipelines directly into your product stack.</p>
+      <!-- Marketplace (teased) -->
+      <div class="nd-quadrant" id="marketplace">
+        <div class="nd-q-icon"><span class="material-symbols-outlined">storefront</span></div>
+        <div class="nd-tag" style="margin-bottom:0.5rem"><span class="nd-live-dot" style="background:var(--primary); box-shadow:none; animation:none"></span> Coming soon</div>
+        <h2>The Neoscona Marketplace.</h2>
+        <p>Soon: a marketplace of AI workers and automations — built by Neoscona and by partners — that any business can switch on. Want early access, or to build and sell your own? Join the waitlist.</p>
+        <a href="mailto:hello@neoscona.xyz?subject=Marketplace%20waitlist" class="nd-btn-secondary">Join the waitlist</a>
       </div>
     </div>
   </section>
 
   <hr class="nd-hr">
 
-  <!-- ─── WHY CHOOSE US ─────────────────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="why">
-    <div class="nd-section-head">
-      <div class="nd-tag">Why Work With Us</div>
-      <h2>Built differently, intentionally</h2>
-    </div>
-    <div class="nd-tiles" style="grid-template-columns: repeat(5, 1fr)">
-      <div class="nd-tile">
-        <div class="nd-icon-frame" style="margin-bottom:1.25rem"><span class="material-symbols-outlined">diversity_3</span></div>
-        <h3 style="font-size:0.95rem; margin-bottom:0.4rem">Web2 + Web3 Expertise</h3>
-        <p>Seamlessly combine traditional software with blockchain infrastructure.</p>
-      </div>
-      <div class="nd-tile">
-        <div class="nd-icon-frame" style="margin-bottom:1.25rem"><span class="material-symbols-outlined">speed</span></div>
-        <h3 style="font-size:0.95rem; margin-bottom:0.4rem">Startup-Focused</h3>
-        <p>We understand speed, iteration, and building under uncertainty.</p>
-      </div>
-      <div class="nd-tile">
-        <div class="nd-icon-frame" style="margin-bottom:1.25rem"><span class="material-symbols-outlined">shield</span></div>
-        <h3 style="font-size:0.95rem; margin-bottom:0.4rem">Security-First</h3>
-        <p>Especially critical for smart contracts and blockchain systems.</p>
-      </div>
-      <div class="nd-tile">
-        <div class="nd-icon-frame" style="margin-bottom:1.25rem"><span class="material-symbols-outlined">trending_up</span></div>
-        <h3 style="font-size:0.95rem; margin-bottom:0.4rem">Fast &amp; Scalable</h3>
-        <p>We build MVPs quickly - and architect for long-term growth.</p>
-      </div>
-      <div class="nd-tile">
-        <div class="nd-icon-frame" style="margin-bottom:1.25rem"><span class="material-symbols-outlined">forum</span></div>
-        <h3 style="font-size:0.95rem; margin-bottom:0.4rem">Clear Communication</h3>
-        <p>No black box. You always know what's happening and why.</p>
-      </div>
-    </div>
-  </section>
-
-  <hr class="nd-hr">
-
-  <!-- ─── SOCIAL PROOF / MINDSET ────────────────────────────────────────────── -->
+  <!-- ─── PROOF / NUMBERS ───────────────────────────────────────────────────── -->
   <section class="nd-section nd-container">
     <div class="nd-section-head-split">
       <div>
-        <div class="nd-tag">Built with a Product Mindset</div>
-        <h2>Ecosystem mastery &amp; track record</h2>
+        <div class="nd-tag">Why it works</div>
+        <h2>Most businesses don't lose to a bad product.<br />They lose to a slow reply.</h2>
       </div>
       <div class="nd-stats">
-        <div class="nd-stat"><p>10+</p><span>Products Shipped</span></div>
-        <div class="nd-stat"><p>2</p><span>Ecosystems Mastered</span></div>
-        <div class="nd-stat"><p>99.9%</p><span>Uptime Record</span></div>
-      </div>
-    </div>
-
-    <div class="nd-cards">
-      <div class="nd-card">
-        <div class="nd-card-thumb"><img src="/static/images/wir-3-white.svg" alt="" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label">Case Study</span>
-            <span class="nd-card-date">March 2024</span>
-          </div>
-          <h4>Track Record</h4>
-          <p>Multiple products successfully designed and developed from scratch.</p>
-          <a href="#" class="nd-card-link">Read More <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
-      <div class="nd-card">
-        <div class="nd-card-thumb"><img src="/static/images/wir-4-white.svg" alt="" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label">Whitepaper</span>
-            <span class="nd-card-date">Feb 2024</span>
-          </div>
-          <h4>Ecosystem Mastery</h4>
-          <p>Deep experience launching projects across both Web2 and Web3 ecosystems.</p>
-          <a href="#" class="nd-card-link">Read More <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
-      <div class="nd-card">
-        <div class="nd-card-thumb"><img src="/static/images/wir-5-white.svg" alt="" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label">Research</span>
-            <span class="nd-card-date">Jan 2024</span>
-          </div>
-          <h4>Built to Scale</h4>
-          <p>Unrelenting focus on performance, usability, and long-term scalability.</p>
-          <a href="#" class="nd-card-link">Read More <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
+        <div class="nd-stat"><p>24/7</p><span>Always answering</span></div>
+        <div class="nd-stat"><p>&lt;10s</p><span>First response</span></div>
+        <div class="nd-stat"><p>0</p><span>Made-up facts</span></div>
       </div>
     </div>
 
     <div class="nd-newsletter">
       <div>
-        <h3>Stay in the loop</h3>
-        <p>Updates on product engineering, Web3 developments, and Neoscona news.</p>
+        <h3>Be first to the future of African business.</h3>
+        <p>Playbooks on AI workers, product updates, and marketplace early access.</p>
       </div>
       <form onsubmit="return false;">
         <input type="email" placeholder="Enter your email" />
-        <button type="submit" class="nd-btn-primary" style="font-size:0.825rem; padding:0.65rem 1.25rem">Subscribe</button>
+        <button type="submit" class="nd-btn-primary" style="font-size:0.825rem; padding:0.65rem 1.25rem">Keep me posted</button>
       </form>
-    </div>
-  </section>
-
-  <hr class="nd-hr">
-
-  <!-- ─── BLOG ────────────────────────────────────────────────────────────────── -->
-  <section class="nd-section nd-container" id="blog">
-    <div class="nd-section-head-split">
-      <div>
-        <div class="nd-tag">Blog</div>
-        <h2>Latest insights &amp; engineering notes</h2>
-      </div>
-      <div class="nd-stats" style="align-items:flex-end">
-        <a href="#blog" class="nd-btn-outline-lg" style="padding: 0.6rem 1.4rem; font-size: 0.8rem">View All Posts</a>
-      </div>
-    </div>
-
-    <div class="nd-cards">
-      <div class="nd-card">
-        <div class="nd-card-thumb" style="background:var(--bg); padding: 2rem"><img src="/static/images/wir-2-purple.svg" alt="" style="opacity: 0.85" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label" style="color:var(--heading)">Machine Learning</span>
-            <span class="nd-card-date">Case Study</span>
-          </div>
-          <h4 style="margin-bottom:0.75rem; line-height:1.4">Identifying SMS Spam with TF-IDF & Logistic Regression</h4>
-          <p>Exploration of our REST API for real-time spam classification, achieving 97% accuracy with dynamic text vectorization.</p>
-          <a href="https://github.com/Blurryfqce/Spam-Detector" target="_blank" class="nd-card-link">View Repository <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
-      <div class="nd-card">
-        <div class="nd-card-thumb" style="background:var(--bg); padding: 2rem"><img src="/static/images/wir-4-white.svg" alt="" style="opacity: 0.85" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label" style="color:var(--heading)">IoT Integration</span>
-            <span class="nd-card-date">Case Study</span>
-          </div>
-          <h4 style="margin-bottom:0.75rem; line-height:1.4">Predictive Analytics for Parking Infrastructure</h4>
-          <p>How we utilized a Random Forest Regressor and automated weekly Firebase updates to forecast parking lot occupancy.</p>
-          <a href="https://github.com/Blurryfqce/Parking_ml" target="_blank" class="nd-card-link">View Repository <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
-      <div class="nd-card">
-        <div class="nd-card-thumb" style="background:var(--bg); padding: 2rem"><img src="/static/images/wir-5-white.svg" alt="" style="opacity: 0.85" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label" style="color:var(--heading)">Web3 Security</span>
-            <span class="nd-card-date">Case Study</span>
-          </div>
-          <h4 style="margin-bottom:0.75rem; line-height:1.4">Aegis Protocol: Trust Layer for Autonomous AI Agents</h4>
-          <p>Building secure, on-chain policy enforcement and intent-level authorization for AI agent payments on Soroban.</p>
-          <a href="https://github.com/the-foundingengineer/aegis-protocol" target="_blank" class="nd-card-link">View Repository <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
-      <div class="nd-card">
-        <div class="nd-card-thumb" style="background:var(--bg); padding: 2rem"><img src="/static/images/wir-1-purple.svg" alt="" style="opacity: 0.85" /></div>
-        <div class="nd-card-body">
-          <div class="nd-card-meta">
-            <span class="nd-card-label" style="color:var(--heading)">Paytech</span>
-            <span class="nd-card-date">Case Study</span>
-          </div>
-          <h4 style="margin-bottom:0.75rem; line-height:1.4">Whistleblower: Trustless Autonomous Payments</h4>
-          <p>Rebuilding civil society infrastructure with AI agents and Web3 for the Cronos paytech ecosystem.</p>
-          <a href="https://github.com/the-foundingengineer/whistleblower" target="_blank" class="nd-card-link">View Repository <span class="material-symbols-outlined" style="font-size:0.9rem">trending_flat</span></a>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -733,12 +611,12 @@
   <!-- ─── CTA ───────────────────────────────────────────────────────────────── -->
   <section class="nd-section nd-container" id="contact">
     <div class="nd-cta-wrap">
-      <div class="nd-tag" style="margin:0 auto 1.5rem; display:block; text-align:center; width:fit-content">Ready to build?</div>
-      <h2>Let's Build Something<br /> <span class="nd-primary-accent" style="font-style:italic">That Matters.</span></h2>
-      <p>Whether you're starting from an idea or scaling an existing product, we can help you move faster and build smarter. Book a call to discuss your project, timeline, and next steps.</p>
+      <div class="nd-tag" style="margin:0 auto 1.5rem; display:block; text-align:center; width:fit-content"><span class="nd-live-dot"></span> Ready to run</div>
+      <h2>Your business never sleeps.<br />Now your team doesn't either.</h2>
+      <p>Switch on your first AI worker this afternoon — or tell us what you need, and we'll build it.</p>
       <div class="nd-cta-btns">
-        <a href="mailto:hello@neoscona.xyz" class="nd-btn-primary-lg">Inquire About a Project</a>
-        <a href="mailto:hello@neoscona.xyz" class="nd-btn-outline-lg">Talk to Our Team</a>
+        <a href="#workers" class="nd-btn-primary-lg">Hire your first worker</a>
+        <a href="mailto:hello@neoscona.xyz?subject=Talk%20to%20Neoscona" class="nd-btn-outline-lg">Talk to our team</a>
       </div>
     </div>
   </section>
@@ -751,34 +629,34 @@
     <div class="nd-footer-grid">
       <div>
         <div class="nd-footer-logo">Neoscona</div>
-        <p class="nd-footer-tagline">Architecting the future of digital products - from Web2 to Web3.</p>
+        <p class="nd-footer-tagline">AI automation, ready to run. The automation layer for African business.</p>
       </div>
       <div class="nd-footer-col">
-        <h5>Services</h5>
-        <a href="#services">Web2 Development</a>
-        <a href="#services">Web3 Development</a>
-        <a href="#services">AI Engineering</a>
-        <a href="#services">UI/UX Design</a>
+        <h5>Workers</h5>
+        <a href="#workers">Neoscona Voice</a>
+        <a href="#workers">Neoscona Reva</a>
+        <a href="#workers">Neoscona Reach</a>
+        <a href="#enterprise">Neoscona Flow</a>
       </div>
       <div class="nd-footer-col">
         <h5>Company</h5>
-        <a href="#about">About Us</a>
-        <a href="#process">Our Process</a>
-        <a href="#portfolio">Portfolio</a>
-        <a href="#contact">Contact</a>
+        <a href="#how">How it works</a>
+        <a href="#enterprise">Enterprise</a>
+        <a href="#marketplace">Marketplace</a>
+        <a href="/blog">Blog</a>
       </div>
       <div class="nd-footer-col">
-        <h5>Engage</h5>
-        <a href="mailto:hello@neoscona.xyz">hello@neoscona.xyz</a>
-        <a href="mailto:hello@neoscona.xyz">Book a Call</a>
-        <a href="mailto:hello@neoscona.xyz">Start a Project</a>
+        <h5>Get started</h5>
+        <a href="mailto:hello@neoscona.xyz?subject=Hire%20an%20AI%20worker">Hire a worker</a>
+        <a href="mailto:hello@neoscona.xyz?subject=Custom%20automation">Talk to us about custom</a>
+        <a href="mailto:hello@neoscona.xyz?subject=Marketplace%20waitlist">Marketplace waitlist</a>
       </div>
     </div>
     <div class="nd-footer-bottom">
-      <p class="nd-copyright">© <span id="year"></span> Neoscona. All rights reserved.</p>
+      <p class="nd-copyright">© <span id="year"></span> Neoscona. AI automation, ready to run.</p>
       <div class="nd-footer-legal">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Use</a>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
       </div>
     </div>
   </div>

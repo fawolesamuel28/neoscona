@@ -1,0 +1,23 @@
+# Render blueprint for the Neoscona marketing site (neoscona.xyz)
+# One free web service. Blog DB lives on Supabase (set DATABASE_URL).
+# Deploy: push to GitHub, then Render → New → Blueprint → pick this repo.
+# Or: Render → New → Web Service → connect repo (it auto-reads this file).
+
+services:
+  - type: web
+    name: neoscona
+    runtime: python
+    plan: free
+    region: frankfurt          # closest free region to Africa; change if you prefer
+    branch: master
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DATABASE_URL        # Supabase Postgres connection string (set in dashboard, kept secret)
+        sync: false
+      - key: ADMIN_TOKEN         # gates /admin?token=... (set a long random value)
+        sync: false
