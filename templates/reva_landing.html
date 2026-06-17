@@ -62,6 +62,35 @@
     .nd-card p { font-size: 0.95rem; line-height: 1.6; }
 
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+
+    /* ─── MOCKUP ─────────────────────────────────────────────────────────── */
+    .mockup-container { perspective: 1800px; margin-top: 4rem; }
+    .mockup-image {
+        transform: rotateX(10deg) rotateY(-2deg) scale(0.95);
+        transition: transform .8s cubic-bezier(.16,1,.3,1);
+        box-shadow: 0 40px 80px -24px rgba(0,0,0,0.45);
+        border-radius: 1.5rem; overflow: hidden;
+        border: 1px solid var(--border);
+        background: var(--bg-input);
+        display: flex; height: 480px;
+    }
+    .mockup-left { flex: 1; border-right: 1px solid var(--border); padding: 3rem; background: rgba(220,38,38,0.03); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .mockup-right { flex: 1; padding: 3rem; background: rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .mockup-bubble { padding: 1rem; border-radius: 12px; margin-bottom: 1rem; width: 100%; max-width: 280px; font-size: 0.8125rem; }
+    .mb-in { background: var(--bg); border: 1px solid var(--border); color: var(--copy-75); }
+    .mb-out { background: var(--primary); color: var(--primary-text); align-self: flex-end; margin-left: auto; }
+    
+    /* ─── PRICING ───────────────────────────────────────────────────────── */
+    .nd-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; }
+    .nd-price-card {
+        padding: 3rem; border-radius: 16px; border: 1px solid var(--border);
+        background: var(--bg-input);
+    }
+    .nd-price-card.featured { border-color: var(--primary); background: rgba(0,0,0,0.5); }
+    .nd-price-val { font-size: 3rem; font-weight: 700; color: var(--heading); margin: 1.5rem 0; }
+    .nd-price-feat { list-style: none; margin-top: 2rem; }
+    .nd-price-feat li { font-size: 0.875rem; color: var(--copy-75); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .nd-price-feat li span { color: var(--primary); font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -70,13 +99,21 @@
     <div class="nd-nav-inner">
       <a href="/" class="nd-nav-logo">Neoscona</a>
       <div class="nd-nav-links">
-        <a href="/dashboard" class="nd-nav-link">Console</a>
         <a href="#features" class="nd-nav-link">Features</a>
         <a href="#pricing" class="nd-nav-link">Pricing</a>
-        <a href="/docs" class="nd-nav-link">Docs</a>
+        {% if session.get('user_id') %}
+            <a href="/docs" class="nd-nav-link">Help</a>
+            <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
+        {% else %}
+            <a href="/docs" class="nd-nav-link" style="color:var(--primary); font-weight:600">Getting Started</a>
+        {% endif %}
       </div>
       <div class="nd-nav-right">
-        <a href="/dashboard" class="nd-btn-primary">Hire Reva</a>
+        {% if session.get('user_id') %}
+            <a href="/logout" class="nd-btn-primary">Logout</a>
+        {% else %}
+            <a href="/login" class="nd-btn-primary">Sign In</a>
+        {% endif %}
       </div>
     </div>
   </nav>
@@ -85,8 +122,45 @@
     <div class="nd-tag">Neoscona Reva · The Lead Agent</div>
     <h1>Every missed call is<br /><span>lost revenue.</span></h1>
     <p>Reva is your 24/7 AI real-estate agent. She answers calls, replies to WhatsApp messages, qualifies leads, and books viewings while you sleep.</p>
-    <a href="/dashboard" class="nd-btn-primary" style="padding: 1rem 2rem; font-size:1rem">Start free trial</a>
+    <div style="display:flex; gap:1rem; justify-content:center">
+        <a href="/docs" class="nd-btn-primary" style="padding: 1rem 2rem; font-size:1rem">See how it works</a>
+        <a href="/signup" class="nd-btn-primary" style="padding: 1rem 2rem; font-size:1rem; background:transparent; border:1px solid var(--primary); color:var(--primary)">Start free trial</a>
+    </div>
+
+    <!-- MOCKUP RESTORED -->
+    <div class="mockup-container">
+        <div class="mockup-image">
+            <div class="mockup-left">
+                <div style="font-size:0.7rem; color:var(--copy-50); margin-bottom:2rem; text-transform:uppercase; letter-spacing:0.1em">Without Reva</div>
+                <div style="opacity:0.5">
+                    <div style="width:200px; height:60px; background:var(--bg); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; padding:1rem; margin-bottom:1rem">
+                        <span class="material-symbols-outlined" style="color:#ef4444; margin-right:10px">phone_missed</span>
+                        <div style="height:8px; width:80px; background:var(--border); border-radius:4px"></div>
+                    </div>
+                    <div style="width:200px; height:60px; background:var(--bg); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; padding:1rem">
+                        <span class="material-symbols-outlined" style="color:#ef4444; margin-right:10px">sms_failed</span>
+                        <div style="height:8px; width:100px; background:var(--border); border-radius:4px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mockup-right">
+                <div style="font-size:0.7rem; color:var(--primary); margin-bottom:2rem; text-transform:uppercase; letter-spacing:0.1em">With Neoscona Reva</div>
+                <div class="mockup-bubble mb-in">Is the 3-bedroom in Lekki still available?</div>
+                <div class="mockup-bubble mb-out">Yes! It is. Would you like to see the floor plan or schedule a viewing?</div>
+                <div style="position:absolute; bottom:2rem; font-size:0.75rem; color:var(--primary); font-weight:600">Answered instantly</div>
+            </div>
+        </div>
+    </div>
   </header>
+
+  <!-- TRUST STRIP -->
+  <section class="nd-section" style="padding: 2rem 0; text-align:center">
+     <div style="display:flex; justify-content:center; gap:4rem">
+         <div><div style="font-size:2rem; font-weight:700; color:var(--heading)">24/7</div><div style="font-size:0.8rem; color:var(--copy-75)">Availability</div></div>
+         <div><div style="font-size:2rem; font-weight:700; color:var(--heading)">&lt; 30s</div><div style="font-size:0.8rem; color:var(--copy-75)">Response Time</div></div>
+         <div><div style="font-size:2rem; font-weight:700; color:var(--heading)">0</div><div style="font-size:0.8rem; color:var(--copy-75)">Leads Ignored</div></div>
+     </div>
+  </section>
 
   <section class="nd-section" id="features">
     <div class="nd-grid">
@@ -105,6 +179,47 @@
         <h3>Auto-Booking</h3>
         <p>Qualified leads are invited to book viewings directly into your calendar. Zero back-and-forth.</p>
       </div>
+    </div>
+  <section class="nd-section" id="pricing">
+    <div style="text-align:center; margin-bottom:4rem">
+        <div class="nd-tag">Pricing</div>
+        <h2 style="font-size:3rem; color:var(--heading)">Priced to pay for itself.</h2>
+    </div>
+    <div class="nd-pricing-grid">
+        <div class="nd-price-card">
+            <h3>Starter</h3>
+            <p style="font-size:0.875rem">For solo agents.</p>
+            <div class="nd-price-val">₦35k<span style="font-size:1rem; opacity:0.5">/mo</span></div>
+            <a href="/signup" class="nd-btn-primary" style="display:block; text-align:center; background:transparent; border:1px solid var(--border); color:var(--heading)">Get Started</a>
+            <ul class="nd-price-feat">
+                <li><span class="material-symbols-outlined">check_circle</span> WhatsApp AI Agent</li>
+                <li><span class="material-symbols-outlined">check_circle</span> 500 Conversations</li>
+                <li><span class="material-symbols-outlined">check_circle</span> CRM Integration</li>
+            </ul>
+        </div>
+        <div class="nd-price-card featured">
+            <h3>Growth</h3>
+            <p style="font-size:0.875rem">For growing teams.</p>
+            <div class="nd-price-val">₦180k<span style="font-size:1rem; opacity:0.5">/mo</span></div>
+            <a href="/signup" class="nd-btn-primary" style="display:block; text-align:center">Get Started</a>
+            <ul class="nd-price-feat">
+                <li><span class="material-symbols-outlined">check_circle</span> Voice + WhatsApp</li>
+                <li><span class="material-symbols-outlined">check_circle</span> 2,000 Conversations</li>
+                <li><span class="material-symbols-outlined">check_circle</span> 500 Call Minutes</li>
+                <li><span class="material-symbols-outlined">check_circle</span> Priority Support</li>
+            </ul>
+        </div>
+        <div class="nd-price-card">
+            <h3>Enterprise</h3>
+            <p style="font-size:0.875rem">For big developers.</p>
+            <div class="nd-price-val">Custom</div>
+            <a href="mailto:hello@neoscona.xyz" class="nd-btn-primary" style="display:block; text-align:center; background:transparent; border:1px solid var(--border); color:var(--heading)">Talk to Sales</a>
+            <ul class="nd-price-feat">
+                <li><span class="material-symbols-outlined">check_circle</span> Unlimited Conversations</li>
+                <li><span class="material-symbols-outlined">check_circle</span> Multi-location support</li>
+                <li><span class="material-symbols-outlined">check_circle</span> Custom Workflows</li>
+            </ul>
+        </div>
     </div>
   </section>
 

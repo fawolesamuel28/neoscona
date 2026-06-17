@@ -377,15 +377,25 @@
       <a href="/#how" class="nd-nav-link">How it works</a>
       <a href="/#enterprise" class="nd-nav-link">Enterprise</a>
       <a href="/blog" class="nd-nav-link active">Blog</a>
-      <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
+      {% if session.get('user_id') %}
+        <a href="/docs" class="nd-nav-link">Help</a>
+        <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
+      {% else %}
+        <a href="/docs" class="nd-nav-link" style="color:var(--primary); font-weight:600">Getting Started</a>
+      {% endif %}
     </div>
     <div class="nd-nav-right">
       <button class="nd-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <span class="material-symbols-outlined icon-sun">light_mode</span>
         <span class="material-symbols-outlined icon-moon">dark_mode</span>
       </button>
-      <a href="mailto:hello@neoscona.xyz?subject=Talk%20to%20Neoscona" class="nd-btn-secondary">Talk to us</a>
-      <a href="/#workers" class="nd-btn-primary">Hire a worker</a>
+      {% if session.get('user_id') %}
+        <span class="nd-nav-link" style="font-size: 0.8125rem; opacity: 0.7;">{{ session.get('user_email') }}</span>
+        <a href="/logout" class="nd-btn-secondary">Logout</a>
+      {% else %}
+        <a href="/login" class="nd-btn-secondary">Login</a>
+        <a href="/signup" class="nd-btn-primary">Sign Up</a>
+      {% endif %}
     </div>
   </div>
 </nav>

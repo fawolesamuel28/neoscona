@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>Sign up — Neoscona</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link href="/static/tokens.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--copy);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+    .nd-auth-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+    .nd-auth-marketing {
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .nd-auth-marketing::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: -10%;
+      width: 120%;
+      height: 140%;
+      background: radial-gradient(ellipse at top, rgba(109,69,255,0.18), transparent 60%),
+                  radial-gradient(ellipse at bottom right, rgba(109,69,255,0.12), transparent 50%);
+      pointer-events: none;
+    }
+    .nd-auth-marketing > * { position: relative; z-index: 1; }
+    .nd-logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--heading);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nd-auth-marketing-content {
+      max-width: 480px;
+      margin: 4rem 0;
+    }
+    .nd-auth-marketing-content h1 {
+      font-size: 2.4rem;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+      color: var(--heading);
+      letter-spacing: -0.03em;
+    }
+    .nd-auth-features {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+    .nd-auth-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+    .nd-auth-feature-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--primary-alt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+    .nd-auth-feature-text {
+      font-size: 0.95rem;
+      color: var(--copy-75);
+    }
+    .nd-auth-form-container {
+      background: var(--bg-input);
+      border-left: 1px solid var(--border);
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .nd-auth-card {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .nd-auth-card h1 {
+      font-size: 1.5rem;
+      color: var(--heading);
+      margin-bottom: 0.5rem;
+    }
+    .nd-auth-card p {
+      font-size: 0.95rem;
+      color: var(--copy-75);
+      margin-bottom: 2rem;
+    }
+    
+    .nd-form-group { margin-bottom: 1.25rem; }
+    .nd-form-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--copy-75);
+      margin-bottom: 0.5rem;
+    }
+    .nd-form-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--heading);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .nd-form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-alt);
+    }
+
+    .nd-btn-submit {
+      width: 100%;
+      padding: 0.95rem;
+      border-radius: 8px;
+      background: var(--primary);
+      color: var(--primary-text);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .nd-btn-submit:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .nd-auth-footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+    .nd-auth-footer a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .nd-auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .nd-flash {
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      background: rgba(220, 38, 38, 0.08);
+      color: #dc2626;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(220, 38, 38, 0.15);
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .nd-auth-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .nd-auth-marketing {
+        padding: 2rem;
+        min-height: auto;
+      }
+      .nd-auth-marketing-content {
+        margin: 2rem 0;
+      }
+      .nd-auth-form-container {
+        padding: 2rem;
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="nd-auth-wrapper">
+    <!-- Marketing Side -->
+    <section class="nd-auth-marketing">
+      <a href="/" class="nd-logo">Neoscona</a>
+      
+      <div class="nd-auth-marketing-content">
+        <h1>Start your free trial today to test out the Neoscona platform with no strings attached.</h1>
+        
+        <div class="nd-auth-features">
+          <div class="nd-auth-feature">
+            <div class="nd-auth-feature-icon">
+              <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+            </div>
+            <div class="nd-auth-feature-text">No credit card required</div>
+          </div>
+          <div class="nd-auth-feature">
+            <div class="nd-auth-feature-icon">
+              <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+            </div>
+            <div class="nd-auth-feature-text">Free trials available</div>
+          </div>
+          <div class="nd-auth-feature">
+            <div class="nd-auth-feature-icon">
+              <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+            </div>
+            <div class="nd-auth-feature-text">Access to all products across the Neoscona platform</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 3rem;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--heading);">Get up and running</h3>
+          <div class="nd-auth-features">
+            <div class="nd-auth-feature">
+              <div class="nd-auth-feature-icon">
+                <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+              </div>
+              <div class="nd-auth-feature-text">Verify your email address & phone number</div>
+            </div>
+            <div class="nd-auth-feature">
+              <div class="nd-auth-feature-icon">
+                <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+              </div>
+              <div class="nd-auth-feature-text">Tell us what you want to build first</div>
+            </div>
+            <div class="nd-auth-feature">
+              <div class="nd-auth-feature-icon">
+                <span class="material-symbols-outlined" style="font-size: 18px;">check</span>
+              </div>
+              <div class="nd-auth-feature-text">Start building!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p style="font-size: 0.8rem; color: var(--copy);">
+        *Free trials may be limited by time, features, and usage caps, and are subject to change without notice.
+      </p>
+    </section>
+    
+    <!-- Form Side -->
+    <section class="nd-auth-form-container">
+      <div class="nd-auth-card">
+        <h1>Sign up for free</h1>
+        <p>Start your free trial and unlock all Neoscona products, including Neoscona Voice and Neoscona Segment.</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="nd-flash">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+          <div class="nd-form-group">
+            <label class="nd-form-label">First name</label>
+            <input type="text" name="first_name" class="nd-form-input" placeholder="Alex" required />
+          </div>
+          
+          <div class="nd-form-group">
+            <label class="nd-form-label">Last name</label>
+            <input type="text" name="last_name" class="nd-form-input" placeholder="Smith" required />
+          </div>
+          
+          <div class="nd-form-group">
+            <label class="nd-form-label">Work email</label>
+            <input type="email" name="email" class="nd-form-input" placeholder="you@company.com" required />
+          </div>
+          
+          <div class="nd-form-group">
+            <label class="nd-form-label">Password</label>
+            <input type="password" name="password" class="nd-form-input" placeholder="Create a password" required />
+          </div>
+          
+          <button type="submit" class="nd-btn-submit">Start free trial</button>
+        </form>
+
+        <div class="nd-auth-footer">
+          Already have an account? <a href="/login">Log in</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

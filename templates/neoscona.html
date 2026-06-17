@@ -427,15 +427,25 @@
       <a href="#how" class="nd-nav-link">How it works</a>
       <a href="#enterprise" class="nd-nav-link">Enterprise</a>
       <a href="/blog" class="nd-nav-link">Blog</a>
-      <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
+      {% if session.get('user_id') %}
+        <a href="/docs" class="nd-nav-link">Help</a>
+        <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
+      {% else %}
+        <a href="/docs" class="nd-nav-link" style="color:var(--primary); font-weight:600">Getting Started</a>
+      {% endif %}
     </div>
     <div class="nd-nav-right">
       <button class="nd-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <span class="material-symbols-outlined icon-sun">light_mode</span>
         <span class="material-symbols-outlined icon-moon">dark_mode</span>
       </button>
-      <a href="mailto:hello@neoscona.xyz?subject=Talk%20to%20Neoscona" class="nd-btn-secondary">Talk to us</a>
-      <a href="#workers" class="nd-btn-primary">Hire a worker</a>
+      {% if session.get('user_id') %}
+        <span class="nd-nav-link" style="font-size: 0.8125rem; opacity: 0.7;">{{ session.get('user_email') }}</span>
+        <a href="/logout" class="nd-btn-secondary">Logout</a>
+      {% else %}
+        <a href="/login" class="nd-btn-secondary">Login</a>
+        <a href="/signup" class="nd-btn-primary">Sign Up</a>
+      {% endif %}
     </div>
   </div>
 </nav>
@@ -450,8 +460,8 @@
       <h1>Hire your first<br />AI worker today.</h1>
       <p>Neoscona gives you ready-to-run AI: a receptionist, a lead agent, a follow-up worker, live on WhatsApp and voice in minutes. Pre-trained. Locally compliant. It never makes things up.</p>
       <div class="nd-hero-btns">
-        <a href="#workers" class="nd-btn-primary-lg">See the workers</a>
-        <a href="mailto:hello@neoscona.xyz?subject=Custom%20automation%20for%20my%20business" class="nd-btn-outline-lg">Talk to us about custom</a>
+        <a href="/docs" class="nd-btn-primary-lg">See how it works</a>
+        <a href="/signup" class="nd-btn-outline-lg">Start Free Trial</a>
       </div>
     </div>
   </section>
@@ -684,7 +694,7 @@
       <h2>Your business never sleeps.<br />Now your team doesn't either.</h2>
       <p>Switch on your first AI worker this afternoon, or tell us what you need, and we'll build it.</p>
       <div class="nd-cta-btns">
-        <a href="#workers" class="nd-btn-primary-lg">Hire your first worker</a>
+        <a href="/signup" class="nd-btn-primary-lg">Hire your first worker</a>
         <a href="mailto:hello@neoscona.xyz?subject=Talk%20to%20Neoscona" class="nd-btn-outline-lg">Talk to our team</a>
       </div>
     </div>

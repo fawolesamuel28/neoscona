@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <title>Neoscona Documentation</title>
+  <title>Help Center — Neoscona</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
@@ -13,107 +13,114 @@
       font-family: 'Inter', sans-serif;
       background-color: var(--bg); color: var(--copy);
       line-height: 1.6; -webkit-font-smoothing: antialiased;
-      transition: background-color 0.3s, color 0.3s;
-      display: flex; min-height: 100vh;
     }
-    a { text-decoration: none; color: inherit; }
-
-    /* ─── DOCS LAYOUT ─────────────────────────────────────────────────────────── */
-    .nd-docs-sidebar {
-      width: 280px; padding: 3rem 2rem; border-right: 1px solid var(--border);
-      position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--bg-input);
+    .nd-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border);
     }
-    .nd-docs-main { flex: 1; padding: 5rem 6rem; max-width: 900px; }
-    .nd-logo { font-weight: 800; font-size: 1.15rem; color: var(--heading); margin-bottom: 3rem; display: block; }
+    .nd-nav-inner { display: flex; align-items: center; justify-content: space-between; max-width: 1240px; margin: 0 auto; padding: 1.1rem 2rem; }
+    .nd-nav-logo { font-weight: 800; color: var(--heading); text-decoration: none; }
+    
+    .nd-help-hero { padding: 6rem 2rem 4rem; text-align: center; max-width: 800px; margin: 0 auto; }
+    .nd-help-hero h1 { font-size: 3rem; color: var(--heading); margin-bottom: 1rem; letter-spacing: -0.04em; }
+    .nd-help-hero p { font-size: 1.1rem; color: var(--copy-75); }
 
-    .nd-docs-nav h5 { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--copy-75); letter-spacing: 0.1em; margin-bottom: 0.75rem; }
-    .nd-docs-nav ul { list-style: none; margin-bottom: 2rem; }
-    .nd-docs-nav li { margin-bottom: 0.5rem; }
-    .nd-docs-nav a { font-size: 0.875rem; color: var(--copy); transition: color 0.2s; }
-    .nd-docs-nav a:hover, .nd-docs-nav a.active { color: var(--primary); }
+    .nd-help-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; max-width: 1000px; margin: 0 auto; padding: 0 2rem 6rem; }
+    .nd-help-card {
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem;
+    }
+    .nd-help-card h3 { font-size: 1.25rem; color: var(--heading); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .nd-help-card p { font-size: 0.95rem; color: var(--copy-75); margin-bottom: 1.5rem; }
+    .nd-help-link { color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.875rem; }
 
-    .nd-docs-content h1 { font-size: 2.5rem; color: var(--heading); letter-spacing: -0.04em; margin-bottom: 1rem; }
-    .nd-docs-content .lead { font-size: 1.25rem; color: var(--copy-75); margin-bottom: 3rem; }
-    .nd-docs-content h2 { font-size: 1.5rem; color: var(--heading); margin-top: 3rem; margin-bottom: 1rem; }
-    .nd-docs-content p { margin-bottom: 1.5rem; }
-    .nd-docs-content code { background: var(--bg-hover); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; }
-    .nd-docs-content pre { background: var(--bg-input); border: 1px solid var(--border); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; overflow-x: auto; overflow-y: hidden; }
-
-    .nd-btn-back { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--copy-75); margin-bottom: 2rem; }
-    .nd-btn-back:hover { color: var(--heading); }
+    .nd-guide-section { max-width: 800px; margin: 0 auto 6rem; padding: 0 2rem; }
+    .nd-guide-section h2 { font-size: 2rem; color: var(--heading); margin-bottom: 2rem; }
+    .nd-step { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; }
+    .nd-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--primary-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+    .nd-step-content h4 { font-size: 1.1rem; color: var(--heading); margin-bottom: 0.5rem; }
+    
+    .nd-cta-box { text-align: center; padding: 4rem; background: var(--primary-alt); border: 1px solid var(--primary); border-radius: 20px; margin-top: 4rem; }
+    .nd-cta-box h2 { color: var(--heading); margin-bottom: 1rem; }
+    .nd-btn-primary { background: var(--primary); color: var(--primary-text); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
   </style>
 </head>
 <body>
 
-  <aside class="nd-docs-sidebar">
-    <a href="/" class="nd-logo">Neoscona</a>
-    <nav class="nd-docs-nav">
-      <h5>Getting Started</h5>
-      <ul>
-        <li><a href="#" class="active">Introduction</a></li>
-        <li><a href="#">Quick Start Guide</a></li>
-        <li><a href="#">Authentication</a></li>
-      </ul>
-
-      <h5>Products</h5>
-      <ul>
-        <li><a href="#">Neoscona Reva</a></li>
-        <li><a href="#">Neoscona Voice</a></li>
-        <li><a href="#">Neoscona Reach</a></li>
-        <li><a href="#">Neoscona Flow</a></li>
-      </ul>
-
-      <h5>Developers</h5>
-      <ul>
-        <li><a href="#">Webhooks</a></li>
-        <li><a href="#">API Reference</a></li>
-        <li><a href="#">No-code Uploads</a></li>
-      </ul>
-    </nav>
-  </aside>
-
-  <main class="nd-docs-main">
-    <a href="/dashboard" class="nd-btn-back"><span class="material-symbols-outlined" style="font-size:1rem">arrow_back</span> Back to Console</a>
-    <div class="nd-docs-content">
-      <h1>Documentation</h1>
-      <p class="lead">Welcome to the Neoscona developer portal. Learn how to switch on AI workers and build custom automations.</p>
-
-      <section>
-        <h2>Master Branding</h2>
-        <p>Neoscona is built on a unified platform architecture. Every product shares the same design tokens, authentication layer, and anti-hallucination core.</p>
-        <p>To integrate Reva specifically, refer to the <code>../reva</code> directory for engine implementation details, or use our pre-built <code>Neoscona Reva</code> components.</p>
-      </section>
-
-      <section>
-        <h2>The Console API</h2>
-        <p>You can interact with your AI workers programmatically via the console API. All requests require your <code>ADMIN_TOKEN</code>.</p>
-        <pre><code>POST /api/upload
-Content-Type: multipart/form-data
-
-{
-  "file": "business_inventory.pdf",
-  "worker": "reva"
-}</code></pre>
-      </section>
-
-      <section>
-        <h2>Anti-Hallucination Core</h2>
-        <p>Ground your workers by uploading your business truth to the <code>Knowledge Base</code>. Our system ensures the AI cross-checks every fact against your specific data before replying.</p>
-      </section>
+<nav class="nd-nav">
+  <div class="nd-nav-inner">
+    <a href="/" class="nd-nav-logo">Neoscona</a>
+    <div style="display:flex; gap:1.5rem; align-items:center">
+      <a href="/" style="font-size:0.8rem; color:var(--copy-75)">Back to Site</a>
+      {% if session.get('user_id') %}
+        <a href="/dashboard" class="nd-btn-primary">Go to Console</a>
+      {% else %}
+        <a href="/login" class="nd-btn-primary">Login</a>
+      {% endif %}
     </div>
-  </main>
+  </div>
+</nav>
 
-  <script>
-    // Theme persistence
-    (function() {
-      var saved = localStorage.getItem('nd-theme');
-      if (saved) {
-        document.documentElement.setAttribute('data-theme', saved);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
-    })();
-  </script>
+<header class="nd-help-hero">
+  <h1>How can we help?</h1>
+  <p>Everything you need to know about setting up and managing your AI workers. No code required.</p>
+</header>
+
+<div class="nd-help-grid">
+  <div class="nd-help-card">
+    <h3><span class="material-symbols-outlined">person_pin</span> Customizing Your Agent</h3>
+    <p>Learn how to give your AI worker a personality, set their working hours, and define what they should say to customers.</p>
+    <a href="#" class="nd-help-link">View Guide →</a>
+  </div>
+  <div class="nd-help-card">
+    <h3><span class="material-symbols-outlined">database</span> Training with Data</h3>
+    <p>Upload your PDFs, CSVs, or website links. Your AI worker will use this information to answer customer questions accurately.</p>
+    <a href="#" class="nd-help-link">Learn about Knowledge Bases →</a>
+  </div>
+  <div class="nd-help-card">
+    <h3><span class="material-symbols-outlined">payments</span> Shared Credits</h3>
+    <p>Understand how our unified billing works. Use one balance for all your AI workers across Voice and Messaging.</p>
+    <a href="#" class="nd-help-link">Billing Guide →</a>
+  </div>
+  <div class="nd-help-card">
+    <h3><span class="material-symbols-outlined">hub</span> Connecting Channels</h3>
+    <p>Connect your WhatsApp Business number or set up a Voice line in just a few clicks.</p>
+    <a href="#" class="nd-help-link">Integration FAQ →</a>
+  </div>
+</div>
+
+<section class="nd-guide-section">
+  <h2>Getting Started in 10 Minutes</h2>
+  
+  <div class="nd-step">
+    <div class="nd-step-num">1</div>
+    <div class="nd-step-content">
+      <h4>Create your account</h4>
+      <p>Sign up and choose which AI worker you need first (e.g., Reva for Real Estate leads).</p>
+    </div>
+  </div>
+
+  <div class="nd-step">
+    <div class="nd-step-num">2</div>
+    <div class="nd-step-content">
+      <h4>Upload your business info</h4>
+      <p>Simply drag and drop your brochures or price lists into the console. The AI learns everything instantly.</p>
+    </div>
+  </div>
+
+  <div class="nd-step">
+    <div class="nd-step-num">3</div>
+    <div class="nd-step-content">
+      <h4>Connect your phone</h4>
+      <p>Scan a QR code to link WhatsApp, or select a new AI phone number. You're now live!</p>
+    </div>
+  </div>
+
+  <div class="nd-cta-box">
+    <h2>Ready to build your team?</h2>
+    <p style="margin-bottom:2rem">Join 200+ businesses using Neoscona to automate their customer service.</p>
+    <a href="/signup" class="nd-btn-primary">Start Your Free Trial</a>
+  </div>
+</section>
 
 </body>
 </html>

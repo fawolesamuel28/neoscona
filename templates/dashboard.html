@@ -155,22 +155,26 @@
     </nav>
 
     <nav class="nd-nav-group">
-      <div class="nd-nav-label">Support</div>
       <a href="/docs" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">description</span>
-        Documentation
-      </a>
-      <a href="#" class="nd-nav-item">
         <span class="material-symbols-outlined nd-nav-icon">help</span>
         Help Center
+      </a>
+      <a href="/billing" class="nd-nav-item">
+        <span class="material-symbols-outlined nd-nav-icon">payments</span>
+        Billing & Credits
+      </a>
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0.5rem;">
+      <a href="/logout" class="nd-nav-item">
+        <span class="material-symbols-outlined nd-nav-icon">logout</span>
+        Logout
       </a>
     </nav>
 
     <div class="nd-sidebar-footer">
       <div class="nd-user-well">
-        <div class="nd-avatar">SK</div>
+        <div class="nd-avatar">{{ user.email[0].upper() }}</div>
         <div class="nd-user-info">
-          <span>Samuel Kolawole</span>
+          <span>{{ user.email }}</span>
           <small>Pro Workspace</small>
         </div>
       </div>
@@ -193,11 +197,28 @@
     </header>
 
     <div class="nd-dash-grid">
+      <!-- Shared Balance Card -->
+      <div class="nd-dash-card" style="grid-column: span 2; background: var(--primary-alt); border-color: var(--primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div>
+            <h3 style="color:var(--primary)"><span class="material-symbols-outlined">payments</span> Shared Balance</h3>
+            <p style="margin-bottom:0">Your unified credit balance shared across all active AI workers.</p>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:2rem; font-weight:700; color:var(--heading)">₦{{ "{:,.2f}".format(user.balance) }}</div>
+            <a href="/billing" style="font-size:0.75rem; color:var(--primary); font-weight:600">Add Credits →</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Reva -->
       <div class="nd-dash-card" data-product="reva">
         <h3><span class="material-symbols-outlined" style="color:var(--primary)">forum</span> Neoscona Reva</h3>
         <p>Real-estate lead qualification & nurture active on 2 numbers.</p>
-        <div class="nd-dash-badge active">● Live</div>
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div class="nd-dash-badge active">● Live</div>
+          <a href="/products/reva/dashboard" class="nd-btn-primary" style="padding:0.4rem 0.8rem; font-size:0.75rem">Manage Leads</a>
+        </div>
       </div>
       <!-- Voice -->
       <div class="nd-dash-card" data-product="voice">
