@@ -1,0 +1,42 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   NEOSCONA DESIGN TOKENS — single source of truth
+   Brand Bible §4.3: ink + white + one violet
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── DEFAULT: DARK THEME ──────────────────────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --bg:             #0A0A0F;
+  --bg-input:       #121119;
+  --border:         #221F2E;
+  --bg-hover:       #1A1824;
+  --graphics:       #2A2640;
+  --copy:           #8B879B;
+  --copy-75:        #C3C0D0;
+  --heading:        #FAFAF7;
+  --primary:        #6D45FF;
+  --primary-light:  #B9A6FF;
+  --primary-dark:   #5A33E0;
+  --primary-text:   #FFFFFF;
+  --live:           #34D399;
+  --nav-bg:         #0A0A0Fcc;
+  --frame:          #221F2E;
+}
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:             #FAFAF7;
+  --bg-input:       #F0EDE6;
+  --border:         #E0DDD6;
+  --bg-hover:       #EEEAE3;
+  --graphics:       #D5D0C8;
+  --copy:           #5C5A55;
+  --copy-75:        #3D3B37;
+  --heading:        #0A0A0F;
+  --primary:        #6D45FF;
+  --primary-light:  #5A33E0;
+  --primary-dark:   #4C1D95;
+  --primary-text:   #FFFFFF;
+  --live:           #059669;
+  --nav-bg:         #FAFAF7cc;
+  --frame:          #E0DDD6;
+}

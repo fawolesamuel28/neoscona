@@ -1,27 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <title>Neoscona Admin - Post</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link href="/static/tokens.css" rel="stylesheet" />
   <style>
-    body { background-color: #1f1e1b; color: #888681; font-family: 'Inter', sans-serif; margin: 0; padding: 2rem; }
-    .admin-container { max-width: 600px; margin: 4rem auto; background: #26241f; padding: 3rem; border: 1px solid #2e2c27; border-radius: 12px; }
-    .admin-container h1 { color: #f1efe8; margin-bottom: 2rem; font-size: 2rem; letter-spacing: -0.03em; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--copy);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+    .admin-header {
+      max-width: 600px; margin: 4rem auto 0; display: flex;
+      justify-content: space-between; align-items: center; margin-bottom: 1rem;
+    }
+    .nd-theme-toggle {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--copy-75); display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem; transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .nd-theme-toggle:hover { background: var(--bg-hover); color: var(--heading); }
+    [data-theme="light"] .nd-theme-toggle .icon-moon { display: none; }
+    [data-theme="dark"]  .nd-theme-toggle .icon-sun  { display: none; }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal; font-style: normal;
+      font-size: inherit; line-height: 1;
+      letter-spacing: normal; text-transform: none;
+      display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr;
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    }
+
+    .admin-container {
+      max-width: 600px; margin: 0 auto;
+      background: var(--bg-input); padding: 3rem;
+      border: 1px solid var(--border); border-radius: 12px;
+    }
+    .admin-container h1 { color: var(--heading); margin-bottom: 2rem; font-size: 2rem; letter-spacing: -0.03em; }
     .form-group { margin-bottom: 1.5rem; }
-    label { display: block; margin-bottom: 0.5rem; color: #f1efe8; font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    input, textarea { width: 100%; box-sizing: border-box; background: #1f1e1b; border: 1px solid #2e2c27; border-radius: 6px; padding: 0.8rem; color: #f1efe8; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; }
-    input:focus, textarea:focus { border-color: #6d28d9; }
-    .btn-submit { background: #6d28d9; color: white; padding: 1rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: background 0.2s; width: 100%; margin-top: 1rem; }
-    .btn-submit:hover { background: #4c1d95; }
-    .nav-back { display: inline-block; margin-bottom: 2rem; color: #c4b5fd; text-decoration: none; font-size: 0.875rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; }
-    .nav-back:hover { color: #edeae4; }
+    label {
+      display: block; margin-bottom: 0.5rem; color: var(--heading);
+      font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    input, textarea {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.8rem; color: var(--heading); font-family: inherit; font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); }
+    .btn-submit {
+      background: var(--primary); color: var(--primary-text);
+      padding: 1rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; border: none; transition: background 0.2s; width: 100%; margin-top: 1rem;
+    }
+    .btn-submit:hover { background: var(--primary-dark); }
+    .nav-back {
+      display: inline-block; color: var(--primary-light); text-decoration: none;
+      font-size: 0.875rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600;
+    }
+    .nav-back:hover { color: var(--heading); }
   </style>
 </head>
 <body>
-  <div class="admin-container">
+  <div class="admin-header">
     <a href="/blog" class="nav-back">← Back to Blog</a>
+    <button class="nd-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <span class="material-symbols-outlined icon-sun">light_mode</span>
+      <span class="material-symbols-outlined icon-moon">dark_mode</span>
+    </button>
+  </div>
+  <div class="admin-container">
     <h1>Create a New Post</h1>
     <form method="POST">
       <div class="form-group">
@@ -43,5 +103,24 @@
       <button type="submit" class="btn-submit">Publish Post to Database</button>
     </form>
   </div>
+
+<script>
+  // ─── Theme toggle with localStorage persistence ───
+  (function() {
+    var saved = localStorage.getItem('nd-theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('nd-theme', next);
+  }
+</script>
+
 </body>
 </html>
