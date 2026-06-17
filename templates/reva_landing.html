@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-product="reva">
+<head>
+  <meta charset="utf-8" />
+  <title>Neoscona Reva — Real Estate AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link href="/static/tokens.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg); color: var(--copy);
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+    /* ─── NAV REPLICATED FROM MAIN ─────────────────────────────────────────── */
+    .nd-nav {
+      position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+      background: var(--nav-bg); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border);
+    }
+    .nd-nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1240px; margin: 0 auto; padding: 1.1rem 2rem;
+    }
+    .nd-nav-logo { font-weight: 800; font-size: 1.15rem; color: var(--heading); }
+    .nd-nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nd-nav-link { font-size: 0.8125rem; font-weight: 500; color: var(--copy-75); }
+    .nd-nav-link:hover { color: var(--heading); }
+    .nd-btn-primary {
+      font-size: 0.8125rem; font-weight: 600; background: var(--primary); color: var(--primary-text);
+      border-radius: 6px; padding: 0.55rem 1.25rem;
+    }
+
+    /* ─── HERO ───────────────────────────────────────────────────────────── */
+    .nd-hero {
+      padding: 10rem 2rem 6rem; text-align: center; max-width: 1240px; margin: 0 auto;
+    }
+    .nd-tag {
+      display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--primary); border: 1px solid var(--primary-alt);
+      border-radius: 999px; padding: 0.4rem 1rem; margin-bottom: 2rem; background: var(--primary-alt);
+    }
+    .nd-hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); color: var(--heading); line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 1.5rem; }
+    .nd-hero h1 span { color: var(--primary); }
+    .nd-hero p { font-size: 1.125rem; color: var(--copy-75); max-width: 680px; margin: 0 auto 3rem; }
+
+    /* ─── SECTIONS ────────────────────────────────────────────────────────── */
+    .nd-section { padding: 6rem 2rem; max-width: 1240px; margin: 0 auto; }
+    .nd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .nd-card {
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px;
+      padding: 2.5rem; transition: border-color 0.2s;
+    }
+    .nd-card:hover { border-color: var(--primary); }
+    .nd-card h3 { font-size: 1.25rem; color: var(--heading); margin-bottom: 1rem; }
+    .nd-card p { font-size: 0.95rem; line-height: 1.6; }
+
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+  </style>
+</head>
+<body>
+
+  <nav class="nd-nav">
+    <div class="nd-nav-inner">
+      <a href="/" class="nd-nav-logo">Neoscona</a>
+      <div class="nd-nav-links">
+        <a href="/dashboard" class="nd-nav-link">Console</a>
+        <a href="#features" class="nd-nav-link">Features</a>
+        <a href="#pricing" class="nd-nav-link">Pricing</a>
+        <a href="/docs" class="nd-nav-link">Docs</a>
+      </div>
+      <div class="nd-nav-right">
+        <a href="/dashboard" class="nd-btn-primary">Hire Reva</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="nd-hero">
+    <div class="nd-tag">Neoscona Reva · The Lead Agent</div>
+    <h1>Every missed call is<br /><span>lost revenue.</span></h1>
+    <p>Reva is your 24/7 AI real-estate agent. She answers calls, replies to WhatsApp messages, qualifies leads, and books viewings while you sleep.</p>
+    <a href="/dashboard" class="nd-btn-primary" style="padding: 1rem 2rem; font-size:1rem">Start free trial</a>
+  </header>
+
+  <section class="nd-section" id="features">
+    <div class="nd-grid">
+      <div class="nd-card">
+        <span class="material-symbols-outlined" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem">call</span>
+        <h3>Voice & WhatsApp</h3>
+        <p>One unified agent across the channels your customers actually use. Instant replies, every time.</p>
+      </div>
+      <div class="nd-card">
+        <span class="material-symbols-outlined" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem">verified</span>
+        <h3>Anti-Hallucination</h3>
+        <p>Grounded in your real inventory. Reva never makes up a price or a floor plan.</p>
+      </div>
+      <div class="nd-card">
+        <span class="material-symbols-outlined" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem">calendar_month</span>
+        <h3>Auto-Booking</h3>
+        <p>Qualified leads are invited to book viewings directly into your calendar. Zero back-and-forth.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer style="padding: 4rem 2rem; text-align: center; border-top: 1px solid var(--border); margin-top: 4rem;">
+    <p>© 2026 Neoscona Reva. Part of the Neoscona ecosystem.</p>
+  </footer>
+
+  <script>
+    // Theme persistence
+    (function() {
+      var saved = localStorage.getItem('nd-theme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
+</body>
+</html>

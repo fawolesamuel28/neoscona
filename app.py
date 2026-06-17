@@ -86,6 +86,27 @@ def admin():
     return render_template("admin.html")
 
 
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
+
+
+@app.route("/products/reva")
+def product_reva():
+    return render_template("reva_landing.html")
+
+
+@app.route("/docs")
+def docs():
+    return render_template("docs.html")
+
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    # Placeholder for no-code knowledge base upload
+    return {"status": "success", "message": "File received"}, 200
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true", "yes")

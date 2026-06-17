@@ -108,8 +108,33 @@
     .nd-nav-link {
       font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.04em;
       color: var(--copy-75); transition: color 0.2s;
+      display: flex; align-items: center; gap: 0.35rem; cursor: pointer;
     }
     .nd-nav-link:hover { color: var(--heading); }
+
+    /* ─── DROPDOWN ─────────────────────────────────────────────────────────────── */
+    .nd-dropdown { position: relative; }
+    .nd-dropdown-content {
+      position: absolute; top: calc(100% + 1rem); left: 50%; transform: translateX(-50%) translateY(10px);
+      width: 280px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 12px; padding: 0.75rem; opacity: 0; visibility: hidden;
+      transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25); z-index: 1000;
+    }
+    .nd-dropdown:hover .nd-dropdown-content { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .nd-dropdown-item {
+      display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.75rem;
+      border-radius: 8px; transition: background 0.2s; text-decoration: none;
+    }
+    .nd-dropdown-item:hover { background: var(--bg-hover); }
+    .nd-dropdown-icon {
+      width: 32px; height: 32px; border-radius: 6px; background: var(--primary-alt);
+      color: var(--primary); display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .nd-dropdown-info h4 { font-size: 0.875rem; color: var(--heading); margin-bottom: 0.15rem; }
+    .nd-dropdown-info p { font-size: 0.75rem; color: var(--copy-75); line-height: 1.4; }
+
     .nd-nav-right { display: flex; gap: 0.75rem; align-items: center; }
     .nd-theme-toggle {
       width: 36px; height: 36px; border-radius: 8px;
@@ -366,11 +391,43 @@
   <div class="nd-nav-inner">
     <a href="#" class="nd-nav-logo">Neoscona</a>
     <div class="nd-nav-links">
-      <a href="#workers" class="nd-nav-link">Workers</a>
+      <div class="nd-dropdown">
+        <div class="nd-nav-link">Products <span class="material-symbols-outlined" style="font-size:14px">expand_more</span></div>
+        <div class="nd-dropdown-content">
+          <a href="/products/reva" class="nd-dropdown-item" data-product="reva">
+            <div class="nd-dropdown-icon"><span class="material-symbols-outlined">forum</span></div>
+            <div class="nd-dropdown-info">
+              <h4>Neoscona Reva</h4>
+              <p>Real-estate lead engine. Qualify & nurture 24/7.</p>
+            </div>
+          </a>
+          <a href="#" class="nd-dropdown-item" data-product="voice">
+            <div class="nd-dropdown-icon"><span class="material-symbols-outlined">call</span></div>
+            <div class="nd-dropdown-info">
+              <h4>Neoscona Voice</h4>
+              <p>AI receptionist. Never miss a call again.</p>
+            </div>
+          </a>
+          <a href="#" class="nd-dropdown-item" data-product="reach">
+            <div class="nd-dropdown-icon"><span class="material-symbols-outlined">hub</span></div>
+            <div class="nd-dropdown-info">
+              <h4>Neoscona Reach</h4>
+              <p>One inbox for WhatsApp, IG, and Telegram.</p>
+            </div>
+          </a>
+          <a href="#" class="nd-dropdown-item" data-product="flow">
+            <div class="nd-dropdown-icon"><span class="material-symbols-outlined">account_tree</span></div>
+            <div class="nd-dropdown-info">
+              <h4>Neoscona Flow</h4>
+              <p>Custom enterprise workflows & automation.</p>
+            </div>
+          </a>
+        </div>
+      </div>
       <a href="#how" class="nd-nav-link">How it works</a>
       <a href="#enterprise" class="nd-nav-link">Enterprise</a>
-      <a href="#marketplace" class="nd-nav-link">Marketplace</a>
       <a href="/blog" class="nd-nav-link">Blog</a>
+      <a href="/dashboard" class="nd-nav-link" style="color:var(--primary); font-weight:600">Console</a>
     </div>
     <div class="nd-nav-right">
       <button class="nd-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">

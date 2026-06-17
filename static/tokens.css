@@ -3,6 +3,17 @@
    Brand Bible §4.3: ink + white + one violet
    ═══════════════════════════════════════════════════════════════════════════════ */
 
+:root {
+  /* ─── PRIMARY ACCENT (Dynamic) ────────────────────────────────────────── */
+  /* Master Neoscona Violet is the default */
+  --p-h: 255; --p-s: 100%; --p-l: 71%; 
+  --primary:       hsl(var(--p-h), var(--p-s), var(--p-l));
+  --primary-light: hsl(var(--p-h), var(--p-s), calc(var(--p-l) + 10%));
+  --primary-dark:  hsl(var(--p-h), var(--p-s), calc(var(--p-l) - 10%));
+  --primary-alt:   hsla(var(--p-h), var(--p-s), var(--p-l), 0.15);
+  --primary-text:  #FFFFFF;
+}
+
 /* ─── DEFAULT: DARK THEME ──────────────────────────────────────────────────── */
 :root, [data-theme="dark"] {
   --bg:             #0A0A0F;
@@ -13,10 +24,6 @@
   --copy:           #8B879B;
   --copy-75:        #C3C0D0;
   --heading:        #FAFAF7;
-  --primary:        #6D45FF;
-  --primary-light:  #B9A6FF;
-  --primary-dark:   #5A33E0;
-  --primary-text:   #FFFFFF;
   --live:           #34D399;
   --nav-bg:         #0A0A0Fcc;
   --frame:          #221F2E;
@@ -32,11 +39,25 @@
   --copy:           #5C5A55;
   --copy-75:        #3D3B37;
   --heading:        #0A0A0F;
-  --primary:        #6D45FF;
-  --primary-light:  #5A33E0;
-  --primary-dark:   #4C1D95;
-  --primary-text:   #FFFFFF;
   --live:           #059669;
   --nav-bg:         #FAFAF7cc;
   --frame:          #E0DDD6;
+}
+
+/* ─── PRODUCT COLOR OVERRIDES ──────────────────────────────────────────────── */
+/* Blue for Reva (per user request) */
+[data-product="reva"] {
+  --p-h: 240; --p-s: 64%; --p-l: 60%;
+}
+/* Teal for Voice (clarity) */
+[data-product="voice"] {
+  --p-h: 171; --p-s: 100%; --p-l: 32%;
+}
+/* Sky Blue for Reach (broad connectivity) */
+[data-product="reach"] {
+  --p-h: 199; --p-s: 98%; --p-l: 39%;
+}
+/* Slate/Indigo for Flow (logic/back-end) */
+[data-product="flow"] {
+  --p-h: 215; --p-s: 25%; --p-l: 27%;
 }
