@@ -1,352 +1,637 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <title>Neoscona Console</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-  <link href="/static/tokens.css" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg);
-      color: var(--copy);
-      font-family: 'Inter', sans-serif;
-      transition: background-color 0.3s, color 0.3s;
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
-    a { text-decoration: none; color: inherit; }
-    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>Neoscona Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link href="/static/tokens.css" rel="stylesheet" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: var(--bg);
+        color: var(--copy);
+        font-family: "Inter", sans-serif;
+        transition:
+          background-color 0.3s,
+          color 0.3s;
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-family: inherit;
+      }
 
-    /* ─── SIDEBAR ─────────────────────────────────────────────────────────────── */
-    .nd-sidebar {
-      width: 260px; height: 100%; background: var(--bg-input);
-      border-right: 1px solid var(--border); display: flex; flex-direction: column;
-      flex-shrink: 0;
-    }
-    .nd-sidebar-header {
-      padding: 2rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
-    }
-    .nd-logo { font-weight: 800; font-size: 1.15rem; color: var(--heading); letter-spacing: -0.04em; }
-    
-    .nd-nav-group { padding: 0 1rem 2rem; }
-    .nd-nav-label {
-      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--copy-75); padding: 0 0.5rem 0.75rem;
-    }
-    .nd-nav-item {
-      display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.5rem;
-      border-radius: 8px; font-size: 0.875rem; font-weight: 500;
-      color: var(--copy); transition: background 0.2s, color 0.2s; margin-bottom: 0.25rem;
-    }
-    .nd-nav-item:hover, .nd-nav-item.active { background: var(--bg-hover); color: var(--heading); }
-    .nd-nav-item.active { color: var(--primary); }
-    .nd-nav-icon { font-size: 1.25rem; color: var(--copy-75); }
-    .nd-nav-item.active .nd-nav-icon { color: var(--primary); }
+      /* ─── SIDEBAR ─────────────────────────────────────────────────────────────── */
+      .nd-sidebar {
+        width: 260px;
+        height: 100%;
+        background: var(--bg-input);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+      .nd-sidebar-header {
+        padding: 2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .nd-logo {
+        font-weight: 800;
+        font-size: 1.15rem;
+        color: var(--heading);
+        letter-spacing: -0.04em;
+      }
 
-    .nd-sidebar-footer { margin-top: auto; padding: 1.5rem; border-top: 1px solid var(--border); }
-    .nd-user-well { display: flex; align-items: center; gap: 0.75rem; }
-    .nd-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
-    .nd-user-info span { display: block; font-size: 0.75rem; font-weight: 600; color: var(--heading); }
-    .nd-user-info small { font-size: 0.65rem; color: var(--copy-75); }
+      .nd-nav-group {
+        padding: 0 1rem 2rem;
+      }
+      .nd-nav-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--copy-75);
+        padding: 0 0.5rem 0.75rem;
+      }
+      .nd-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--copy);
+        transition:
+          background 0.2s,
+          color 0.2s;
+        margin-bottom: 0.25rem;
+      }
+      .nd-nav-item:hover,
+      .nd-nav-item.active {
+        background: var(--bg-hover);
+        color: var(--heading);
+      }
+      .nd-nav-item.active {
+        color: var(--primary);
+      }
+      .nd-nav-icon {
+        font-size: 1.25rem;
+        color: var(--copy-75);
+      }
+      .nd-nav-item.active .nd-nav-icon {
+        color: var(--primary);
+      }
 
-    /* ─── MAIN CONTENT ────────────────────────────────────────────────────────── */
-    .nd-main { flex: 1; overflow-y: auto; padding: 3rem; position: relative; }
-    .nd-top-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;
-    }
-    .nd-top-header h1 { font-size: 1.75rem; color: var(--heading); letter-spacing: -0.03em; }
+      .nd-sidebar-footer {
+        margin-top: auto;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+      }
+      .nd-user-well {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .nd-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+      }
+      .nd-user-info span {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--heading);
+      }
+      .nd-user-info small {
+        font-size: 0.65rem;
+        color: var(--copy-75);
+      }
 
-    .nd-top-actions { display: flex; gap: 1rem; align-items: center; }
-    .nd-theme-toggle {
-      width: 36px; height: 36px; border-radius: 8px;
-      border: 1px solid var(--border); color: var(--copy-75);
-      display: flex; align-items: center; justify-content: center;
-    }
+      /* ─── MAIN CONTENT ────────────────────────────────────────────────────────── */
+      .nd-main {
+        flex: 1;
+        overflow-y: auto;
+        padding: 3rem;
+        position: relative;
+      }
+      .nd-top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+      }
+      .nd-top-header h1 {
+        font-size: 1.75rem;
+        color: var(--heading);
+        letter-spacing: -0.03em;
+      }
 
-    /* ─── DASHBOARD GRID ──────────────────────────────────────────────────────── */
-    .nd-dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 3rem; }
-    .nd-dash-card {
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 12px; padding: 2rem; position: relative;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-    .nd-dash-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-    .nd-dash-card h3 { font-size: 1.1rem; color: var(--heading); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-    .nd-dash-card p { font-size: 0.875rem; color: var(--copy); line-height: 1.5; margin-bottom: 1.5rem; }
-    .nd-dash-badge {
-      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
-      padding: 0.25rem 0.5rem; border-radius: 4px; background: var(--bg);
-      border: 1px solid var(--border); color: var(--copy-75);
-    }
-    .nd-dash-badge.active { background: rgba(52, 211, 153, 0.1); color: #34D399; border-color: rgba(52, 211, 153, 0.2); }
+      .nd-top-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      .nd-theme-toggle {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        color: var(--copy-75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-    /* ─── KNOWLEDGE BASE UPLOADER ─────────────────────────────────────────────── */
-    .nd-kb-section {
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 12px; padding: 2.5rem; text-align: center;
-    }
-    .nd-upload-zone {
-      border: 2px dashed var(--border); border-radius: 12px;
-      padding: 3rem; margin-top: 1.5rem; background: var(--bg);
-      transition: border-color 0.2s, background 0.2s; cursor: pointer;
-    }
-    .nd-upload-zone:hover { border-color: var(--primary); background: var(--bg-hover); }
-    .nd-upload-zone i { font-size: 3rem; color: var(--copy-75); margin-bottom: 1rem; }
-    .nd-upload-zone p { font-size: 0.9rem; color: var(--copy); }
-    .nd-upload-zone strong { color: var(--primary); font-weight: 600; }
+      /* ─── DASHBOARD GRID ──────────────────────────────────────────────────────── */
+      .nd-dash-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+      .nd-dash-card {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        position: relative;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
+      .nd-dash-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+      .nd-dash-card h3 {
+        font-size: 1.1rem;
+        color: var(--heading);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .nd-dash-card p {
+        font-size: 0.875rem;
+        color: var(--copy);
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+      }
+      .nd-dash-badge {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--copy-75);
+      }
+      .nd-dash-badge.active {
+        background: rgba(52, 211, 153, 0.1);
+        color: #34d399;
+        border-color: rgba(52, 211, 153, 0.2);
+      }
 
-    .nd-btn-primary {
-      background: var(--primary); color: var(--primary-text);
-      padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem;
-      display: inline-flex; align-items: center; gap: 0.5rem;
-    }
-    .nd-btn-primary:hover { opacity: 0.9; }
+      /* ─── KNOWLEDGE BASE UPLOADER ─────────────────────────────────────────────── */
+      .nd-kb-section {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2.5rem;
+        text-align: center;
+      }
+      .nd-upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 3rem;
+        margin-top: 1.5rem;
+        background: var(--bg);
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        cursor: pointer;
+      }
+      .nd-upload-zone:hover {
+        border-color: var(--primary);
+        background: var(--bg-hover);
+      }
+      .nd-upload-zone i {
+        font-size: 3rem;
+        color: var(--copy-75);
+        margin-bottom: 1rem;
+      }
+      .nd-upload-zone p {
+        font-size: 0.9rem;
+        color: var(--copy);
+      }
+      .nd-upload-zone strong {
+        color: var(--primary);
+        font-weight: 600;
+      }
 
-    /* Utility */
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
-  </style>
-</head>
-<body>
+      .nd-btn-primary {
+        background: var(--primary);
+        color: var(--primary-text);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .nd-btn-primary:hover {
+        opacity: 0.9;
+      }
 
-  <!-- ─── SIDEBAR ───────────────────────────────────────────────────────────── -->
-  <aside class="nd-sidebar">
-    <div class="nd-sidebar-header">
-      <a href="/" class="nd-logo">Neoscona</a>
-    </div>
-
-    <nav class="nd-nav-group">
-      <div class="nd-nav-label">Main</div>
-      <a href="/dashboard" class="nd-nav-item active">
-        <span class="material-symbols-outlined nd-nav-icon">dashboard</span>
-        Console
-      </a>
-      <a href="/blog" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">article</span>
-        Blog Posts
-      </a>
-      <a href="/admin" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">admin_panel_settings</span>
-        CMS Admin
-      </a>
-    </nav>
-
-    <nav class="nd-nav-group">
-      <div class="nd-nav-label">Products</div>
-      <a href="/products/reva/console" class="nd-nav-item" data-product="reva">
-        <span class="material-symbols-outlined nd-nav-icon">forum</span>
-        Neoscona Reva
-      </a>
-      <a href="#" class="nd-nav-item" data-product="voice">
-        <span class="material-symbols-outlined nd-nav-icon">call</span>
-        Neoscona Voice
-      </a>
-      <a href="#" class="nd-nav-item" data-product="reach">
-        <span class="material-symbols-outlined nd-nav-icon">hub</span>
-        Neoscona Reach
-      </a>
-      <a href="#" class="nd-nav-item" data-product="flow">
-        <span class="material-symbols-outlined nd-nav-icon">account_tree</span>
-        Neoscona Flow
-      </a>
-    </nav>
-
-    <nav class="nd-nav-group">
-      <a href="/docs" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">help</span>
-        Help Center
-      </a>
-      <a href="/billing" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">payments</span>
-        Billing & Credits
-      </a>
-      <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0.5rem;">
-      <a href="/logout" class="nd-nav-item">
-        <span class="material-symbols-outlined nd-nav-icon">logout</span>
-        Logout
-      </a>
-    </nav>
-
-    <div class="nd-sidebar-footer">
-      <div class="nd-user-well">
-        <div class="nd-avatar">{{ user.email[0].upper() }}</div>
-        <div class="nd-user-info">
-          <span>{{ user.email }}</span>
-          <small>Pro Workspace</small>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ─── MAIN ─────────────────────────────────────────────────────────────── -->
-  <main class="nd-main">
-    <header class="nd-top-header">
-      <h1>Console Overview</h1>
-      <div class="nd-top-actions">
-        <button class="nd-theme-toggle" onclick="toggleTheme()">
-          <span class="material-symbols-outlined">light_mode</span>
-        </button>
-        <a href="mailto:support@neoscona.xyz" class="nd-btn-primary">
-          <span class="material-symbols-outlined">support_agent</span>
-          Get Help
+      /* Utility */
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 300,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ─── SIDEBAR ───────────────────────────────────────────────────────────── -->
+    <aside class="nd-sidebar">
+      <div class="nd-sidebar-header">
+        <a href="/" class="nd-logo">
+          <img
+            src="/static/images/neoscona-logo.png"
+            alt="Neoscona"
+            style="height: 40px; object-fit: contain"
+          />
         </a>
       </div>
-    </header>
 
-    <div class="nd-dash-grid">
-      <!-- Shared Balance Card -->
-      <div class="nd-dash-card" style="grid-column: span 2; background: var(--primary-alt); border-color: var(--primary);">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <div>
-            <h3 style="color:var(--primary)"><span class="material-symbols-outlined">payments</span> Shared Balance</h3>
-            <p style="margin-bottom:0">Your unified credit balance shared across all active AI workers.</p>
-          </div>
-          <div style="text-align:right">
-            <div id="display-balance" style="font-size:2rem; font-weight:700; color:var(--heading)">₦0.00</div>
-            <a href="/billing" style="font-size:0.75rem; color:var(--primary); font-weight:600">Add Credits →</a>
+      <nav class="nd-nav-group">
+        <div class="nd-nav-label">Main</div>
+        <a href="/dashboard" class="nd-nav-item active">
+          <span class="material-symbols-outlined nd-nav-icon">dashboard</span>
+          Console
+        </a>
+        <a href="/blog" class="nd-nav-item">
+          <span class="material-symbols-outlined nd-nav-icon">article</span>
+          Blog Posts
+        </a>
+        <a href="/admin" class="nd-nav-item">
+          <span class="material-symbols-outlined nd-nav-icon"
+            >admin_panel_settings</span
+          >
+          CMS Admin
+        </a>
+      </nav>
+
+      <nav class="nd-nav-group">
+        <div class="nd-nav-label">Products</div>
+        <a
+          href="/products/reva/console"
+          class="nd-nav-item"
+          data-product="reva"
+        >
+          <span class="material-symbols-outlined nd-nav-icon">forum</span>
+          Neoscona Reva
+        </a>
+        <a href="#" class="nd-nav-item" data-product="voice">
+          <span class="material-symbols-outlined nd-nav-icon">call</span>
+          Neoscona Voice
+        </a>
+        <a href="#" class="nd-nav-item" data-product="reach">
+          <span class="material-symbols-outlined nd-nav-icon">hub</span>
+          Neoscona Reach
+        </a>
+        <a href="#" class="nd-nav-item" data-product="flow">
+          <span class="material-symbols-outlined nd-nav-icon"
+            >account_tree</span
+          >
+          Neoscona Flow
+        </a>
+      </nav>
+
+      <nav class="nd-nav-group">
+        <a href="/docs" class="nd-nav-item">
+          <span class="material-symbols-outlined nd-nav-icon">help</span>
+          Help Center
+        </a>
+        <a href="/billing" class="nd-nav-item">
+          <span class="material-symbols-outlined nd-nav-icon">payments</span>
+          Billing & Credits
+        </a>
+        <hr
+          style="
+            border: 0;
+            border-top: 1px solid var(--border);
+            margin: 1rem 0.5rem;
+          "
+        />
+        <a href="/logout" class="nd-nav-item">
+          <span class="material-symbols-outlined nd-nav-icon">logout</span>
+          Logout
+        </a>
+      </nav>
+
+      <div class="nd-sidebar-footer">
+        <div class="nd-user-well">
+          <div class="nd-avatar">{{ user.email[0].upper() }}</div>
+          <div class="nd-user-info">
+            <span>{{ user.email }}</span>
+            <small>Pro Workspace</small>
           </div>
         </div>
       </div>
+    </aside>
 
-      <!-- Reva -->
-      <div class="nd-dash-card" data-product="reva">
-        <h3><span class="material-symbols-outlined" style="color:var(--primary)">forum</span> Neoscona Reva</h3>
-        <p>Real-estate lead qualification & nurture active on 2 numbers.</p>
-        <div style="display:flex; justify-content:space-between; align-items:center">
+    <!-- ─── MAIN ─────────────────────────────────────────────────────────────── -->
+    <main class="nd-main">
+      <header class="nd-top-header">
+        <h1>Console Overview</h1>
+        <div class="nd-top-actions">
+          <button class="nd-theme-toggle" onclick="toggleTheme()">
+            <span class="material-symbols-outlined">light_mode</span>
+          </button>
+          <a href="mailto:support@neoscona.xyz" class="nd-btn-primary">
+            <span class="material-symbols-outlined">support_agent</span>
+            Get Help
+          </a>
+        </div>
+      </header>
+
+      <div class="nd-dash-grid">
+        <!-- Shared Balance Card -->
+        <div
+          class="nd-dash-card"
+          style="
+            grid-column: span 2;
+            background: var(--primary-alt);
+            border-color: var(--primary);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div>
+              <h3 style="color: var(--primary)">
+                <span class="material-symbols-outlined">payments</span> Shared
+                Balance
+              </h3>
+              <p style="margin-bottom: 0">
+                Your unified credit balance shared across all active AI workers.
+              </p>
+            </div>
+            <div style="text-align: right">
+              <div
+                id="display-balance"
+                style="font-size: 2rem; font-weight: 700; color: var(--heading)"
+              >
+                ₦0.00
+              </div>
+              <a
+                href="/billing"
+                style="
+                  font-size: 0.75rem;
+                  color: var(--primary);
+                  font-weight: 600;
+                "
+                >Add Credits →</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Reva -->
+        <div class="nd-dash-card" data-product="reva">
+          <h3>
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary)"
+              >forum</span
+            >
+            Neoscona Reva
+          </h3>
+          <p>Real-estate lead qualification & nurture active on 2 numbers.</p>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div class="nd-dash-badge active">● Live</div>
+            <a
+              href="/products/reva/console"
+              class="nd-btn-primary"
+              style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+              >Open Reva</a
+            >
+          </div>
+        </div>
+        <!-- Voice -->
+        <div class="nd-dash-card" data-product="voice">
+          <h3>
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary)"
+              >call</span
+            >
+            Neoscona Voice
+          </h3>
+          <p>AI Receptionist. 142 calls answered this week.</p>
           <div class="nd-dash-badge active">● Live</div>
-          <a href="/products/reva/console" class="nd-btn-primary" style="padding:0.4rem 0.8rem; font-size:0.75rem">Open Reva</a>
+        </div>
+        <!-- Reach -->
+        <div class="nd-dash-card" data-product="reach">
+          <h3>
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary)"
+              >hub</span
+            >
+            Neoscona Reach
+          </h3>
+          <p>Unified messaging active on WhatsApp and Instagram.</p>
+          <div class="nd-dash-badge active">● Live</div>
+        </div>
+        <!-- Flow -->
+        <div class="nd-dash-card" data-product="flow">
+          <h3>
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary)"
+              >account_tree</span
+            >
+            Neoscona Flow
+          </h3>
+          <p>Custom enterprise workflows for your team.</p>
+          <div class="nd-dash-badge">Inactive</div>
         </div>
       </div>
-      <!-- Voice -->
-      <div class="nd-dash-card" data-product="voice">
-        <h3><span class="material-symbols-outlined" style="color:var(--primary)">call</span> Neoscona Voice</h3>
-        <p>AI Receptionist. 142 calls answered this week.</p>
-        <div class="nd-dash-badge active">● Live</div>
-      </div>
-      <!-- Reach -->
-      <div class="nd-dash-card" data-product="reach">
-        <h3><span class="material-symbols-outlined" style="color:var(--primary)">hub</span> Neoscona Reach</h3>
-        <p>Unified messaging active on WhatsApp and Instagram.</p>
-        <div class="nd-dash-badge active">● Live</div>
-      </div>
-      <!-- Flow -->
-      <div class="nd-dash-card" data-product="flow">
-        <h3><span class="material-symbols-outlined" style="color:var(--primary)">account_tree</span> Neoscona Flow</h3>
-        <p>Custom enterprise workflows for your team.</p>
-        <div class="nd-dash-badge">Inactive</div>
-      </div>
-    </div>
 
-    <section class="nd-kb-section">
-      <div class="nd-section-head">
-        <h2>Knowledge Base</h2>
-        <p style="margin-top:0.5rem; font-size:0.9rem">Upload PDFs, CSVs, or documentation to train your AI workers on your specific business data.</p>
-      </div>
-      <div class="nd-upload-zone" onclick="simulateUpload()">
-        <span class="material-symbols-outlined">cloud_upload</span>
-        <p>Drag and drop files here or <strong>browse files</strong></p>
-        <small style="display:block; margin-top:0.5rem; color:var(--copy-75)">Supports PDF, CSV, Excel and TXT (Max 20MB)</small>
-      </div>
-    </section>
+      <section class="nd-kb-section">
+        <div class="nd-section-head">
+          <h2>Knowledge Base</h2>
+          <p style="margin-top: 0.5rem; font-size: 0.9rem">
+            Upload PDFs, CSVs, or documentation to train your AI workers on your
+            specific business data.
+          </p>
+        </div>
+        <div class="nd-upload-zone" onclick="simulateUpload()">
+          <span class="material-symbols-outlined">cloud_upload</span>
+          <p>Drag and drop files here or <strong>browse files</strong></p>
+          <small
+            style="display: block; margin-top: 0.5rem; color: var(--copy-75)"
+            >Supports PDF, CSV, Excel and TXT (Max 20MB)</small
+          >
+        </div>
+      </section>
+    </main>
 
-  </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const supabaseUrl = "{{ supabase_url }}";
+      const supabaseAnonKey = "{{ supabase_anon_key }}";
+      const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = "{{ supabase_url }}";
-    const supabaseAnonKey = "{{ supabase_anon_key }}";
-    const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
-
-    // ─── Theme toggle persistence ───
-    (function() {
-      var saved = localStorage.getItem('nd-theme');
-      if (saved) {
-        document.documentElement.setAttribute('data-theme', saved);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
-    })();
-
-    function toggleTheme() {
-      var current = document.documentElement.getAttribute('data-theme');
-      var next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('nd-theme', next);
-    }
-
-    // ─── SSO cookie bridge ───
-    async function bridgeSession(session) {
-      await fetch('/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        }),
-      });
-    }
-
-    // ─── Supabase Session & Data ───
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
-
-      // Keep the parent-domain SSO cookie in sync with the Supabase session.
-      await bridgeSession(session);
-
-      // Update UI with user info
-      const user = session.user;
-      document.querySelector('.nd-avatar').innerText = user.email[0].toUpperCase();
-      document.querySelector('.nd-user-info span').innerText = user.email;
-
-      // Fetch dynamic profile/balance from backend
-      try {
-        const response = await fetch('/api/me', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
-        if (response.ok) {
-          const profile = await response.json();
-          const balance = profile.billing?.balance || 0;
-          document.getElementById('display-balance').innerText = '₦' + balance.toLocaleString();
+      // ─── Theme toggle persistence ───
+      (function () {
+        var saved = localStorage.getItem("nd-theme");
+        if (saved) {
+          document.documentElement.setAttribute("data-theme", saved);
+        } else if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: light)").matches
+        ) {
+          document.documentElement.setAttribute("data-theme", "light");
         }
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
+      })();
+
+      function toggleTheme() {
+        var current = document.documentElement.getAttribute("data-theme");
+        var next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("nd-theme", next);
       }
-    }
 
-    async function handleLogout() {
-      await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
-      await supabase.auth.signOut();
-      window.location.href = '/';
-    }
+      // ─── SSO cookie bridge ───
+      async function bridgeSession(session) {
+        await fetch("/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          }),
+        });
+      }
 
-    document.querySelector('a[href="/logout"]').addEventListener('click', (e) => {
-      e.preventDefault();
-      handleLogout();
-    });
+      // ─── Supabase Session & Data ───
+      async function checkSession() {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED' && session) {
+        if (!session) {
+          window.location.href = "/login";
+          return;
+        }
+
+        // Keep the parent-domain SSO cookie in sync with the Supabase session.
         await bridgeSession(session);
+
+        // Update UI with user info
+        const user = session.user;
+        document.querySelector(".nd-avatar").innerText =
+          user.email[0].toUpperCase();
+        document.querySelector(".nd-user-info span").innerText = user.email;
+
+        // Fetch dynamic profile/balance from backend
+        try {
+          const response = await fetch("/api/me", {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+          if (response.ok) {
+            const profile = await response.json();
+            const balance = profile.billing?.balance || 0;
+            document.getElementById("display-balance").innerText =
+              "₦" + balance.toLocaleString();
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile:", err);
+        }
       }
-    });
 
-    checkSession();
+      async function handleLogout() {
+        await fetch("/auth/logout", {
+          method: "POST",
+          credentials: "same-origin",
+        });
+        await supabase.auth.signOut();
+        window.location.href = "/";
+      }
 
-    function simulateUpload() {
-      alert("No-code Knowledge Base upload triggered. In a production environment, this would open the file picker and stream to /api/upload.");
-    }
-  </script>
+      document
+        .querySelector('a[href="/logout"]')
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          handleLogout();
+        });
 
-</body>
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === "TOKEN_REFRESHED" && session) {
+          await bridgeSession(session);
+        }
+      });
+
+      checkSession();
+
+      function simulateUpload() {
+        alert(
+          "No-code Knowledge Base upload triggered. In a production environment, this would open the file picker and stream to /api/upload.",
+        );
+      }
+    </script>
+  </body>
 </html>

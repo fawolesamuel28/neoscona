@@ -60,8 +60,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <nav className="border-b border-gray-200 bg-white px-6 py-4">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div className="flex items-center gap-4">
-              <Link href="/" className="text-xl font-bold text-gray-900">
-                Neoscona
+              <Link href="/" className="flex items-center">
+                <img src="/neoscona-logo.png" alt="Neoscona" style={{ height: 40, objectFit: 'contain' }} />
               </Link>
               
               {/* Product Switcher (Twilio-style) */}

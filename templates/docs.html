@@ -1,126 +1,282 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <title>Help Center — Neoscona</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-  <link href="/static/tokens.css" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg); color: var(--copy);
-      line-height: 1.6; -webkit-font-smoothing: antialiased;
-    }
-    .nd-nav {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--nav-bg); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border);
-    }
-    .nd-nav-inner { display: flex; align-items: center; justify-content: space-between; max-width: 1240px; margin: 0 auto; padding: 1.1rem 2rem; }
-    .nd-nav-logo { font-weight: 800; color: var(--heading); text-decoration: none; }
-    
-    .nd-help-hero { padding: 6rem 2rem 4rem; text-align: center; max-width: 800px; margin: 0 auto; }
-    .nd-help-hero h1 { font-size: 3rem; color: var(--heading); margin-bottom: 1rem; letter-spacing: -0.04em; }
-    .nd-help-hero p { font-size: 1.1rem; color: var(--copy-75); }
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>Help Center — Neoscona</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link href="/static/tokens.css" rel="stylesheet" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg);
+        color: var(--copy);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .nd-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--nav-bg);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nd-nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 1.1rem 2rem;
+      }
+      .nd-nav-logo {
+        font-weight: 800;
+        color: var(--heading);
+        text-decoration: none;
+      }
 
-    .nd-help-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; max-width: 1000px; margin: 0 auto; padding: 0 2rem 6rem; }
-    .nd-help-card {
-      background: var(--bg-input); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem;
-    }
-    .nd-help-card h3 { font-size: 1.25rem; color: var(--heading); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
-    .nd-help-card p { font-size: 0.95rem; color: var(--copy-75); margin-bottom: 1.5rem; }
-    .nd-help-link { color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.875rem; }
+      .nd-help-hero {
+        padding: 6rem 2rem 4rem;
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .nd-help-hero h1 {
+        font-size: 3rem;
+        color: var(--heading);
+        margin-bottom: 1rem;
+        letter-spacing: -0.04em;
+      }
+      .nd-help-hero p {
+        font-size: 1.1rem;
+        color: var(--copy-75);
+      }
 
-    .nd-guide-section { max-width: 800px; margin: 0 auto 6rem; padding: 0 2rem; }
-    .nd-guide-section h2 { font-size: 2rem; color: var(--heading); margin-bottom: 2rem; }
-    .nd-step { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; }
-    .nd-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--primary-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
-    .nd-step-content h4 { font-size: 1.1rem; color: var(--heading); margin-bottom: 0.5rem; }
-    
-    .nd-cta-box { text-align: center; padding: 4rem; background: var(--primary-alt); border: 1px solid var(--primary); border-radius: 20px; margin-top: 4rem; }
-    .nd-cta-box h2 { color: var(--heading); margin-bottom: 1rem; }
-    .nd-btn-primary { background: var(--primary); color: var(--primary-text); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
-  </style>
-</head>
-<body>
+      .nd-help-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 2rem 6rem;
+      }
+      .nd-help-card {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 2.5rem;
+      }
+      .nd-help-card h3 {
+        font-size: 1.25rem;
+        color: var(--heading);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .nd-help-card p {
+        font-size: 0.95rem;
+        color: var(--copy-75);
+        margin-bottom: 1.5rem;
+      }
+      .nd-help-link {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
 
-<nav class="nd-nav">
-  <div class="nd-nav-inner">
-    <a href="/" class="nd-nav-logo">Neoscona</a>
-    <div style="display:flex; gap:1.5rem; align-items:center">
-      <a href="/" style="font-size:0.8rem; color:var(--copy-75)">Back to Site</a>
-      {% if session.get('user_id') %}
-        <a href="/dashboard" class="nd-btn-primary">Go to Console</a>
-      {% else %}
-        <a href="/login" class="nd-btn-primary">Login</a>
-      {% endif %}
+      .nd-guide-section {
+        max-width: 800px;
+        margin: 0 auto 6rem;
+        padding: 0 2rem;
+      }
+      .nd-guide-section h2 {
+        font-size: 2rem;
+        color: var(--heading);
+        margin-bottom: 2rem;
+      }
+      .nd-step {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .nd-step-num {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--primary-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .nd-step-content h4 {
+        font-size: 1.1rem;
+        color: var(--heading);
+        margin-bottom: 0.5rem;
+      }
+
+      .nd-cta-box {
+        text-align: center;
+        padding: 4rem;
+        background: var(--primary-alt);
+        border: 1px solid var(--primary);
+        border-radius: 20px;
+        margin-top: 4rem;
+      }
+      .nd-cta-box h2 {
+        color: var(--heading);
+        margin-bottom: 1rem;
+      }
+      .nd-btn-primary {
+        background: var(--primary);
+        color: var(--primary-text);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nd-nav">
+      <div class="nd-nav-inner">
+        <a href="/" class="nd-nav-logo">
+          <img
+            src="/static/images/neoscona-logo.png"
+            alt="Neoscona"
+            style="height: 40px; object-fit: contain"
+          />
+        </a>
+        <div style="display: flex; gap: 1.5rem; align-items: center">
+          <a href="/" style="font-size: 0.8rem; color: var(--copy-75)"
+            >Back to Site</a
+          >
+          {% if session.get('user_id') %}
+          <a href="/dashboard" class="nd-btn-primary">Go to Console</a>
+          {% else %}
+          <a href="/login" class="nd-btn-primary">Login</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <header class="nd-help-hero">
+      <h1>How can we help?</h1>
+      <p>
+        Everything you need to know about setting up and managing your AI
+        workers. No code required.
+      </p>
+    </header>
+
+    <div class="nd-help-grid">
+      <div class="nd-help-card">
+        <h3>
+          <span class="material-symbols-outlined">person_pin</span> Customizing
+          Your Agent
+        </h3>
+        <p>
+          Learn how to give your AI worker a personality, set their working
+          hours, and define what they should say to customers.
+        </p>
+        <a href="#" class="nd-help-link">View Guide →</a>
+      </div>
+      <div class="nd-help-card">
+        <h3>
+          <span class="material-symbols-outlined">database</span> Training with
+          Data
+        </h3>
+        <p>
+          Upload your PDFs, CSVs, or website links. Your AI worker will use this
+          information to answer customer questions accurately.
+        </p>
+        <a href="#" class="nd-help-link">Learn about Knowledge Bases →</a>
+      </div>
+      <div class="nd-help-card">
+        <h3>
+          <span class="material-symbols-outlined">payments</span> Shared Credits
+        </h3>
+        <p>
+          Understand how our unified billing works. Use one balance for all your
+          AI workers across Voice and Messaging.
+        </p>
+        <a href="#" class="nd-help-link">Billing Guide →</a>
+      </div>
+      <div class="nd-help-card">
+        <h3>
+          <span class="material-symbols-outlined">hub</span> Connecting Channels
+        </h3>
+        <p>
+          Connect your WhatsApp Business number or set up a Voice line in just a
+          few clicks.
+        </p>
+        <a href="#" class="nd-help-link">Integration FAQ →</a>
+      </div>
     </div>
-  </div>
-</nav>
 
-<header class="nd-help-hero">
-  <h1>How can we help?</h1>
-  <p>Everything you need to know about setting up and managing your AI workers. No code required.</p>
-</header>
+    <section class="nd-guide-section">
+      <h2>Getting Started in 10 Minutes</h2>
 
-<div class="nd-help-grid">
-  <div class="nd-help-card">
-    <h3><span class="material-symbols-outlined">person_pin</span> Customizing Your Agent</h3>
-    <p>Learn how to give your AI worker a personality, set their working hours, and define what they should say to customers.</p>
-    <a href="#" class="nd-help-link">View Guide →</a>
-  </div>
-  <div class="nd-help-card">
-    <h3><span class="material-symbols-outlined">database</span> Training with Data</h3>
-    <p>Upload your PDFs, CSVs, or website links. Your AI worker will use this information to answer customer questions accurately.</p>
-    <a href="#" class="nd-help-link">Learn about Knowledge Bases →</a>
-  </div>
-  <div class="nd-help-card">
-    <h3><span class="material-symbols-outlined">payments</span> Shared Credits</h3>
-    <p>Understand how our unified billing works. Use one balance for all your AI workers across Voice and Messaging.</p>
-    <a href="#" class="nd-help-link">Billing Guide →</a>
-  </div>
-  <div class="nd-help-card">
-    <h3><span class="material-symbols-outlined">hub</span> Connecting Channels</h3>
-    <p>Connect your WhatsApp Business number or set up a Voice line in just a few clicks.</p>
-    <a href="#" class="nd-help-link">Integration FAQ →</a>
-  </div>
-</div>
+      <div class="nd-step">
+        <div class="nd-step-num">1</div>
+        <div class="nd-step-content">
+          <h4>Create your account</h4>
+          <p>
+            Sign up and choose which AI worker you need first (e.g., Reva for
+            Real Estate leads).
+          </p>
+        </div>
+      </div>
 
-<section class="nd-guide-section">
-  <h2>Getting Started in 10 Minutes</h2>
-  
-  <div class="nd-step">
-    <div class="nd-step-num">1</div>
-    <div class="nd-step-content">
-      <h4>Create your account</h4>
-      <p>Sign up and choose which AI worker you need first (e.g., Reva for Real Estate leads).</p>
-    </div>
-  </div>
+      <div class="nd-step">
+        <div class="nd-step-num">2</div>
+        <div class="nd-step-content">
+          <h4>Upload your business info</h4>
+          <p>
+            Simply drag and drop your brochures or price lists into the console.
+            The AI learns everything instantly.
+          </p>
+        </div>
+      </div>
 
-  <div class="nd-step">
-    <div class="nd-step-num">2</div>
-    <div class="nd-step-content">
-      <h4>Upload your business info</h4>
-      <p>Simply drag and drop your brochures or price lists into the console. The AI learns everything instantly.</p>
-    </div>
-  </div>
+      <div class="nd-step">
+        <div class="nd-step-num">3</div>
+        <div class="nd-step-content">
+          <h4>Connect your phone</h4>
+          <p>
+            Scan a QR code to link WhatsApp, or select a new AI phone number.
+            You're now live!
+          </p>
+        </div>
+      </div>
 
-  <div class="nd-step">
-    <div class="nd-step-num">3</div>
-    <div class="nd-step-content">
-      <h4>Connect your phone</h4>
-      <p>Scan a QR code to link WhatsApp, or select a new AI phone number. You're now live!</p>
-    </div>
-  </div>
-
-  <div class="nd-cta-box">
-    <h2>Ready to build your team?</h2>
-    <p style="margin-bottom:2rem">Join 200+ businesses using Neoscona to automate their customer service.</p>
-    <a href="/signup" class="nd-btn-primary">Start Your Free Trial</a>
-  </div>
-</section>
-
-</body>
+      <div class="nd-cta-box">
+        <h2>Ready to build your team?</h2>
+        <p style="margin-bottom: 2rem">
+          Join 200+ businesses using Neoscona to automate their customer
+          service.
+        </p>
+        <a href="/signup" class="nd-btn-primary">Start Your Free Trial</a>
+      </div>
+    </section>
+  </body>
 </html>
