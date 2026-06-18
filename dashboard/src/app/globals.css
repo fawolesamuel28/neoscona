@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Official Neoscona Design Tokens (light mode default, per Brand Bible §4) ── */
+:root {
+  /* Primary Accent (Neoscona Violet) */
+  --p-h: 255; 
+  --p-s: 100%; 
+  --p-l: 71%; 
+  --primary:       hsl(var(--p-h), var(--p-s), var(--p-l));
+  --primary-light: hsl(var(--p-h), var(--p-s), calc(var(--p-l) + 10%));
+  --primary-dark:  hsl(var(--p-h), var(--p-s), calc(var(--p-l) - 10%));
+  --primary-alt:   hsla(var(--p-h), var(--p-s), var(--p-l), 0.15);
+  --primary-text:  #FFFFFF;
+
+  /* Light Theme Default */
+  --bg:             #FAFAF7;
+  --bg-input:       #F0EDE6;
+  --border:         #E0DDD6;
+  --bg-hover:       #EEEAE3;
+  --graphics:       #D5D0C8;
+  --copy:           #5C5A55;
+  --copy-75:        #3D3B37;
+  --heading:        #0A0A0F;
+  --live:           #059669;
+  --nav-bg:         #FAFAF7cc;
+  --frame:          #E0DDD6;
+
+  /* Tailwind compat aliases */
+  --background: var(--bg);
+  --foreground: var(--heading);
+  --surface: #FFFFFF;
+  --line: var(--border);
+  --accent: var(--primary);
+  --accent-soft: var(--primary-alt);
+
+  /* Shadows (per design system) */
+  --shadow-sm: 0 1px 2px rgba(10,10,15,0.04), 0 1px 1px rgba(10,10,15,0.03);
+  --shadow-md: 0 8px 24px -8px rgba(10,10,15,0.10), 0 2px 6px rgba(10,10,15,0.04);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg:             #0A0A0F;
+  --bg-input:       #121119;
+  --border:         #221F2E;
+  --bg-hover:       #1A1824;
+  --graphics:       #2A2640;
+  --copy:           #8B879B;
+  --copy-75:        #C3C0D0;
+  --heading:        #FAFAF7;
+  --live:           #34D399;
+  --nav-bg:         #0A0A0Fcc;
+  --frame:          #221F2E;
+
+  --background: var(--bg);
+  --foreground: var(--heading);
+  --surface: #121119;
+  --line: var(--border);
+}
+
+/* Product Specific Colors */
+[data-product="reva"] {
+  --p-h: 240; 
+  --p-s: 64%; 
+  --p-l: 60%;
+  --accent: var(--primary);
+}
+[data-product="voice"] {
+  --p-h: 171; 
+  --p-s: 100%; 
+  --p-l: 32%;
+  --accent: var(--primary);
+}
+[data-product="reach"] {
+  --p-h: 199; 
+  --p-s: 98%; 
+  --p-l: 39%;
+  --accent: var(--primary);
+}
+[data-product="flow"] {
+  --p-h: 215; 
+  --p-s: 25%; 
+  --p-l: 27%;
+  --accent: var(--primary);
+}
+
+body {
+  background: var(--bg);
+  color: var(--copy);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading);
+  font-family: var(--font-display), 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--graphics);
+}
+
+@layer components {
+  .glass-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: var(--primary-text);
+  }
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+  .input {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--heading);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-alt);
+  }
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

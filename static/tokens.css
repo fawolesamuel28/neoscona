@@ -14,23 +14,8 @@
   --primary-text:  #FFFFFF;
 }
 
-/* ─── DEFAULT: DARK THEME ──────────────────────────────────────────────────── */
-:root, [data-theme="dark"] {
-  --bg:             #0A0A0F;
-  --bg-input:       #121119;
-  --border:         #221F2E;
-  --bg-hover:       #1A1824;
-  --graphics:       #2A2640;
-  --copy:           #8B879B;
-  --copy-75:        #C3C0D0;
-  --heading:        #FAFAF7;
-  --live:           #34D399;
-  --nav-bg:         #0A0A0Fcc;
-  --frame:          #221F2E;
-}
-
-/* ─── LIGHT THEME ──────────────────────────────────────────────────────────── */
-[data-theme="light"] {
+/* ─── DEFAULT: LIGHT THEME ──────────────────────────────────────────────────── */
+:root, [data-theme="light"] {
   --bg:             #FAFAF7;
   --bg-input:       #F0EDE6;
   --border:         #E0DDD6;
@@ -42,6 +27,21 @@
   --live:           #059669;
   --nav-bg:         #FAFAF7cc;
   --frame:          #E0DDD6;
+}
+
+/* ─── DARK THEME ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:             #0A0A0F;
+  --bg-input:       #121119;
+  --border:         #221F2E;
+  --bg-hover:       #1A1824;
+  --graphics:       #2A2640;
+  --copy:           #8B879B;
+  --copy-75:        #C3C0D0;
+  --heading:        #FAFAF7;
+  --live:           #34D399;
+  --nav-bg:         #0A0A0Fcc;
+  --frame:          #221F2E;
 }
 
 /* ─── PRODUCT COLOR OVERRIDES ──────────────────────────────────────────────── */
