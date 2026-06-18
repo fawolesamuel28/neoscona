@@ -136,7 +136,7 @@
 
     <nav class="nd-nav-group">
       <div class="nd-nav-label">Products</div>
-      <a href="/products/reva" class="nd-nav-item" data-product="reva">
+      <a href="/products/reva/console" class="nd-nav-item" data-product="reva">
         <span class="material-symbols-outlined nd-nav-icon">forum</span>
         Neoscona Reva
       </a>
@@ -205,7 +205,7 @@
             <p style="margin-bottom:0">Your unified credit balance shared across all active AI workers.</p>
           </div>
           <div style="text-align:right">
-            <div style="font-size:2rem; font-weight:700; color:var(--heading)">₦{{ "{:,.2f}".format(user.balance) }}</div>
+            <div id="display-balance" style="font-size:2rem; font-weight:700; color:var(--heading)">₦0.00</div>
             <a href="/billing" style="font-size:0.75rem; color:var(--primary); font-weight:600">Add Credits →</a>
           </div>
         </div>
@@ -217,7 +217,7 @@
         <p>Real-estate lead qualification & nurture active on 2 numbers.</p>
         <div style="display:flex; justify-content:space-between; align-items:center">
           <div class="nd-dash-badge active">● Live</div>
-          <a href="/products/reva/dashboard" class="nd-btn-primary" style="padding:0.4rem 0.8rem; font-size:0.75rem">Manage Leads</a>
+          <a href="/products/reva/console" class="nd-btn-primary" style="padding:0.4rem 0.8rem; font-size:0.75rem">Open Reva</a>
         </div>
       </div>
       <!-- Voice -->
@@ -254,7 +254,12 @@
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const supabaseUrl = "{{ supabase_url }}";
+    const supabaseAnonKey = "{{ supabase_anon_key }}";
+    const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
+
     // ─── Theme toggle persistence ───
     (function() {
       var saved = localStorage.getItem('nd-theme');
@@ -264,12 +269,79 @@
         document.documentElement.setAttribute('data-theme', 'light');
       }
     })();
+
     function toggleTheme() {
       var current = document.documentElement.getAttribute('data-theme');
       var next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('nd-theme', next);
     }
+
+    // ─── SSO cookie bridge ───
+    async function bridgeSession(session) {
+      await fetch('/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        }),
+      });
+    }
+
+    // ─── Supabase Session & Data ───
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Keep the parent-domain SSO cookie in sync with the Supabase session.
+      await bridgeSession(session);
+
+      // Update UI with user info
+      const user = session.user;
+      document.querySelector('.nd-avatar').innerText = user.email[0].toUpperCase();
+      document.querySelector('.nd-user-info span').innerText = user.email;
+
+      // Fetch dynamic profile/balance from backend
+      try {
+        const response = await fetch('/api/me', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        if (response.ok) {
+          const profile = await response.json();
+          const balance = profile.billing?.balance || 0;
+          document.getElementById('display-balance').innerText = '₦' + balance.toLocaleString();
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      }
+    }
+
+    async function handleLogout() {
+      await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    }
+
+    document.querySelector('a[href="/logout"]').addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogout();
+    });
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED' && session) {
+        await bridgeSession(session);
+      }
+    });
+
+    checkSession();
 
     function simulateUpload() {
       alert("No-code Knowledge Base upload triggered. In a production environment, this would open the file picker and stream to /api/upload.");

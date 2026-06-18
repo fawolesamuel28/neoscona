@@ -1,4 +1,23 @@
-# neoscona web deps
-Flask==3.0.3
-gunicorn==22.0.0
-psycopg2-binary==2.9.9
+fastapi
+uvicorn[standard]
+gunicorn
+python-dotenv
+pydantic
+pydantic-settings
+httpx
+redis[hiredis]
+supabase
+apscheduler
+openai
+anthropic
+psycopg2-binary
+celery
+flower
+PyJWT
+cryptography
+prometheus-client
+PyPDF2
+python-docx
+jinja2
+aiofiles
+python-multipart

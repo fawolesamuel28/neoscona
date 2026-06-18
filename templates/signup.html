@@ -263,37 +263,131 @@
         <h1>Sign up for free</h1>
         <p>Start your free trial and unlock all Neoscona products, including Neoscona Voice and Neoscona Segment.</p>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            {% for message in messages %}
-              <div class="nd-flash">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        <div id="auth-error" class="nd-flash" style="display: none;"></div>
+        <div id="auth-success" class="nd-flash" style="display: none; background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.15);"></div>
 
-        <form method="POST">
-          <div class="nd-form-group">
-            <label class="nd-form-label">First name</label>
-            <input type="text" name="first_name" class="nd-form-input" placeholder="Alex" required />
+        <form id="signup-form">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="nd-form-group">
+              <label class="nd-form-label">First name</label>
+              <input type="text" id="first_name" class="nd-form-input" placeholder="Alex" required />
+            </div>
+            
+            <div class="nd-form-group">
+              <label class="nd-form-label">Last name</label>
+              <input type="text" id="last_name" class="nd-form-input" placeholder="Smith" required />
+            </div>
           </div>
-          
+
           <div class="nd-form-group">
-            <label class="nd-form-label">Last name</label>
-            <input type="text" name="last_name" class="nd-form-input" placeholder="Smith" required />
+            <label class="nd-form-label">Company name</label>
+            <input type="text" id="company_name" class="nd-form-input" placeholder="Acme Inc." required />
           </div>
           
           <div class="nd-form-group">
             <label class="nd-form-label">Work email</label>
-            <input type="email" name="email" class="nd-form-input" placeholder="you@company.com" required />
+            <input type="email" id="email" class="nd-form-input" placeholder="you@company.com" required />
           </div>
           
           <div class="nd-form-group">
             <label class="nd-form-label">Password</label>
-            <input type="password" name="password" class="nd-form-input" placeholder="Create a password" required />
+            <input type="password" id="password" class="nd-form-input" placeholder="Create a password" required />
           </div>
           
-          <button type="submit" class="nd-btn-submit">Start free trial</button>
+          <button type="submit" id="submit-btn" class="nd-btn-submit">Start free trial</button>
         </form>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+          const supabaseUrl = "{{ supabase_url }}";
+          const supabaseAnonKey = "{{ supabase_anon_key }}";
+          const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
+
+          const signupForm = document.getElementById('signup-form');
+          const errorDiv = document.getElementById('auth-error');
+          const successDiv = document.getElementById('auth-success');
+          const submitBtn = document.getElementById('submit-btn');
+
+          signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Creating account...';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const firstName = document.getElementById('first_name').value;
+            const lastName = document.getElementById('last_name').value;
+            const companyName = document.getElementById('company_name').value;
+
+            // 1. Sign up user in Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+              email: email,
+              password: password,
+              options: {
+                data: {
+                  first_name: firstName,
+                  last_name: lastName
+                }
+              }
+            });
+
+            if (authError) {
+              errorDiv.innerText = authError.message;
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Start free trial';
+              return;
+            }
+
+            // 2. Provision Workspace (via FastAPI endpoint)
+            // We use the access_token from the signup response to authenticate the provisioning request
+            const session = authData.session;
+            if (session) {
+                try {
+                    const response = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ company_name: companyName })
+                    });
+                    
+                    if (response.ok) {
+                        // Bridge the session into the parent-domain SSO cookie
+                        // before entering the console.
+                        await fetch('/auth/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                access_token: session.access_token,
+                                refresh_token: session.refresh_token,
+                            }),
+                        });
+                        window.location.href = '/dashboard';
+                    } else {
+                        const err = await response.json();
+                        errorDiv.innerText = "Auth successful, but workspace setup failed: " + (err.detail || "Unknown error");
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    errorDiv.innerText = "Connection error during workspace setup.";
+                    errorDiv.style.display = 'block';
+                }
+            } else {
+                // If email confirmation is required, session might be null
+                successDiv.innerText = "Account created! Please check your email to confirm and then log in.";
+                successDiv.style.display = 'block';
+                signupForm.style.display = 'none';
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Start free trial';
+          });
+        </script>
 
         <div class="nd-auth-footer">
           Already have an account? <a href="/login">Log in</a>

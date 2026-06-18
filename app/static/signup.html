@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reva — Create your workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=9" />
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <div class="auth-overlay">
+    <div class="auth-split">
+
+      <!-- Left — branded panel -->
+      <aside class="auth-brand-panel">
+        <div class="abp-top">
+          <div class="abp-orb" aria-hidden="true">R</div>
+          <span class="abp-brand-name">Reva</span>
+        </div>
+
+        <div>
+          <h2 class="abp-headline">The AI that qualifies your leads while you sleep.</h2>
+          <p class="abp-sub">Reva talks to every inbound lead across WhatsApp, Instagram, Telegram and voice — qualifying, scoring and booking meetings automatically.</p>
+          <ul class="abp-points">
+            <li class="abp-point">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M16.5 5.5L8 14l-4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              14-day free trial — no card required
+            </li>
+            <li class="abp-point">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M16.5 5.5L8 14l-4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Full Growth features unlocked
+            </li>
+            <li class="abp-point">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M16.5 5.5L8 14l-4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Live in minutes, no engineers needed
+            </li>
+          </ul>
+        </div>
+
+        <figure class="abp-quote">
+          <div class="abp-stars" aria-label="5 out of 5 stars">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.77l-5.2 2.73.99-5.78L1.58 7.62l5.82-.85L10 1.5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.77l-5.2 2.73.99-5.78L1.58 7.62l5.82-.85L10 1.5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.77l-5.2 2.73.99-5.78L1.58 7.62l5.82-.85L10 1.5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.77l-5.2 2.73.99-5.78L1.58 7.62l5.82-.85L10 1.5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.77l-5.2 2.73.99-5.78L1.58 7.62l5.82-.85L10 1.5z"/></svg>
+          </div>
+          <p class="abp-quote-text">"Reva replied to 300+ leads in our first week and booked 18 viewings before I'd even logged in. It pays for itself."</p>
+          <p class="abp-quote-author">Adaeze N. — Atlantic Horizons Developments</p>
+        </figure>
+      </aside>
+
+      <!-- Right — form panel -->
+      <main class="auth-form-panel">
+        <div class="auth-form-inner">
+          <div class="auth-form-brand"><div class="brand-orb" aria-hidden="true">R</div><span class="brand-name">Reva</span></div>
+          <h1 class="auth-title">Start your 14-day trial</h1>
+          <p class="auth-sub">Create your workspace — no card required.</p>
+          <form id="signupForm" class="auth-form" autocomplete="on">
+            <input type="text" id="company" placeholder="Company name" autocomplete="organization" required />
+            <input type="email" id="email" placeholder="you@company.com" autocomplete="email" required />
+            <input type="password" id="password" placeholder="Create a password" autocomplete="new-password" required minlength="6" />
+            <button type="submit" class="btn-pill primary auth-submit">Create workspace</button>
+          </form>
+          <a class="auth-link" href="/dashboard">Already have an account? Sign in</a>
+          <p class="auth-error hidden" id="signupMsg"></p>
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/static/signup.js?v=1"></script>
+</body>
+</html>

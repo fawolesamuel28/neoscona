@@ -1,0 +1,5 @@
+dashboard/
+evolution-api-native/
+venv/
+.next/
+node_modules/

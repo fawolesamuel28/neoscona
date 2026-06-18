@@ -239,27 +239,67 @@
         <h1>Log in</h1>
         <p>Access your Neoscona account to continue managing your AI workers.</p>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            {% for message in messages %}
-              <div class="nd-flash">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        <div id="auth-error" class="nd-flash" style="display: none;"></div>
 
-        <form method="POST">
+        <form id="login-form">
           <div class="nd-form-group">
             <label class="nd-form-label">Work email</label>
-            <input type="email" name="email" class="nd-form-input" placeholder="you@company.com" required />
+            <input type="email" id="email" class="nd-form-input" placeholder="you@company.com" required />
           </div>
           
           <div class="nd-form-group">
             <label class="nd-form-label">Password</label>
-            <input type="password" name="password" class="nd-form-input" placeholder="Enter your password" required />
+            <input type="password" id="password" class="nd-form-input" placeholder="Enter your password" required />
           </div>
           
-          <button type="submit" class="nd-btn-submit">Log in</button>
+          <button type="submit" id="submit-btn" class="nd-btn-submit">Log in</button>
         </form>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+          const supabaseUrl = "{{ supabase_url }}";
+          const supabaseAnonKey = "{{ supabase_anon_key }}";
+          const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
+
+          const loginForm = document.getElementById('login-form');
+          const errorDiv = document.getElementById('auth-error');
+          const submitBtn = document.getElementById('submit-btn');
+
+          loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Logging in...';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: email,
+              password: password,
+            });
+
+            if (error) {
+              errorDiv.innerText = error.message;
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Log in';
+            } else {
+              // Bridge the Supabase session into a parent-domain SSO cookie so
+              // the console and every product surface share one sign-on.
+              await fetch('/auth/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                  access_token: data.session.access_token,
+                  refresh_token: data.session.refresh_token,
+                }),
+              });
+              window.location.href = '/dashboard';
+            }
+          });
+        </script>
 
         <div class="nd-auth-footer">
           Don't have an account? <a href="/signup">Sign up</a>

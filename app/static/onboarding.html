@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reva — Set up your workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=9" />
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <div class="auth-overlay" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;">
+    <div class="auth-card" style="width:440px;">
+      <div class="auth-brand"><div class="brand-orb" aria-hidden="true">R</div><span class="brand-name">Reva</span></div>
+
+      <div class="wiz-steps" id="wizSteps"></div>
+
+      <div id="wizBody"><p class="auth-sub" id="wizLoading">Loading your workspace…</p></div>
+
+      <div class="wiz-actions">
+        <button type="button" id="wizSkip" class="auth-link hidden">Skip for now</button>
+        <button type="button" id="wizNext" class="btn-pill primary auth-submit hidden">Continue</button>
+      </div>
+      <p class="auth-error hidden" id="wizMsg"></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/static/onboarding.js?v=1"></script>
+</body>
+</html>

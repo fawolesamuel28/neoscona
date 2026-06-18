@@ -11,7 +11,7 @@ services:
     region: frankfurt          # closest free region to Africa; change if you prefer
     branch: master
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    startCommand: gunicorn server:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 2 --timeout 60
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
