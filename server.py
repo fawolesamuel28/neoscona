@@ -93,42 +93,43 @@ app.include_router(health_router, prefix="/api", tags=["System"])
 
 def get_base_context(request: Request):
     return {
-        "request": request,
         "supabase_url": os.getenv("SUPABASE_URL"),
         "supabase_anon_key": os.getenv("SUPABASE_ANON_KEY"),
     }
 
+
+def render_template(request: Request, name: str, **extra):
+    return templates.TemplateResponse(request, name, {**get_base_context(request), **extra})
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("neoscona.html", get_base_context(request))
+    return render_template(request, "neoscona.html")
 
 @app.get("/blog", response_class=HTMLResponse)
 async def blog(request: Request):
-    context = get_base_context(request)
-    context["posts"] = []
-    return templates.TemplateResponse("blog.html", context)
+    return render_template(request, "blog.html", posts=[])
 
 @app.get("/docs", response_class=HTMLResponse)
 async def help_center(request: Request):
-    return templates.TemplateResponse("docs.html", get_base_context(request))
+    return render_template(request, "docs.html")
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", get_base_context(request))
+    return render_template(request, "login.html")
 
 @app.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
-    return templates.TemplateResponse("signup.html", get_base_context(request))
+    return render_template(request, "signup.html")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     if not page_session_ok(request):
         return RedirectResponse(url="/login")
-    return templates.TemplateResponse("dashboard.html", get_base_context(request))
+    return render_template(request, "dashboard.html")
 
 @app.get("/products/reva", response_class=HTMLResponse)
 async def reva_landing(request: Request):
-    return templates.TemplateResponse("reva_landing.html", get_base_context(request))
+    return render_template(request, "reva_landing.html")
 
 @app.get("/products/reva/console", response_class=HTMLResponse)
 async def reva_console(request: Request):
