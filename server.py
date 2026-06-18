@@ -2,7 +2,7 @@ import os
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Response, Form
+from fastapi import FastAPI, Request, Response, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 # Reva Imports (Assumes app/ directory was copied)
 from app.cache.redis import close_redis_client
 from app.core.dashboard_ws import dashboard_ws_manager
-from app.core.sso import router as sso_router, page_session_ok
+from app.core.sso import router as sso_router, page_session_ok, ACCESS_COOKIE
+from app.core.auth import _decode_token, _auth_disabled
 from app.webhooks.whatsapp import router as whatsapp_router
 from app.webhooks.paystack import router as paystack_webhook_router
 from app.routers.leads import router as leads_router
@@ -91,10 +92,31 @@ app.include_router(health_router, prefix="/api", tags=["System"])
 
 # ─── Marketing & Platform Routes ───────────────────────────────────────────
 
+def _template_session(request: Request) -> dict:
+    """Flask-compat session dict for Jinja nav bars (derived from SSO cookie)."""
+    if _auth_disabled():
+        return {"user_id": "dev-user", "user_email": "dev@local"}
+    token = request.cookies.get(ACCESS_COOKIE)
+    if not token:
+        return {}
+    try:
+        claims = _decode_token(token)
+    except HTTPException:
+        return {}
+    user_id = claims.get("sub")
+    if not user_id:
+        return {}
+    return {"user_id": user_id, "user_email": claims.get("email") or ""}
+
+
 def get_base_context(request: Request):
+    session = _template_session(request)
+    email = session.get("user_email") or ""
     return {
         "supabase_url": os.getenv("SUPABASE_URL"),
         "supabase_anon_key": os.getenv("SUPABASE_ANON_KEY"),
+        "session": session,
+        "user": {"email": email or "Account"},
     }
 
 
