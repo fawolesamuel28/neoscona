@@ -143,6 +143,18 @@ async def login_page(request: Request):
 async def signup_page(request: Request):
     return render_template(request, "signup.html")
 
+
+@app.post("/signup")
+async def signup_form_fallback():
+    """Legacy HTML forms POST here if JS fails — send them back to the SPA flow."""
+    return RedirectResponse(url="/signup", status_code=303)
+
+
+@app.post("/login")
+async def login_form_fallback():
+    return RedirectResponse(url="/login", status_code=303)
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     if not page_session_ok(request):
