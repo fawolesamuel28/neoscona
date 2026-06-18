@@ -266,7 +266,7 @@
         <div id="auth-error" class="nd-flash" style="display: none;"></div>
         <div id="auth-success" class="nd-flash" style="display: none; background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.15);"></div>
 
-        <form id="signup-form">
+        <form id="signup-form" action="#" method="post" novalidate>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="nd-form-group">
               <label class="nd-form-label">First name</label>
@@ -301,15 +301,25 @@
         <script>
           const supabaseUrl = "{{ supabase_url }}";
           const supabaseAnonKey = "{{ supabase_anon_key }}";
-          const supabase = supabasejs.createClient(supabaseUrl, supabaseAnonKey);
 
           const signupForm = document.getElementById('signup-form');
           const errorDiv = document.getElementById('auth-error');
           const successDiv = document.getElementById('auth-success');
           const submitBtn = document.getElementById('submit-btn');
 
+          if (!supabaseUrl || !supabaseAnonKey) {
+            errorDiv.innerText = 'Sign-up is not configured on the server yet. Please contact support@neoscona.xyz.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = true;
+          }
+
+          const supabase = supabaseUrl && supabaseAnonKey
+            ? supabasejs.createClient(supabaseUrl, supabaseAnonKey)
+            : null;
+
           signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!supabase) return;
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
             submitBtn.disabled = true;
@@ -335,6 +345,15 @@
 
             if (authError) {
               errorDiv.innerText = authError.message;
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Start free trial';
+              return;
+            }
+
+            // Supabase returns an empty identities array when the email is already registered.
+            if (authData.user?.identities?.length === 0) {
+              errorDiv.innerText = 'An account with this email already exists. Try logging in instead.';
               errorDiv.style.display = 'block';
               submitBtn.disabled = false;
               submitBtn.innerText = 'Start free trial';
