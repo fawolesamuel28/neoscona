@@ -266,7 +266,7 @@
         <div id="auth-error" class="nd-flash" style="display: none;"></div>
         <div id="auth-success" class="nd-flash" style="display: none; background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.15);"></div>
 
-        <form id="signup-form" onsubmit="return false;" novalidate>
+        <form id="signup-form" novalidate>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="nd-form-group">
               <label class="nd-form-label">First name</label>
@@ -299,76 +299,89 @@
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
         <script>
-          const supabaseUrl = "{{ supabase_url }}";
-          const supabaseAnonKey = "{{ supabase_anon_key }}";
+          document.addEventListener('DOMContentLoaded', () => {
+            const supabaseUrl = "{{ supabase_url }}";
+            const supabaseAnonKey = "{{ supabase_anon_key }}";
 
-          const signupForm = document.getElementById('signup-form');
-          const errorDiv = document.getElementById('auth-error');
-          const successDiv = document.getElementById('auth-success');
-          const submitBtn = document.getElementById('submit-btn');
+            const signupForm = document.getElementById('signup-form');
+            const errorDiv = document.getElementById('auth-error');
+            const successDiv = document.getElementById('auth-success');
+            const submitBtn = document.getElementById('submit-btn');
 
-          if (!supabaseUrl || !supabaseAnonKey) {
-            errorDiv.innerText = 'Sign-up is not configured on the server yet. Please contact support@neoscona.xyz.';
-            errorDiv.style.display = 'block';
-            submitBtn.disabled = true;
-          } else if (!window.supabase?.createClient) {
-            errorDiv.innerText = 'Sign-up failed to load. Please refresh the page or try another browser.';
-            errorDiv.style.display = 'block';
-            submitBtn.disabled = true;
-          }
+            let supabase = null;
+            if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'None' || supabaseAnonKey === 'None') {
+              errorDiv.innerText = 'Sign-up is not configured on the server yet. Please contact support@neoscona.xyz.';
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = true;
+              return;
+            }
 
-          const supabase = window.supabase?.createClient
-            ? window.supabase.createClient(supabaseUrl, supabaseAnonKey)
-            : null;
+            if (!window.supabase || !window.supabase.createClient) {
+              errorDiv.innerText = 'Sign-up failed to load. Please refresh the page or try another browser.';
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = true;
+              return;
+            }
 
-          signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!supabase) return;
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Creating account...';
+            try {
+              supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+            } catch (err) {
+              errorDiv.innerText = 'Failed to initialize sign-up. Please try again later.';
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = true;
+              return;
+            }
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const firstName = document.getElementById('first_name').value;
-            const lastName = document.getElementById('last_name').value;
-            const companyName = document.getElementById('company_name').value;
+            signupForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              if (!supabase) return;
+              
+              errorDiv.style.display = 'none';
+              successDiv.style.display = 'none';
+              
+              const originalText = submitBtn.innerText;
+              submitBtn.disabled = true;
+              submitBtn.innerText = 'Creating account...';
 
-            // 1. Sign up user in Supabase Auth
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-              email: email,
-              password: password,
-              options: {
-                data: {
-                  first_name: firstName,
-                  last_name: lastName
+              try {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const firstName = document.getElementById('first_name').value.trim();
+                const lastName = document.getElementById('last_name').value.trim();
+                const companyName = document.getElementById('company_name').value.trim();
+
+                // 1. Sign up user in Supabase Auth
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                  email: email,
+                  password: password,
+                  options: {
+                    data: {
+                      first_name: firstName,
+                      last_name: lastName
+                    }
+                  }
+                });
+
+                if (authError) {
+                  errorDiv.innerText = authError.message;
+                  errorDiv.style.display = 'block';
+                  submitBtn.disabled = false;
+                  submitBtn.innerText = originalText;
+                  return;
                 }
-              }
-            });
 
-            if (authError) {
-              errorDiv.innerText = authError.message;
-              errorDiv.style.display = 'block';
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Start free trial';
-              return;
-            }
+                // Supabase returns an empty identities array when the email is already registered.
+                if (authData.user?.identities?.length === 0) {
+                  errorDiv.innerText = 'An account with this email already exists. Try logging in instead.';
+                  errorDiv.style.display = 'block';
+                  submitBtn.disabled = false;
+                  submitBtn.innerText = originalText;
+                  return;
+                }
 
-            // Supabase returns an empty identities array when the email is already registered.
-            if (authData.user?.identities?.length === 0) {
-              errorDiv.innerText = 'An account with this email already exists. Try logging in instead.';
-              errorDiv.style.display = 'block';
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Start free trial';
-              return;
-            }
-
-            // 2. Provision Workspace (via FastAPI endpoint)
-            // We use the access_token from the signup response to authenticate the provisioning request
-            const session = authData.session;
-            if (session) {
-                try {
+                // 2. Provision Workspace (via FastAPI endpoint)
+                const session = authData.session;
+                if (session) {
                     const response = await fetch('/api/signup', {
                         method: 'POST',
                         headers: {
@@ -379,8 +392,6 @@
                     });
                     
                     if (response.ok) {
-                        // Bridge the session into the parent-domain SSO cookie
-                        // before entering the console.
                         await fetch('/auth/session', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -392,23 +403,26 @@
                         });
                         window.location.href = '/dashboard';
                     } else {
-                        const err = await response.json();
-                        errorDiv.innerText = "Auth successful, but workspace setup failed: " + (err.detail || "Unknown error");
+                        const err = await response.json().catch(() => ({}));
+                        errorDiv.innerText = "Workspace setup failed: " + (err.detail || "Unknown error");
                         errorDiv.style.display = 'block';
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = originalText;
                     }
-                } catch (err) {
-                    errorDiv.innerText = "Connection error during workspace setup.";
-                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.innerText = "Account created! Please check your email to confirm and then log in.";
+                    successDiv.style.display = 'block';
+                    signupForm.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalText;
                 }
-            } else {
-                // If email confirmation is required, session might be null
-                successDiv.innerText = "Account created! Please check your email to confirm and then log in.";
-                successDiv.style.display = 'block';
-                signupForm.style.display = 'none';
-            }
-            
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Start free trial';
+              } catch (err) {
+                errorDiv.innerText = err.message || "An unexpected error occurred.";
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+              }
+            });
           });
         </script>
 
