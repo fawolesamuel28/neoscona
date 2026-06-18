@@ -308,7 +308,7 @@
             const successDiv = document.getElementById('auth-success');
             const submitBtn = document.getElementById('submit-btn');
 
-            let supabase = null;
+            let sbClient = null;
             if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'None' || supabaseAnonKey === 'None') {
               errorDiv.innerText = 'Sign-up is not configured on the server yet. Please contact support@neoscona.xyz.';
               errorDiv.style.display = 'block';
@@ -324,7 +324,7 @@
             }
 
             try {
-              supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+              sbClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
             } catch (err) {
               errorDiv.innerText = 'Failed to initialize sign-up. Please try again later.';
               errorDiv.style.display = 'block';
@@ -334,7 +334,7 @@
 
             signupForm.addEventListener('submit', async (e) => {
               e.preventDefault();
-              if (!supabase) return;
+              if (!sbClient) return;
               
               errorDiv.style.display = 'none';
               successDiv.style.display = 'none';
@@ -351,7 +351,7 @@
                 const companyName = document.getElementById('company_name').value.trim();
 
                 // 1. Sign up user in Supabase Auth
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await sbClient.auth.signUp({
                   email: email,
                   password: password,
                   options: {
