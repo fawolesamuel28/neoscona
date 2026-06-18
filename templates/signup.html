@@ -195,14 +195,32 @@
         border-top: 1px solid var(--border);
       }
     }
+    /* ─── LIVE EQUALIZER: neoscona signature ─── */
+    .nd-live {
+      display: inline-flex; align-items: flex-end; gap: 2px;
+      height: 13px; margin-right: 0.5rem; position: relative; top: 1px;
+    }
+    .nd-live i {
+      display: block; width: 3px; border-radius: 1px;
+      background: var(--live); transform-origin: bottom;
+      animation: live-eq 1.1s ease-in-out infinite;
+    }
+    .nd-live i:nth-child(1) { height: 6px;  animation-delay: -0.9s; }
+    .nd-live i:nth-child(2) { height: 13px; animation-delay: -0.5s; }
+    .nd-live i:nth-child(3) { height: 9px;  animation-delay: -0.2s; }
+    @keyframes live-eq {
+      0%, 100% { transform: scaleY(0.35); }
+      50%      { transform: scaleY(1); }
+    }
   </style>
 </head>
 <body>
   <div class="nd-auth-wrapper">
     <!-- Marketing Side -->
     <section class="nd-auth-marketing">
-      <a href="/" class="nd-logo">
-        <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 40px; object-fit: contain;">
+      <a href="/" class="nd-logo" style="text-decoration:none">
+        <div class="nd-live"><i></i><i></i><i></i></div>
+        <span style="font-weight:800; font-size:1.5rem; color:var(--heading); letter-spacing:-0.04em">Neoscona</span>
       </a>
       
       <div class="nd-auth-marketing-content">
