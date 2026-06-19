@@ -8,10 +8,11 @@ token (a JWT) and sends it as `Authorization: Bearer <token>`. This module:
   2. resolves the user's tenant + role from the `memberships` table, and
   3. exposes FastAPI dependencies that yield a `Principal` to route handlers.
 
-Tenant isolation is enforced at the application layer: handlers pass
-`principal.tenant_id` into every query. (RLS via per-request JWT clients is the
-Phase-1.5 defense-in-depth layer; the service-role client used today bypasses
-RLS, so app-layer filtering is the real guard.)
+Tenant isolation is enforced in two layers: (1) handlers pass `principal.tenant_id`
+into every query (the deterministic primary guard), and (2) on request paths the
+verified user token is stashed via `set_request_token` so service code can build a
+user-scoped Supabase client (`get_request_client`) whose queries run under RLS
+(`auth.uid()` joined to `memberships`) as a defense-in-depth backstop.
 
 Local-dev escape hatch: set AUTH_DISABLED=true to inject an owner principal for
 the default tenant. It is **ignored when ENVIRONMENT=production**.
@@ -29,7 +30,7 @@ from fastapi import Cookie, Depends, Header, HTTPException, WebSocket, status
 
 from app.core.logger import get_logger
 from app.core.tenant import get_default_tenant_id
-from app.db.supabase import get_supabase
+from app.db.supabase import get_supabase, set_request_token
 
 logger = get_logger(__name__)
 
@@ -219,10 +220,15 @@ async def get_current_principal(
     if _auth_disabled():
         return _dev_principal()
 
-    claims = _decode_token(_token_from_header_or_cookie(authorization, sso_cookie))
+    token = _token_from_header_or_cookie(authorization, sso_cookie)
+    claims = _decode_token(token)
     user_id = claims.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Token missing subject")
+
+    # Stash the verified token so tenant-scoped service code can build a
+    # user-scoped (RLS-enforced) Supabase client for this request.
+    set_request_token(token)
 
     tenant_id, role = await asyncio.to_thread(_lookup_membership, user_id, x_org_id)
     return Principal(user_id=user_id, email=claims.get("email"), tenant_id=tenant_id, role=role)
@@ -279,6 +285,7 @@ async def get_ws_principal(websocket: WebSocket) -> Optional[Principal]:
         user_id = claims.get("sub")
         if not user_id:
             return None
+        set_request_token(token)
         tenant_id, role = await asyncio.to_thread(
             _lookup_membership, user_id, websocket.query_params.get("org_id")
         )

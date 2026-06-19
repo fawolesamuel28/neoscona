@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any
 
-from app.core.tenant import apply_tenant_defaults
+from app.core.tenant import apply_tenant_defaults, require_tenant
 from app.db.supabase import get_supabase
 from app.models.inventory import UnitMatch
 
@@ -180,6 +180,7 @@ def _score_unit(
 
 
 async def fetch_available_units(tenant_id: str | None = None) -> list[dict[str, Any]]:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
@@ -192,9 +193,8 @@ async def fetch_available_units(tenant_id: str | None = None) -> list[dict[str, 
                     "developments(name, phase, location, area_tags)"
                 )
                 .eq("status", "available")
+                .eq("tenant_id", tenant_id)
             )
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
             return query.execute()
 
         result = await asyncio.to_thread(_fetch)
@@ -445,6 +445,8 @@ async def save_lead_matches(
     if not matches:
         return
 
+    tenant_id = require_tenant(tenant_id)
+
     from app.cache.redis import cache_lead_matches
 
     snapshot = [m.model_dump() for m in matches]
@@ -452,16 +454,13 @@ async def save_lead_matches(
 
     try:
         db = get_supabase()
-        # apply_tenant_defaults fills the seeded default tenant when tenant_id is
-        # None, so matches are always tenant-tagged (matches migration 010's column).
         rows = [
             apply_tenant_defaults({
                 "phone_number": phone_number,
                 "unit_id": m.unit_id,
                 "match_score": m.match_score,
                 "rank": m.rank,
-                "tenant_id": tenant_id,
-            })
+            }, tenant_id)
             for m in matches
         ]
 
@@ -475,6 +474,7 @@ async def save_lead_matches(
 
 
 async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> list[dict[str, Any]]:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
@@ -487,9 +487,8 @@ async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> l
                     "developments(name, location, phase))"
                 )
                 .eq("phone_number", phone_number)
+                .eq("tenant_id", tenant_id)
             )
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
             return query.order("rank").execute()
 
         result = await asyncio.to_thread(_fetch)

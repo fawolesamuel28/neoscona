@@ -3,8 +3,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from app.core.tenant import apply_tenant_defaults
-from app.db.supabase import get_supabase
+from app.core.tenant import apply_tenant_defaults, require_tenant
+from app.db.supabase import get_request_client
 
 logger = logging.getLogger(__name__)
 
@@ -23,23 +23,21 @@ def infer_channel_source(phone_number: str) -> str:
     return "unknown"
 
 
-async def _fetch_conversation_meta(tenant_id: str | None = None) -> dict[str, dict[str, Any]]:
+async def _fetch_conversation_meta(tenant_id: str) -> dict[str, dict[str, Any]]:
     """Latest activity per phone from conversation_logs (paginated — Supabase caps at 1000/req)."""
+    tenant_id = require_tenant(tenant_id)
     try:
-        db = get_supabase()
+        db = get_request_client()
         page_size = 1000
         offset = 0
         all_rows: list[dict[str, Any]] = []
 
         def _fetch_page(off: int):
-            query = (
+            return (
                 db.table("conversation_logs")
                 .select("phone_number, role, created_at, message")
-            )
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return (
-                query.order("created_at", desc=True)
+                .eq("tenant_id", tenant_id)
+                .order("created_at", desc=True)
                 .range(off, off + page_size - 1)
                 .execute()
             )
@@ -74,18 +72,34 @@ async def _fetch_conversation_meta(tenant_id: str | None = None) -> dict[str, di
         return {}
 
 
-async def upsert_lead(phone_number: str, extracted_data: dict[str, Any], stage: str) -> dict | None:
+async def upsert_lead(
+    phone_number: str,
+    extracted_data: dict[str, Any],
+    stage: str,
+    tenant_id: str | None = None,
+) -> dict | None:
     """
     Creates a lead if it's their first time, or updates them if they're returning.
     Only updates fields that have actual values (ignores None/null).
-    """
-    try:
-        db = get_supabase()
 
-        # Fetch existing lead data first
+    `tenant_id` is REQUIRED — the inbound path must resolve it (channel registry)
+    before writing, so a message is never stored against the wrong workspace.
+    """
+    tenant_id = require_tenant(tenant_id or extracted_data.get("tenant_id"))
+    try:
+        db = get_request_client()
+
+        # Fetch existing lead data first — scoped to this tenant so we never merge
+        # another workspace's lead that happens to share the phone number.
         def _get_existing():
-            return db.table("leads").select("*").eq("phone_number", phone_number).execute()
-        
+            return (
+                db.table("leads")
+                .select("*")
+                .eq("phone_number", phone_number)
+                .eq("tenant_id", tenant_id)
+                .execute()
+            )
+
         existing = await asyncio.to_thread(_get_existing)
         existing_data = existing.data[0] if existing.data else {}
 
@@ -120,17 +134,17 @@ async def upsert_lead(phone_number: str, extracted_data: dict[str, Any], stage: 
         if stage == "qualified" and not existing_data.get("qualified_at"):
             payload["qualified_at"] = now
 
-        apply_tenant_defaults(payload)
+        apply_tenant_defaults(payload, tenant_id)
 
         def _do_upsert():
             return db.table("leads").upsert(
                 payload,
-                on_conflict="phone_number"
+                on_conflict="tenant_id,phone_number",
             ).execute()
 
         result = await asyncio.to_thread(_do_upsert)
 
-        logger.info("Lead upserted: %s | Stage: %s", phone_number, stage)
+        logger.info("Lead upserted: %s | Stage: %s | tenant=%s", phone_number, stage, tenant_id)
         return result.data[0] if result.data else None
 
     except Exception as exc:
@@ -139,15 +153,20 @@ async def upsert_lead(phone_number: str, extracted_data: dict[str, Any], stage: 
 
 
 async def get_lead(phone_number: str, tenant_id: str | None = None) -> dict | None:
-    """Fetches a lead's full profile by phone number, optionally scoped to a tenant."""
+    """Fetches a lead's full profile by phone number, scoped to a tenant."""
+    tenant_id = require_tenant(tenant_id)
     try:
-        db = get_supabase()
+        db = get_request_client()
 
         def _get():
-            query = db.table("leads").select("*").eq("phone_number", phone_number)
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return query.limit(1).execute()
+            return (
+                db.table("leads")
+                .select("*")
+                .eq("phone_number", phone_number)
+                .eq("tenant_id", tenant_id)
+                .limit(1)
+                .execute()
+            )
 
         result = await asyncio.to_thread(_get)
         if not result.data:
@@ -171,23 +190,23 @@ async def log_message(
     Logs every message to the conversation_logs table.
     Provides a full audit trail of the conversation for dashboard review.
 
-    `role` is 'user' | 'assistant' | 'human_agent'. For human-agent replies, pass
-    `author_user_id` (the dashboard user) and `tenant_id` (their org).
+    `role` is 'user' | 'assistant' | 'human_agent'. `tenant_id` is REQUIRED (the
+    inbound path resolves it from the channel; the human-agent path passes the
+    dashboard user's org).
     """
+    tenant_id = require_tenant(tenant_id)
     try:
-        db = get_supabase()
+        db = get_request_client()
 
         def _log():
             row = {
                 "phone_number": phone_number,
                 "role": role,
                 "message": message,
+                "tenant_id": tenant_id,
             }
             if author_user_id:
                 row["author_user_id"] = author_user_id
-            if tenant_id:
-                row["tenant_id"] = tenant_id
-            apply_tenant_defaults(row)
             return db.table("conversation_logs").insert(row).execute()
 
         await asyncio.to_thread(_log)
@@ -198,19 +217,23 @@ async def log_message(
 
 async def get_all_leads(stage: str | None = None, tenant_id: str | None = None) -> list:
     """
-    Fetches all leads, optionally filtered by stage and scoped to a tenant.
-    Merges in any phone numbers that have conversation_logs but no leads row
-    (e.g. Telegram chat IDs when upsert previously failed).
+    Fetches all leads for a tenant, optionally filtered by stage. Merges in any
+    phone numbers that have conversation_logs but no leads row (e.g. Telegram chat
+    IDs when upsert previously failed).
     """
+    tenant_id = require_tenant(tenant_id)
     try:
-        db = get_supabase()
+        db = get_request_client()
         conv_meta = await _fetch_conversation_meta(tenant_id=tenant_id)
 
         def _get_all():
-            query = db.table("leads").select("*")
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return query.order("created_at", desc=True).execute()
+            return (
+                db.table("leads")
+                .select("*")
+                .eq("tenant_id", tenant_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
 
         result = await asyncio.to_thread(_get_all)
         by_phone: dict[str, dict[str, Any]] = {
@@ -251,21 +274,28 @@ async def get_all_leads(stage: str | None = None, tenant_id: str | None = None) 
         return []
 
 
-async def mark_meeting_booked(phone_number: str, meeting_url: str) -> None:
+async def mark_meeting_booked(phone_number: str, meeting_url: str, tenant_id: str | None = None) -> None:
     """Marks a lead as booked once they schedule through Calendly/similar."""
+    tenant_id = require_tenant(tenant_id)
     try:
-        db = get_supabase()
-        
+        db = get_request_client()
+
         def _update():
-            return db.table("leads").update({
-                "meeting_booked": True,
-                "meeting_url": meeting_url,
-                "stage": "done"
-            }).eq("phone_number", phone_number).execute()
-            
+            return (
+                db.table("leads")
+                .update({
+                    "meeting_booked": True,
+                    "meeting_url": meeting_url,
+                    "stage": "done",
+                })
+                .eq("phone_number", phone_number)
+                .eq("tenant_id", tenant_id)
+                .execute()
+            )
+
         await asyncio.to_thread(_update)
 
-        logger.info("Meeting booked for %s", phone_number)
+        logger.info("Meeting booked for %s | tenant=%s", phone_number, tenant_id)
 
     except Exception as exc:
         logger.error("Failed to mark meeting booked for %s: %s", phone_number, exc)

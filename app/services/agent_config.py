@@ -18,6 +18,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
 from app.llm.prompts import DEFAULT_CONFIG
 
@@ -108,6 +109,7 @@ def _sanitize(patch: dict[str, Any]) -> dict[str, Any]:
 
 async def upsert_agent_config(tenant_id: str, patch: dict[str, Any]) -> dict[str, Any]:
     """Validate + persist a partial config update; returns the merged resolved config."""
+    tenant_id = require_tenant(tenant_id)
     clean = _sanitize(patch)
     db = get_supabase()
     row = {"tenant_id": tenant_id, **clean, "updated_at": datetime.now(timezone.utc).isoformat()}

@@ -163,13 +163,15 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
     if not phone:
         return None
 
-    existing = await get_lead(phone)
-    stage = existing.get("stage", "new") if existing else "new"
-
+    # Voice captures currently land on the system default tenant; Phase 2 resolves
+    # the owning tenant from the receptionist/assistant channel registry instead.
     tenant_id = get_default_tenant_id()
     if not tenant_id:
         logger.error("DEFAULT_TENANT_ID is not configured; cannot import voice lead")
         return None
+
+    existing = await get_lead(phone, tenant_id)
+    stage = existing.get("stage", "new") if existing else "new"
 
     extracted = {
         "name": voice_lead.get("name"),
@@ -181,7 +183,7 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
         "tenant_id": tenant_id,
     }
 
-    lead = await upsert_lead(phone, extracted, stage=stage)
+    lead = await upsert_lead(phone, extracted, stage=stage, tenant_id=tenant_id)
     if lead:
         summary = voice_lead.get("ai_summary")
         if summary:
@@ -189,6 +191,7 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
                 phone,
                 "assistant",
                 f"[VOICE_RECEPTIONIST]: {summary}",
+                tenant_id=tenant_id,
             )
         await mark_elevenlabs_lead_viewed(lead_id)
     return lead

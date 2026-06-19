@@ -15,7 +15,7 @@ from datetime import date, timedelta
 from typing import Any, Optional
 
 from app.billing.plans import limit as plan_limit
-from app.core.tenant import get_default_tenant_id
+from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -40,11 +40,13 @@ def current_period(today: Optional[date] = None) -> tuple[date, date]:
 
 
 async def record_usage(tenant_id: Optional[str], event_type: str = "message", quantity: float = 1) -> None:
-    """Log a billable event and increment the live-period counter. Never raises."""
-    tenant_id = tenant_id or get_default_tenant_id()
-    if not tenant_id:
-        return
+    """Log a billable event and increment the live-period counter. Never raises.
+
+    `tenant_id` is required — metering is skipped (with a warning) rather than
+    attributed to the wrong workspace if the caller failed to resolve it.
+    """
     try:
+        tenant_id = require_tenant(tenant_id)
         db = get_supabase()
         start, end = current_period()
         col = _EVENT_TO_COLUMN.get(event_type, "p_messages")
@@ -112,6 +114,7 @@ def _usage_for_key(used: float, cap: Optional[int]) -> dict[str, Any]:
 async def get_usage(tenant_id: str, plan: Optional[str] = None) -> dict[str, Any]:
     """Current-cycle usage vs plan limits for messages / voice_minutes / seats."""
     try:
+        tenant_id = require_tenant(tenant_id)
         plan = plan or await _plan_for_tenant(tenant_id)
         counter = await _fetch_counter(tenant_id)
         return {
