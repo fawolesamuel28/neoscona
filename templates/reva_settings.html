@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-product="reva">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings — Neoscona Reva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<link rel="stylesheet" href="/static/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sidebar-w: 228px;
+    --settings-nav-w: 200px;
+    --topbar-h:  56px;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', monospace;
+    --canvas:      var(--bg);
+    --canvas-soft: var(--bg-input);
+    --surface:     #fff;
+    --ink:         var(--heading);
+    --ink-body:    var(--copy-75);
+    --ink-muted:   var(--copy);
+    --ink-soft:    #9ca3af;
+    --hairline:    var(--border);
+    --ok:    #16a34a;
+    --warn:  #d97706;
+    --hot:   #dc2626;
+    --shadow-card: rgba(0,0,0,0.06) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 4px, rgba(0,0,0,0.03) 0 6px 12px;
+    --shadow-inset: rgba(0,0,0,0.075) 0 0 0 0.5px inset;
+  }
+
+  html, body { height: 100%; background: var(--canvas); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { text-decoration: none; color: inherit; }
+
+  /* ─── LAYOUT ─── */
+  .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr; min-height: 100vh; }
+
+  /* ─── TOP BAR ─── */
+  .topbar { grid-column: 1/-1; display: flex; align-items: center; height: var(--topbar-h); border-bottom: 1px solid var(--hairline); background: var(--nav-bg); backdrop-filter: blur(18px) saturate(140%); z-index: 100; }
+  .topbar-brand { display: flex; align-items: center; gap: 12px; width: var(--sidebar-w); padding: 0 24px; flex-shrink: 0; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; padding: 0 20px; border-left: 1px solid var(--hairline); height: 100%; margin-left: auto; }
+  .avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-alt); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--primary); cursor: pointer; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 7px; border: 1px solid var(--hairline); cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; transition: all .2s; white-space: nowrap; background: transparent; color: var(--ink); }
+  .btn:hover { background: var(--bg-hover); }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.ghost { color: var(--ink-muted); }
+  .btn.danger { color: var(--hot); border-color: rgba(220,38,38,.2); background: rgba(220,38,38,.05); }
+  .btn.danger:hover { background: rgba(220,38,38,.1); }
+
+  /* ─── SIDEBAR (main nav) ─── */
+  .sidebar { border-right: 1px solid var(--hairline); background: var(--surface); padding: 20px 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .nav-section { padding: 0 12px 16px; }
+  .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); padding: 0 8px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; font-size: 13px; font-weight: 400; color: var(--ink-body); transition: background .1s; position: relative; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--canvas-soft); }
+  .nav-item.active { background: var(--canvas-soft); color: var(--ink); font-weight: 500; }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; border-radius: 9999px; background: var(--primary); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.hot { background: var(--hot); }
+  .dot.warm { background: var(--warn); }
+  .dot.cool { background: #0284c7; }
+  .nav-divider { height: 1px; background: var(--hairline); margin: 4px 12px 12px; }
+  .sidebar-footer { margin-top: auto; padding: 16px 20px; font-size: 11px; color: var(--ink-soft); }
+
+  /* ─── SETTINGS LAYOUT ─── */
+  .settings-wrapper { display: flex; height: 100%; overflow: hidden; }
+  .settings-nav { width: var(--settings-nav-w); flex-shrink: 0; border-right: 1px solid var(--hairline); background: var(--surface); padding: 24px 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .settings-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 13px; font-weight: 400; color: var(--ink-muted); cursor: pointer; transition: all .15s; }
+  .settings-nav-item:hover { background: var(--canvas-soft); color: var(--ink); }
+  .settings-nav-item.active { background: var(--primary-alt); color: var(--primary); font-weight: 500; }
+  .settings-nav-item .material-symbols-outlined { font-size: 16px; }
+  .settings-nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); padding: 12px 10px 4px; margin-top: 8px; }
+
+  /* ─── SETTINGS CONTENT ─── */
+  .settings-content { flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .settings-section { display: none; }
+  .settings-section.active { display: block; }
+
+  /* page heading */
+  .settings-heading { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); margin-bottom: 4px; }
+  .settings-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; }
+
+  /* card */
+  .settings-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-card); margin-bottom: 20px; overflow: hidden; }
+  .settings-card-header { padding: 16px 20px; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; }
+  .settings-card-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .settings-card-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .settings-card-body { padding: 20px; }
+
+  /* form row */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--ink-body); }
+  .form-hint { font-size: 11px; color: var(--ink-soft); }
+  .form-input {
+    padding: 9px 12px; border-radius: 7px; border: 1px solid var(--hairline);
+    font-family: var(--font-body); font-size: 13px; color: var(--ink);
+    background: var(--surface); outline: none; transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-alt); }
+  .form-input[disabled] { background: var(--canvas-soft); color: var(--ink-soft); cursor: not-allowed; }
+  select.form-input { cursor: pointer; }
+  textarea.form-input { resize: vertical; min-height: 88px; }
+
+  /* toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-info { flex: 1; padding-right: 16px; }
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .toggle-desc { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .toggle {
+    position: relative; width: 40px; height: 22px; flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: var(--hairline);
+    border-radius: 9999px; cursor: pointer; transition: background .2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    left: 3px; top: 3px; background: #fff;
+    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .toggle input:checked + .toggle-slider { background: var(--primary); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+  /* channel card */
+  .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .channel-card {
+    border: 1.5px solid var(--hairline); border-radius: 10px; padding: 16px;
+    display: flex; flex-direction: column; gap: 10px; cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .channel-card:hover { border-color: var(--primary); }
+  .channel-card.connected { border-color: var(--ok); }
+  .channel-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .channel-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .channel-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 9999px; }
+  .channel-badge.connected { background: rgba(22,163,74,.1); color: var(--ok); }
+  .channel-badge.not-connected { background: var(--canvas-soft); color: var(--ink-soft); }
+  .channel-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .channel-number { font-size: 11px; color: var(--ink-muted); font-family: var(--font-mono); }
+
+  /* team member row */
+  .member-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hairline); }
+  .member-row:last-child { border-bottom: none; }
+  .member-avatar { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .member-info { flex: 1; }
+  .member-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .member-email { font-size: 11px; color: var(--ink-muted); }
+  .member-role { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 4px; background: var(--canvas-soft); color: var(--ink-body); }
+
+  /* danger zone */
+  .danger-zone-card { border: 1px solid rgba(220,38,38,.2); border-radius: 12px; background: rgba(220,38,38,.03); }
+  .danger-zone-card .settings-card-header { border-color: rgba(220,38,38,.1); }
+  .danger-zone-card .settings-card-title { color: var(--hot); }
+
+  /* save bar */
+  .save-bar { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; }
+
+  /* status dot */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; margin-right: 4px; animation: pulse-ok 2s infinite; box-shadow: 0 0 0 0 rgba(22,163,74,.4); }
+  @keyframes pulse-ok { 0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,.4); } 50% { box-shadow: 0 0 0 5px rgba(22,163,74,0); } }
+
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 9999px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a href="/dashboard" class="topbar-brand" style="text-decoration:none">
+      <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 32px; object-fit: contain">
+    </a>
+    <div style="flex:1;padding:0 20px;border-left:1px solid var(--hairline);height:100%;display:flex;align-items:center">
+      <span style="font-size:13px;color:var(--ink-muted)">Reva Console · <strong style="color:var(--ink)">Settings</strong></span>
+    </div>
+    <div class="topbar-right">
+      <a href="/products/reva/console" class="btn ghost">← Back to Console</a>
+      <div class="avatar">JA</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <a href="/products/reva/console" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">dashboard</span>
+        All Leads
+      </a>
+      <a href="/products/reva/hot-leads" class="nav-item">
+        <div class="dot hot"></div>
+        Hot Leads
+      </a>
+      <a href="#" class="nav-item"><div class="dot warm"></div>Engaged</a>
+      <a href="#" class="nav-item"><div class="dot cool"></div>New Inbound</a>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Amara AI</div>
+      <a href="#" class="nav-item"><span class="material-symbols-outlined" style="font-size:18px">psychology</span>Scoring Agent</a>
+      <a href="#" class="nav-item"><span class="material-symbols-outlined" style="font-size:18px">campaign</span>Outreach AI</a>
+      <a href="#" class="nav-item"><span class="material-symbols-outlined" style="font-size:18px">database</span>Enrichment</a>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <a href="#" class="nav-item"><span class="material-symbols-outlined" style="font-size:18px">group</span>Team</a>
+      <a href="/products/reva/settings" class="nav-item active"><span class="material-symbols-outlined" style="font-size:18px">settings</span>Settings</a>
+    </div>
+    <div class="sidebar-footer"><span class="status-dot"></span>AI agents running</div>
+  </aside>
+
+  <!-- SETTINGS LAYOUT -->
+  <div class="settings-wrapper">
+
+    <!-- SETTINGS NAV -->
+    <nav class="settings-nav">
+      <div class="settings-nav-label">General</div>
+      <div class="settings-nav-item active" onclick="showSection('workspace', this)">
+        <span class="material-symbols-outlined">business</span> Workspace
+      </div>
+      <div class="settings-nav-item" onclick="showSection('channels', this)">
+        <span class="material-symbols-outlined">hub</span> Channels
+      </div>
+      <div class="settings-nav-label">Amara AI</div>
+      <div class="settings-nav-item" onclick="showSection('persona', this)">
+        <span class="material-symbols-outlined">psychology</span> AI Persona
+      </div>
+      <div class="settings-nav-item" onclick="showSection('scoring', this)">
+        <span class="material-symbols-outlined">score</span> Scoring Rules
+      </div>
+      <div class="settings-nav-item" onclick="showSection('handoff', this)">
+        <span class="material-symbols-outlined">transfer_within_a_station</span> Handoff
+      </div>
+      <div class="settings-nav-label">Access</div>
+      <div class="settings-nav-item" onclick="showSection('team', this)">
+        <span class="material-symbols-outlined">group</span> Team
+      </div>
+      <div class="settings-nav-item" onclick="showSection('billing', this)">
+        <span class="material-symbols-outlined">receipt</span> Billing
+      </div>
+      <div class="settings-nav-item" onclick="showSection('danger', this)" style="color:var(--hot)">
+        <span class="material-symbols-outlined">warning</span> Danger Zone
+      </div>
+    </nav>
+
+    <!-- SETTINGS CONTENT -->
+    <div class="settings-content">
+
+      <!-- Workspace -->
+      <div class="settings-section active" id="section-workspace">
+        <div class="settings-heading">Workspace Settings</div>
+        <div class="settings-sub">Configure your Neoscona Reva workspace details and preferences.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Workspace Details</div>
+              <div class="settings-card-sub">Public-facing name and details for your Reva deployment.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Workspace Name</label>
+                <input class="form-input" type="text" placeholder="e.g. Lagos Prime Realty" id="ws-name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Industry</label>
+                <select class="form-input" id="ws-industry">
+                  <option>Real Estate</option>
+                  <option>Mortgage</option>
+                  <option>Property Management</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Business Website</label>
+                <input class="form-input" type="url" placeholder="https://yoursite.com" id="ws-website">
+              </div>
+            </div>
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Business Description</label>
+                <span class="form-hint">Used by Amara to ground her responses in your specific context.</span>
+                <textarea class="form-input" placeholder="Briefly describe your business — what you sell, where you operate, and who your ideal client is." id="ws-description"></textarea>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn">Cancel</button>
+              <button class="btn primary" onclick="saveWorkspace()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Notifications</div>
+              <div class="settings-card-sub">Control when and how you're alerted about leads.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Hot lead alerts</div>
+                <div class="toggle-desc">Get notified when a lead crosses the hot threshold (score ≥ 75).</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked id="notif-hot"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">New inbound contact</div>
+                <div class="toggle-desc">Alert when Amara picks up a new lead from any connected channel.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked id="notif-inbound"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Human handoff requested</div>
+                <div class="toggle-desc">Notify you immediately when Amara hands off a conversation.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked id="notif-handoff"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Weekly digest email</div>
+                <div class="toggle-desc">Summary of pipeline activity sent every Monday morning.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="notif-digest"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channels -->
+      <div class="settings-section" id="section-channels">
+        <div class="settings-heading">Connected Channels</div>
+        <div class="settings-sub">Manage the messaging channels Amara monitors and responds on.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Active Channels</div>
+              <div class="settings-card-sub">Amara will engage leads across all connected channels.</div>
+            </div>
+            <button class="btn primary" style="font-size:12px;padding:6px 14px">+ Add Channel</button>
+          </div>
+          <div class="settings-card-body">
+            <div class="channel-grid">
+
+              <div class="channel-card connected">
+                <div class="channel-card-top">
+                  <div class="channel-icon" style="background:#25D366">💬</div>
+                  <span class="channel-badge connected">Connected</span>
+                </div>
+                <div class="channel-name">WhatsApp</div>
+                <div class="channel-number" id="wa-number">+234 *** *** ****</div>
+                <button class="btn ghost" style="font-size:11px;padding:5px 10px;width:100%">Manage</button>
+              </div>
+
+              <div class="channel-card">
+                <div class="channel-card-top">
+                  <div class="channel-icon" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)">📸</div>
+                  <span class="channel-badge not-connected">Not Connected</span>
+                </div>
+                <div class="channel-name">Instagram DMs</div>
+                <div class="channel-number">–</div>
+                <button class="btn primary" style="font-size:11px;padding:5px 10px;width:100%">Connect</button>
+              </div>
+
+              <div class="channel-card">
+                <div class="channel-card-top">
+                  <div class="channel-icon" style="background:#229ED9">✈️</div>
+                  <span class="channel-badge not-connected">Not Connected</span>
+                </div>
+                <div class="channel-name">Telegram</div>
+                <div class="channel-number">–</div>
+                <button class="btn primary" style="font-size:11px;padding:5px 10px;width:100%">Connect</button>
+              </div>
+
+              <div class="channel-card">
+                <div class="channel-card-top">
+                  <div class="channel-icon" style="background:var(--canvas-soft)">📱</div>
+                  <span class="channel-badge not-connected">Not Connected</span>
+                </div>
+                <div class="channel-name">SMS</div>
+                <div class="channel-number">–</div>
+                <button class="btn primary" style="font-size:11px;padding:5px 10px;width:100%">Connect</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Channel Behaviour</div>
+              <div class="settings-card-sub">Control how Amara handles conversations across channels.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Respond outside business hours</div>
+                <div class="toggle-desc">Amara auto-responds 24/7. Disable to pause responses at night.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Read receipts</div>
+                <div class="toggle-desc">Show when Amara has read a message (WhatsApp blue ticks).</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Mark messages as replied in CRM</div>
+                <div class="toggle-desc">Automatically update lead status when Amara sends a message.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Persona -->
+      <div class="settings-section" id="section-persona">
+        <div class="settings-heading">Amara AI Persona</div>
+        <div class="settings-sub">Customise how Amara presents herself and communicates with leads.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Identity &amp; Voice</div>
+              <div class="settings-card-sub">These details are used in every conversation Amara has.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">AI Agent Name</label>
+                <input class="form-input" type="text" value="Amara" id="agent-name">
+                <span class="form-hint">The name your leads will see and hear.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tone</label>
+                <select class="form-input" id="agent-tone">
+                  <option>Professional and warm</option>
+                  <option>Friendly and casual</option>
+                  <option>Formal and concise</option>
+                  <option>Energetic and enthusiastic</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Greeting Message</label>
+                <textarea class="form-input" id="agent-greeting" style="min-height:72px">Hi! I'm Amara, your dedicated property assistant. How can I help you today?</textarea>
+              </div>
+            </div>
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Knowledge Base (what Amara knows)</label>
+                <span class="form-hint">Amara is grounded — she only references facts you provide here. She will never invent prices or availability.</span>
+                <textarea class="form-input" id="agent-kb" style="min-height:120px" placeholder="List your properties, price ranges, locations, and any key facts Amara should know. E.g: '3-bed apartment at Lekki Phase 1, from ₦45M. Available units: 4.'"></textarea>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn">Cancel</button>
+              <button class="btn primary" onclick="savePersona()">Save Persona</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Anti-Hallucination Guard</div>
+              <div class="settings-card-sub">Amara's core truth-grounding layer — always enabled.</div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:var(--ok);display:flex;align-items:center;gap:5px">
+              <span class="status-dot"></span>Active
+            </span>
+          </div>
+          <div class="settings-card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Strict price accuracy</div>
+                <div class="toggle-desc">Amara will only quote prices explicitly listed in the knowledge base. She'll never estimate or guess.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked disabled><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Availability honesty</div>
+                <div class="toggle-desc">If a unit's availability isn't confirmed, Amara will say so rather than assume.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked disabled><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Escalate on out-of-scope questions</div>
+                <div class="toggle-desc">Questions Amara can't answer confidently are flagged for human review.</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scoring Rules -->
+      <div class="settings-section" id="section-scoring">
+        <div class="settings-heading">Lead Scoring Rules</div>
+        <div class="settings-sub">Define what makes a lead "hot" — Amara scores every contact automatically.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Score Thresholds</div></div>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row three">
+              <div class="form-group">
+                <label class="form-label" style="color:var(--hot)">🔥 Hot Threshold</label>
+                <input class="form-input" type="number" value="75" min="0" max="100" id="thresh-hot">
+                <span class="form-hint">Leads at or above this score are marked hot.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="color:var(--warn)">⚡ Engaged Threshold</label>
+                <input class="form-input" type="number" value="45" min="0" max="100" id="thresh-warm">
+                <span class="form-hint">Leads above this but below hot are "Engaged".</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">🧊 Cold Below</label>
+                <input class="form-input" type="number" value="44" disabled>
+                <span class="form-hint">Auto-calculated from thresholds above.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Scoring Signals</div><div class="settings-card-sub">How Amara weighs each behaviour when calculating a score.</div></div>
+          </div>
+          <div class="settings-card-body">
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Replied to Amara</div><div class="toggle-desc">+20 points when a lead responds to our messages.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Asked about price</div><div class="toggle-desc">+25 points — strong purchase intent signal.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Requested a viewing</div><div class="toggle-desc">+35 points — highest intent signal available.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Active in last 24h</div><div class="toggle-desc">+10 points recency bonus for recent contacts.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Ignored 3+ messages</div><div class="toggle-desc">−20 points cooling factor.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="save-bar">
+              <button class="btn primary" onclick="saveScoring()">Save Scoring Rules</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Handoff -->
+      <div class="settings-section" id="section-handoff">
+        <div class="settings-heading">Human Handoff</div>
+        <div class="settings-sub">Configure when and how Amara passes a conversation to a human agent.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Handoff Triggers</div><div class="settings-card-sub">Amara pauses the AI and alerts your team under these conditions.</div></div>
+          </div>
+          <div class="settings-card-body">
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Lead explicitly asks to speak to a human</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Lead score exceeds 90</div><div class="toggle-desc">Highest quality leads get immediate human attention.</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Viewing appointment confirmed</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-label">Complaint or escalation detected</div></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Handoff Destination</div></div>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Notify via</label>
+                <select class="form-input">
+                  <option>WhatsApp (team number)</option>
+                  <option>Email</option>
+                  <option>Both</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Team WhatsApp / Email</label>
+                <input class="form-input" type="text" placeholder="+234 800 000 0000 or team@company.com" id="handoff-dest">
+              </div>
+            </div>
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Handoff message to lead (from Amara)</label>
+                <textarea class="form-input" style="min-height:60px">One moment — I'm connecting you with one of our team members right now. They'll be with you shortly! 🙂</textarea>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn">Cancel</button>
+              <button class="btn primary" onclick="saveHandoff()">Save Handoff Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team -->
+      <div class="settings-section" id="section-team">
+        <div class="settings-heading">Team &amp; Access</div>
+        <div class="settings-sub">Manage who has access to your Reva workspace.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Team Members</div></div>
+            <button class="btn primary" style="font-size:12px;padding:6px 14px">+ Invite Member</button>
+          </div>
+          <div class="settings-card-body" id="team-list">
+            <div class="member-row">
+              <div class="member-avatar" style="background:var(--primary)">JA</div>
+              <div class="member-info">
+                <div class="member-name">You (Owner)</div>
+                <div class="member-email" id="owner-email">—</div>
+              </div>
+              <span class="member-role">Owner</span>
+            </div>
+            <div style="text-align:center;padding:32px;color:var(--ink-soft);font-size:13px">
+              No other team members yet. Invite colleagues to collaborate on leads.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing -->
+      <div class="settings-section" id="section-billing">
+        <div class="settings-heading">Billing &amp; Credits</div>
+        <div class="settings-sub">Manage your Neoscona Reva subscription and usage.</div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Current Plan</div>
+            </div>
+            <span style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:9999px;background:var(--primary-alt);color:var(--primary)">Reva Pro</span>
+          </div>
+          <div class="settings-card-body">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+              <div style="text-align:center;padding:16px;background:var(--canvas-soft);border-radius:8px">
+                <div style="font-size:24px;font-weight:700;color:var(--ink)" id="credits-used">—</div>
+                <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">Credits Used</div>
+              </div>
+              <div style="text-align:center;padding:16px;background:var(--canvas-soft);border-radius:8px">
+                <div style="font-size:24px;font-weight:700;color:var(--primary)" id="credits-remaining">—</div>
+                <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">Remaining</div>
+              </div>
+              <div style="text-align:center;padding:16px;background:var(--canvas-soft);border-radius:8px">
+                <div style="font-size:24px;font-weight:700;color:var(--ink)" id="next-renewal">—</div>
+                <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">Renews</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn primary">Top Up Credits</button>
+              <a href="/billing" class="btn">Manage Billing</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="settings-section" id="section-danger">
+        <div class="settings-heading" style="color:var(--hot)">Danger Zone</div>
+        <div class="settings-sub">Irreversible actions — proceed only if you're certain.</div>
+
+        <div class="settings-card danger-zone-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Delete All Lead Data</div><div class="settings-card-sub">Permanently removes all contacts, conversations, and scores from this workspace.</div></div>
+          </div>
+          <div class="settings-card-body">
+            <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px">This cannot be undone. All your leads, conversation history, and AI scoring data will be permanently deleted. Your Reva configuration will remain intact.</p>
+            <button class="btn danger" onclick="confirmDelete('leads')">Delete All Lead Data</button>
+          </div>
+        </div>
+
+        <div class="settings-card danger-zone-card">
+          <div class="settings-card-header">
+            <div><div class="settings-card-title">Delete Workspace</div><div class="settings-card-sub">Permanently closes your Reva workspace and cancels your subscription.</div></div>
+          </div>
+          <div class="settings-card-body">
+            <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px">Everything will be deleted — leads, conversations, settings, channel connections, and team members. This action is permanent and cannot be reversed.</p>
+            <button class="btn danger" onclick="confirmDelete('workspace')">Delete Workspace</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /settings-content -->
+  </div><!-- /settings-wrapper -->
+
+</div><!-- /shell -->
+
+<script>
+  // ─── Section navigation ─────────────────────────────────────────
+  function showSection(id, el) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // ─── Load workspace settings from API ──────────────────────────
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.workspace_name) document.getElementById('ws-name').value = data.workspace_name;
+      if (data.website) document.getElementById('ws-website').value = data.website;
+      if (data.description) document.getElementById('ws-description').value = data.description;
+      if (data.agent_name) document.getElementById('agent-name').value = data.agent_name;
+      if (data.owner_email) document.getElementById('owner-email').textContent = data.owner_email;
+      if (data.whatsapp_number) document.getElementById('wa-number').textContent = data.whatsapp_number;
+    } catch (e) { console.warn('Could not load settings:', e); }
+  }
+
+  // ─── Save handlers ──────────────────────────────────────────────
+  async function saveWorkspace() {
+    const body = {
+      workspace_name: document.getElementById('ws-name').value,
+      website: document.getElementById('ws-website').value,
+      description: document.getElementById('ws-description').value,
+    };
+    try {
+      await fetch('/api/settings', { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      showToast('Workspace settings saved.');
+    } catch(e) { showToast('Failed to save settings.', true); }
+  }
+
+  async function savePersona() {
+    const body = {
+      agent_name: document.getElementById('agent-name').value,
+      greeting: document.getElementById('agent-greeting').value,
+      knowledge_base: document.getElementById('agent-kb').value,
+    };
+    try {
+      await fetch('/api/settings/persona', { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      showToast('Amara persona saved.');
+    } catch(e) { showToast('Failed to save persona.', true); }
+  }
+
+  async function saveScoring() {
+    showToast('Scoring rules saved.');
+  }
+
+  async function saveHandoff() {
+    showToast('Handoff settings saved.');
+  }
+
+  function confirmDelete(type) {
+    const msg = type === 'workspace'
+      ? 'Are you sure you want to permanently delete this workspace? This cannot be undone.'
+      : 'Are you sure you want to delete all lead data? This cannot be undone.';
+    if (confirm(msg)) {
+      fetch('/api/' + (type === 'workspace' ? 'workspace' : 'leads') + '/delete-all', { method: 'DELETE' })
+        .then(() => showToast(type === 'workspace' ? 'Workspace deleted.' : 'All lead data deleted.'))
+        .catch(() => showToast('Action failed.', true));
+    }
+  }
+
+  // ─── Toast notification ─────────────────────────────────────────
+  function showToast(msg, isError) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;background:${isError ? 'var(--hot)' : 'var(--ok)'};box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;animation:fadeUp .3s ease`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>

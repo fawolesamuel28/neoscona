@@ -194,6 +194,18 @@ async def reva_console(request: Request):
         return FileResponse(str(dashboard_file))
     return {"error": "Reva Console not found"}
 
+@app.get("/products/reva/hot-leads", response_class=HTMLResponse)
+async def reva_hot_leads(request: Request):
+    if not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "reva_hot_leads.html")
+
+@app.get("/products/reva/settings", response_class=HTMLResponse)
+async def reva_settings(request: Request):
+    if not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "reva_settings.html")
+
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
