@@ -196,13 +196,17 @@ async def reva_console(request: Request):
 
 @app.get("/products/reva/hot-leads", response_class=HTMLResponse)
 async def reva_hot_leads(request: Request):
-    if not page_session_ok(request):
+    # Mirror the console's localhost dev bypass so the sidebar links work locally.
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
         return RedirectResponse(url="/login")
     return render_template(request, "reva_hot_leads.html")
 
 @app.get("/products/reva/settings", response_class=HTMLResponse)
 async def reva_settings(request: Request):
-    if not page_session_ok(request):
+    # Mirror the console's localhost dev bypass so the sidebar links work locally.
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
         return RedirectResponse(url="/login")
     return render_template(request, "reva_settings.html")
 
