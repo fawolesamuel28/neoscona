@@ -1,1799 +1,987 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Leads — Neoscona Reva</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/static/tokens.css" />
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      :root {
-        --sidebar-w: 228px;
-        --topbar-h: 56px;
-        --font-body: "Inter", sans-serif;
-      }
-
-      html,
-      body {
-        height: 100%;
-        background: var(--bg);
-        color: var(--copy);
-        font-family: var(--font-body);
-        font-size: 14px;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      /* ─── LIVE EQUALIZER: neoscona signature ─── */
-      .nd-live {
-        display: inline-flex;
-        align-items: flex-end;
-        gap: 2px;
-        height: 13px;
-        margin-right: 0.5rem;
-        position: relative;
-        top: 1px;
-      }
-      .nd-live i {
-        <script>
-          (() => {
-            const API = "/api";
-            let currentStage = "";
-            let drawerEl = null;
-
-            function qs(sel, ctx = document) {
-              return ctx.querySelector(sel);
-            }
-            function qsa(sel, ctx = document) {
-              return Array.from(ctx.querySelectorAll(sel));
-            }
-
-            async function fetchStats() {
-              try {
-                const res = await fetch(`${API}/stats`, { credentials: "include" });
-                if (!res.ok) return;
-                const data = await res.json();
-                renderStats(data);
-              } catch (e) {
-                console.warn("Failed to fetch stats", e);
-              }
-            }
-
-            function renderStats(s) {
-              qs("#badge-all").textContent = s.total ?? 0;
-              qs("#badge-hot").textContent = s.hot_leads ?? 0;
-              if (qs("#badge-engaged")) qs("#badge-engaged").textContent = s.qualified ?? 0;
-              if (qs("#badge-new")) qs("#badge-new").textContent = s.new ?? 0;
-
-              const statValues = qsa(".stat-row .stat-card .stat-value");
-              if (statValues[0]) statValues[0].textContent = s.total ?? 0;
-              if (statValues[1]) statValues[1].textContent = s.hot_leads ?? 0;
-              if (statValues[2]) statValues[2].textContent = (s.conversion_rate ?? 0) + "%";
-              if (statValues[3]) statValues[3].textContent = "$" + (s.pipeline_value ?? 0);
-
-              const sub = qs(".page-subtitle");
-              if (sub) sub.textContent = `${s.total ?? 0} contacts · AI-scored · updated just now`;
-
-              const fills = qsa(".funnel .funnel-fill");
-              if (fills.length >= 5) {
-                const total = s.total || 1;
-                fills[0].style.width = `${Math.round(((s.new || 0) / total) * 100)}%`;
-                fills[1].style.width = `${Math.round(((s.qualified || 0) / total) * 100)}%`;
-                fills[2].style.width = `${Math.round(((s.qualified || 0) / total) * 100)}%`;
-                fills[3].style.width = `${Math.round(((s.booked || 0) / total) * 100)}%`;
-                fills[4].style.width = `${Math.round(((s.booked || 0) / total) * 100)}%`;
-              }
-            }
-
-            async function fetchLeads(stage) {
-              try {
-                const url = new URL(`${API}/leads`, location.origin);
-                if (stage && stage !== "__hot") url.searchParams.set("stage", stage);
-                const res = await fetch(url.toString(), { credentials: "include" });
-                if (!res.ok) return [];
-                const data = await res.json();
-                let leads = data.leads || [];
-                if (stage === "__hot") leads = leads.filter((l) => (l.seriousness_score || 0) >= 8);
-                return leads;
-              } catch (e) {
-                console.warn("Failed to fetch leads", e);
-                return [];
-              }
-            }
-
-            function renderLeads(leads) {
-              const tbody = qs("#leads-body");
-              if (!tbody) return;
-              tbody.innerHTML = "";
-              if (!leads || leads.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--ink-soft);">No leads yet. Your AI workers will appear here once they start engaging.</td></tr>`;
-                return;
-              }
-              for (const lead of leads) {
-                const tr = document.createElement("tr");
-                tr.dataset.phone = lead.phone_number || "";
-                tr.innerHTML = `
-                  <td>
-                    <div class="lead-cell">
-                      <div class="lead-avatar">${(lead.name || lead.phone_number || "--").slice(0, 2).toUpperCase()}</div>
-                      <div>
-                        <div class="lead-name">${escapeHtml(lead.name || lead.phone_number || "Unknown")}</div>
-                        <div class="lead-co">${escapeHtml(lead.source || "")}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="score-wrap">
-                      <div class="score-track"><div class="score-fill" style="width:${((lead.seriousness_score || 5) / 10) * 100}%;background:var(--primary);"></div></div>
-                      <div class="score-num">${lead.seriousness_score ?? "-"}</div>
-                    </div>
-                  </td>
-                  <td><div class="stage-pill ${escapeHtml(lead.stage || "new")}">${escapeHtml(cap(lead.stage || "new"))}</div></td>
-                  <td><div class="signal-bars">${renderIntent(lead)}</div></td>
-                  <td>${escapeHtml(lead.last_message_at || lead.created_at || "")}</td>
-                  <td><div class="row-action">View</div></td>
-                `;
-                tbody.appendChild(tr);
-              }
-            }
-
-            function renderIntent(lead) {
-              const lvl = Math.min(10, lead.seriousness_score || 5);
-              const bars = [];
-              for (let i = 0; i < 3; i++) {
-                const cls = i === 2 ? "hot-bar" : lvl >= 7 ? "lit" : lvl >= 4 ? "mid" : "";
-                bars.push(`<div class="signal-bar ${cls}"></div>`);
-              }
-              return bars.join("");
-            }
-
-            function renderActivityFeed(leads) {
-              const feed = qs("#activity-feed");
-              if (!feed) return;
-              feed.innerHTML = "";
-              const sorted = (leads || []).slice().sort((a, b) => {
-                const ta = a.last_message_at || a.created_at || "";
-                const tb = b.last_message_at || b.created_at || "";
-                return tb.localeCompare(ta);
-              });
-              const top = sorted.slice(0, 6);
-              if (top.length === 0) {
-                feed.innerHTML = `<div style="padding:20px;text-align:center;font-size:11px;color:var(--ink-soft);">No recent activity.</div>`;
-                return;
-              }
-              for (const l of top) {
-                const item = document.createElement('div');
-                item.className = 'feed-item';
-                item.dataset.phone = l.phone_number || '';
-                item.innerHTML = `
-                  <div class="feed-avatar">${escapeHtml((l.name||l.phone_number||'--').slice(0,2).toUpperCase())}</div>
-                  <div style="flex:1">
-                    <div class="feed-text"><strong>${escapeHtml(l.name || l.phone_number || 'Unknown')}</strong> · ${escapeHtml(l.source || '')}</div>
-                    <div class="feed-time">${escapeHtml(l.last_message_at || l.created_at || '')}</div>
-                  </div>
-                `;
-                item.addEventListener('click', () => openDrawer(item.dataset.phone));
-                feed.appendChild(item);
-              }
-            }
-
-            function cap(s) { return (s || '').replace(/_/g, ' '); }
-            function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
-
-            async function openDrawer(phone) {
-              if (!phone) return;
-              if (!drawerEl) createDrawer();
-              qs('.drawer-loading', drawerEl).style.display = 'block';
-              qs('.drawer-body', drawerEl).style.opacity = '0.3';
-              try {
-                const res = await fetch(`${API}/leads/${encodeURIComponent(phone)}`, { credentials: 'include' });
-                if (!res.ok) {
-                  qs('.drawer-body', drawerEl).innerHTML = '<div style="padding:16px;color:var(--ink-soft)">Failed to load lead.</div>';
-                } else {
-                  const data = await res.json();
-                  const lead = data.lead || {};
-                  const conv = data.conversation || [];
-                  renderDrawer(lead, conv);
-                }
-              } catch (e) {
-                console.warn('Failed to fetch lead', e);
-                qs('.drawer-body', drawerEl).innerHTML = '<div style="padding:16px;color:var(--ink-soft)">Failed to load lead.</div>';
-              } finally {
-                qs('.drawer-loading', drawerEl).style.display = 'none';
-                qs('.drawer-body', drawerEl).style.opacity = '1';
-              }
-              drawerEl.classList.add('open');
-            }
-
-            function renderDrawer(lead, conv) {
-              if (!drawerEl) return;
-              qs('.drawer-title', drawerEl).textContent = lead.name || lead.phone_number || 'Lead';
-              const meta = `
-                <div style="padding:12px 16px;border-bottom:1px solid var(--hairline);">
-                  <div style="font-size:13px;font-weight:600">${escapeHtml(lead.name || lead.phone_number || '')}</div>
-                  <div style="font-size:12px;color:var(--ink-muted)">${escapeHtml(lead.source || '')} · Stage: ${escapeHtml(lead.stage||'')}</div>
-                </div>`;
-              const convHtml = conv.length ? conv.map(c => `<div style="padding:10px 16px;border-bottom:1px solid var(--hairline-soft)"><div style="font-size:12px;color:var(--ink-muted)">${escapeHtml(c.role)}</div><div style="margin-top:6px">${escapeHtml(c.message)}</div><div class="feed-time">${escapeHtml(c.created_at||'')}</div></div>`).join('') : '<div style="padding:16px;color:var(--ink-soft)">No conversation yet.</div>';
-              qs('.drawer-body', drawerEl).innerHTML = meta + `<div style="max-height:400px;overflow:auto">${convHtml}</div>`;
-            }
-
-            function createDrawer() {
-              drawerEl = document.createElement('div');
-              drawerEl.className = 'lead-drawer';
-              drawerEl.style.position = 'fixed';
-              drawerEl.style.top = '0';
-              drawerEl.style.right = '0';
-              drawerEl.style.width = '420px';
-              drawerEl.style.height = '100%';
-              drawerEl.style.background = 'var(--surface)';
-              drawerEl.style.boxShadow = 'rgba(0,0,0,0.12) -8px 0 24px';
-              drawerEl.style.transform = 'translateX(100%)';
-              drawerEl.style.transition = 'transform .28s ease';
-              drawerEl.style.zIndex = '120';
-              drawerEl.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--hairline);">
-                  <div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:8px;background:var(--primary);"></div><div class="drawer-title" style="font-weight:600"></div></div>
-                  <div style="display:flex;gap:8px;align-items:center"><button class="btn-pill" id="drawer-close">Close</button></div>
-                </div>
-                <div class="drawer-loading" style="display:none;padding:12px;color:var(--ink-soft)">Loading…</div>
-                <div class="drawer-body" style="padding:0 0 40px 0"></div>
-              `;
-              document.body.appendChild(drawerEl);
-              qs('#drawer-close', drawerEl).addEventListener('click', () => { drawerEl.classList.remove('open'); setTimeout(()=>drawerEl.style.transform='translateX(100%)', 300); });
-              // open/close transition
-              const observer = new MutationObserver(() => {
-                if (drawerEl.classList.contains('open')) drawerEl.style.transform = 'translateX(0)';
-                else drawerEl.style.transform = 'translateX(100%)';
-              });
-              observer.observe(drawerEl, { attributes: true });
-            }
-
-            // delegate view clicks from table
-            (function setupTableClicks(){
-              const tbody = qs('#leads-body');
-              if (!tbody) return;
-              tbody.addEventListener('click', (ev) => {
-                const btn = ev.target.closest('.row-action');
-                if (!btn) return;
-                const tr = btn.closest('tr');
-                const phone = tr?.dataset?.phone;
-                if (phone) openDrawer(phone);
-              });
-            })();
-
-            function wireNav() { qsa('.sidebar .nav-item').forEach((el) => { el.addEventListener('click', async (ev) => { ev.preventDefault(); const stage = el.getAttribute('data-stage') || ''; await load(stage); }); }); }
-
-            async function load(stage) {
-              currentStage = stage ?? '';
-              qsa('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
-              const sel = stage === '' ? '#nav-all' : stage === '__hot' ? '#nav-hot' : stage === 'new' ? '#nav-new' : '#nav-engaged';
-              const el = qs(sel); if (el) el.classList.add('active');
-              const leads = await fetchLeads(stage);
-              renderLeads(leads);
-              renderActivityFeed(leads);
-            }
-
-            // initial load
-            fetchStats(); load(''); wireNav();
-
-            // periodic refresh
-            setInterval(() => { fetchStats(); load(currentStage); }, 30000);
-          })();
-        </script>
-        gap: 9px;
-        padding: 7px 10px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 400;
-        color: var(--ink-body);
-        transition: background 0.1s;
-        text-decoration: none;
-        position: relative;
-      }
-      .nav-item:hover {
-        background: var(--canvas-soft);
-      }
-      .nav-item.active {
-        background: var(--canvas-soft);
-        color: var(--ink);
-        font-weight: 500;
-      }
-      .nav-item.active::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 3px;
-        height: 16px;
-        border-radius: 9999px;
-        background: var(--ink);
-      }
-      .nav-item svg {
-        color: var(--ink-muted);
-        flex-shrink: 0;
-      }
-      .nav-item.active svg {
-        color: var(--ink);
-      }
-
-      .nav-badge {
-        margin-left: auto;
-        font-size: 10px;
-        font-weight: 500;
-        background: var(--ink);
-        color: #fff;
-        padding: 1px 6px;
-        border-radius: 9999px;
-        min-width: 18px;
-        text-align: center;
-      }
-
-      .nav-divider {
-        height: 1px;
-        background: var(--hairline);
-        margin: 4px 12px 12px;
-      }
-
-      /* score dot in nav */
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
-      .dot.hot {
-        background: var(--hot);
-        box-shadow: 0 0 6px var(--hot);
-      }
-      .dot.warm {
-        background: var(--warn);
-      }
-      .dot.cool {
-        background: var(--sky);
-      }
-
-      /* ─── MAIN CONTENT ────────────────────────────────────────── */
-      .main {
-        overflow-y: auto;
-        padding: 28px 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        background: var(--canvas);
-      }
-
-      /* Page heading */
-      .page-header {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-      }
-      .page-title {
-        font-family: var(--font-display);
-        font-size: 32px;
-        font-weight: 300;
-        line-height: 1.1;
-        letter-spacing: -0.02em;
-        color: var(--ink);
-      }
-      .page-subtitle {
-        font-size: 13px;
-        color: var(--ink-muted);
-        margin-top: 4px;
-        letter-spacing: 0.01em;
-      }
-      .header-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      /* ─── STAT CARDS ──────────────────────────────────────────── */
-      .stat-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-      }
-
-      .stat-card {
-        background: var(--surface);
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: var(--shadow-card);
-        position: relative;
-        overflow: hidden;
-        transition: box-shadow 0.2s;
-      }
-      .stat-card:hover {
-        box-shadow:
-          rgba(0, 0, 0, 0.08) 0 0 0 1px,
-          rgba(0, 0, 0, 0.06) 0 4px 8px,
-          rgba(0, 0, 0, 0.04) 0 12px 24px;
-      }
-
-      .stat-card .accent-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--primary);
-      }
-
-      .stat-label {
-        font-size: 11px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--ink-soft);
-        margin-bottom: 10px;
-      }
-
-      .stat-value {
-        font-family: var(--font-display);
-        font-size: 36px;
-        font-weight: 300;
-        line-height: 1;
-        letter-spacing: -0.02em;
-        color: var(--ink);
-        margin-bottom: 6px;
-      }
-
-      .stat-delta {
-        font-size: 12px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 3px;
-      }
-      .stat-delta.up {
-        color: var(--ok);
-      }
-      .stat-delta.down {
-        color: var(--hot);
-      }
-      .stat-delta span {
-        color: var(--ink-muted);
-        font-weight: 400;
-      }
-
-      /* spark line – pure CSS */
-      .spark {
-        height: 28px;
-        margin-top: 12px;
-        display: flex;
-        align-items: flex-end;
-        gap: 2px;
-      }
-      .spark-bar {
-        flex: 1;
-        border-radius: 2px;
-        background: var(--hairline);
-        transition: background 0.2s;
-      }
-      .spark-bar.hi {
-        background: var(--primary);
-        opacity: 0.6;
-      }
-      .spark-bar.last {
-        background: var(--primary);
-        opacity: 1;
-      }
-
-      /* ─── TWO-COL CONTENT ROW ─────────────────────────────────── */
-      .content-row {
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        gap: 16px;
-        align-items: start;
-      }
-
-      /* ─── LEAD TABLE ──────────────────────────────────────────── */
-      .card {
-        background: var(--surface);
-        border-radius: 16px;
-        box-shadow: var(--shadow-card);
-        overflow: hidden;
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--hairline);
-      }
-      .card-title {
-        font-size: 13px;
-        font-weight: 500;
-        letter-spacing: 0.01em;
-        color: var(--ink);
-      }
-      .card-meta {
-        font-size: 12px;
-        color: var(--ink-soft);
-      }
-
-      .filter-row {
-        display: flex;
-        gap: 6px;
-        padding: 12px 20px;
-        border-bottom: 1px solid var(--hairline);
-        overflow-x: auto;
-      }
-      .filter-chip {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition:
-          background 0.1s,
-          box-shadow 0.1s;
-        white-space: nowrap;
-        border: none;
-        background: var(--canvas-soft);
-        color: var(--ink-muted);
-        box-shadow: var(--shadow-inset);
-      }
-      .filter-chip:hover {
-        background: var(--hairline);
-        color: var(--ink);
-      }
-      .filter-chip.active {
-        background: var(--ink);
-        color: #fff;
-        box-shadow:
-          rgba(0, 0, 0, 0.4) 0 0 1px,
-          rgba(0, 0, 0, 0.06) 0 2px 4px;
-      }
-
-      .table-wrap {
-        overflow-x: auto;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      thead th {
-        text-align: left;
-        padding: 10px 12px;
-        font-size: 11px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--ink-soft);
-        border-bottom: 1px solid var(--hairline);
-        white-space: nowrap;
-      }
-      thead th:first-child {
-        padding-left: 20px;
-      }
-      thead th:last-child {
-        padding-right: 20px;
-      }
-
-      tbody tr {
-        transition: background 0.1s;
-        cursor: pointer;
-      }
-      tbody tr:hover {
-        background: var(--canvas-soft);
-      }
-      tbody tr + tr td {
-        border-top: 1px solid var(--hairline-soft);
-      }
-
-      td {
-        padding: 11px 12px;
-        vertical-align: middle;
-      }
-      td:first-child {
-        padding-left: 20px;
-      }
-      td:last-child {
-        padding-right: 20px;
-      }
-
-      .lead-cell {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .lead-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        font-size: 11px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--shadow-inset);
-      }
-      .lead-name {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--ink);
-      }
-      .lead-co {
-        font-size: 11px;
-        color: var(--ink-muted);
-      }
-
-      /* AI score gauge */
-      .score-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .score-track {
-        width: 56px;
-        height: 4px;
-        border-radius: 9999px;
-        background: var(--hairline);
-        position: relative;
-        overflow: hidden;
-      }
-      .score-fill {
-        height: 100%;
-        border-radius: 9999px;
-        position: absolute;
-        left: 0;
-        top: 0;
-      }
-      .score-num {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        font-weight: 400;
-        color: var(--ink-muted);
-      }
-
-      /* stage pill */
-      .stage-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 500;
-      }
-      .stage-pill.new {
-        background: rgba(168, 200, 232, 0.25);
-        color: var(--sky);
-      }
-      .stage-pill.qual {
-        background: rgba(167, 229, 211, 0.25);
-        color: var(--ok);
-      }
-      .stage-pill.engaged {
-        background: rgba(200, 184, 224, 0.25);
-        color: #7c3aed;
-      }
-      .stage-pill.negotiat {
-        background: rgba(244, 197, 168, 0.25);
-        color: var(--warn);
-      }
-      .stage-pill.closed {
-        background: rgba(220, 38, 38, 0.08);
-        color: var(--hot);
-      }
-
-      /* intent signal */
-      .signal-bars {
-        display: flex;
-        gap: 2px;
-        align-items: flex-end;
-      }
-      .signal-bar {
-        width: 4px;
-        border-radius: 1px;
-        background: var(--hairline);
-      }
-      .signal-bar.lit {
-        background: var(--live);
-      }
-      .signal-bar.mid {
-        background: var(--warn);
-      }
-      .signal-bar.hot-bar {
-        background: var(--hot);
-      }
-
-      /* row action */
-      .row-action {
-        font-size: 11px;
-        font-weight: 500;
-        color: var(--ink-muted);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-      }
-      .row-action svg {
-        flex-shrink: 0;
-      }
-
-      .time-label {
-        font-size: 11px;
-        color: var(--ink-soft);
-        font-family: var(--font-mono);
-      }
-
-      /* ─── SIDE PANEL ──────────────────────────────────────────── */
-      .side-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .side-card {
-        background: var(--surface);
-        border-radius: 16px;
-        box-shadow: var(--shadow-card);
-        overflow: hidden;
-      }
-
-      /* AI insight */
-      .insight-head {
-        padding: 14px 16px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .ai-icon {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: var(--ink);
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .ai-icon::after {
-        content: "";
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--primary);
-        box-shadow: 0 0 8px var(--primary);
-        animation: live-eq 1.1s ease-in-out infinite alternate;
-      }
-      .insight-title {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--ink);
-      }
-      .insight-body {
-        padding: 10px 16px 14px;
-        font-size: 12px;
-        line-height: 1.55;
-        color: var(--ink-body);
-      }
-      .insight-body strong {
-        color: var(--ink);
-        font-weight: 500;
-      }
-
-      .insight-chips {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        padding: 0 16px 14px;
-      }
-      .i-chip {
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 500;
-        background: var(--canvas-soft);
-        color: var(--ink-muted);
-        box-shadow: var(--shadow-inset);
-      }
-
-      /* pipeline funnel */
-      .funnel {
-        padding: 14px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .funnel-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .funnel-label {
-        font-size: 12px;
-        color: var(--ink-muted);
-        width: 72px;
-        flex-shrink: 0;
-      }
-      .funnel-track {
-        flex: 1;
-        height: 6px;
-        border-radius: 9999px;
-        background: var(--hairline);
-        overflow: hidden;
-      }
-      .funnel-fill {
-        height: 100%;
-        border-radius: 9999px;
-      }
-      .funnel-n {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--ink-muted);
-        text-align: right;
-        width: 24px;
-      }
-
-      /* activity feed */
-      .feed {
-        padding: 4px 0;
-      }
-      .feed-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 10px 16px;
-        transition: background 0.1s;
-        cursor: pointer;
-      }
-      .feed-item:hover {
-        background: var(--canvas-soft);
-      }
-      .feed-avatar {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        font-size: 10px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--shadow-inset);
-      }
-      .feed-text {
-        font-size: 12px;
-        line-height: 1.45;
-        color: var(--ink-body);
-      }
-      .feed-text strong {
-        color: var(--ink);
-        font-weight: 500;
-      }
-      .feed-time {
-        font-size: 10px;
-        color: var(--ink-soft);
-        margin-top: 2px;
-        font-family: var(--font-mono);
-      }
-
-      .feed-divider {
-        height: 1px;
-        background: var(--hairline-soft);
-        margin: 0 16px;
-      }
-
-      /* ─── BOTTOM CHART ROW ────────────────────────────────────── */
-      .chart-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .chart-area {
-        padding: 16px 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .mini-chart {
-        display: flex;
-        align-items: flex-end;
-        gap: 3px;
-        height: 60px;
-      }
-      .mc-bar {
-        flex: 1;
-        border-radius: 3px 3px 0 0;
-        background: var(--hairline);
-        transition: background 0.2s;
-        cursor: pointer;
-      }
-      .mc-bar:hover {
-        background: var(--ink-soft);
-      }
-      .mc-bar.current {
-        background: var(--primary);
-        opacity: 0.9;
-      }
-
-      .chart-legend {
-        display: flex;
-        gap: 14px;
-      }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11px;
-        color: var(--ink-muted);
-      }
-      .legend-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-      }
-
-      /* Source donut - CSS only */
-      .donut-wrap {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 0 20px 16px;
-      }
-      .donut {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: conic-gradient(
-          var(--primary) 0deg 126deg,
-          var(--primary-alt) 126deg 216deg,
-          var(--border) 216deg 288deg,
-          var(--primary-light) 288deg 360deg
-        );
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        flex-shrink: 0;
-      }
-      .donut::after {
-        content: "";
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--surface);
-        position: absolute;
-      }
-      .donut-sources {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .ds-row {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        font-size: 11px;
-      }
-      .ds-swatch {
-        width: 8px;
-        height: 8px;
-        border-radius: 2px;
-        flex-shrink: 0;
-      }
-      .ds-label {
-        color: var(--ink-muted);
-        flex: 1;
-      }
-      .ds-pct {
-        font-family: var(--font-mono);
-        color: var(--ink);
-        font-weight: 400;
-      }
-
-      /* ─── ANIMATIONS ──────────────────────────────────────────── */
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .stat-card {
-        animation: fadeUp 0.4s ease both;
-      }
-      .stat-card:nth-child(1) {
-        animation-delay: 0.05s;
-      }
-      .stat-card:nth-child(2) {
-        animation-delay: 0.1s;
-      }
-      .stat-card:nth-child(3) {
-        animation-delay: 0.15s;
-      }
-      .stat-card:nth-child(4) {
-        animation-delay: 0.2s;
-      }
-      .card {
-        animation: fadeUp 0.4s ease 0.25s both;
-      }
-      .side-card {
-        animation: fadeUp 0.4s ease 0.3s both;
-      }
-
-      /* ─── SCROLLBARS ──────────────────────────────────────────── */
-      ::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--hairline);
-        border-radius: 9999px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="shell">
-      <!-- TOP BAR -->
-      <header class="topbar">
-        <a href="/dashboard" class="topbar-brand" style="text-decoration: none">
-          <div class="nd-live"><i></i><i></i><i></i></div>
-          <img
-            src="/static/images/neoscona-logo.png"
-            alt="Neoscona"
-            style="height: 32px; object-fit: contain"
-          />
-        </a>
-        <div class="topbar-center">
-          <div class="search-wrap">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <circle
-                cx="6.5"
-                cy="6.5"
-                r="5.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-              />
-              <path
-                d="M11 11L14.5 14.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-                stroke-linecap="round"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search leads, companies, contacts…"
-            />
-            <span
-              style="
-                font-size: 10px;
-                color: var(--ink-soft);
-                font-family: var(--font-mono);
-                white-space: nowrap;
-              "
-              >⌘K</span
-            >
-          </div>
-        </div>
-        <div class="topbar-right" style="margin-left: auto">
-          <button class="btn-pill ghost" style="gap: 4px">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M8 1v14M1 8h14"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-            Import
-          </button>
-          <button class="btn-pill primary">+ Add lead</button>
-          <div class="avatar" title="Your workspace">MK</div>
-        </div>
-      </header>
-
-      <!-- SIDEBAR -->
-      <aside class="sidebar">
-        <div class="nav-section">
-          <div class="nav-label">Pipeline</div>
-          <a
-            href="/products/reva/console"
-            class="nav-item active"
-            id="nav-all"
-            data-stage=""
-          >
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >dashboard</span
-            >
-            All Leads
-            <span class="nav-badge" id="badge-all">0</span>
-          </a>
-          <a href="#" class="nav-item" id="nav-hot" data-stage="__hot">
-            <div class="dot hot"></div>
-            Hot Leads
-            <span
-              class="nav-badge"
-              id="badge-hot"
-              style="background: var(--hot)"
-              >0</span
-            >
-          </a>
-          <a href="#" class="nav-item" id="nav-engaged" data-stage="qualified">
-            <div class="dot warm"></div>
-            Engaged
-            <span
-              class="nav-badge"
-              id="badge-engaged"
-              style="display: none"
-            ></span>
-          </a>
-          <a href="#" class="nav-item" id="nav-new" data-stage="new">
-            <div class="dot cool"></div>
-            New Inbound
-            <span class="nav-badge" id="badge-new" style="display: none"></span>
-          </a>
-        </div>
-        <div class="nav-divider"></div>
-        <div class="nav-section">
-          <div class="nav-label">Amara AI</div>
-          <a href="#" class="nav-item">
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >psychology</span
-            >
-            Scoring Agent
-          </a>
-          <a href="#" class="nav-item">
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >campaign</span
-            >
-            Outreach AI
-          </a>
-          <a href="#" class="nav-item">
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >database</span
-            >
-            Enrichment
-          </a>
-        </div>
-        <div class="nav-divider"></div>
-        <div class="nav-section">
-          <div class="nav-label">Workspace</div>
-          <a href="#" class="nav-item">
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >group</span
-            >
-            Team
-          </a>
-          <a href="#" class="nav-item">
-            <span class="material-symbols-outlined" style="font-size: 18px"
-              >settings</span
-            >
-            Settings
-          </a>
-        </div>
-
-        <!-- bottom credit -->
-        <div
-          style="
-            margin-top: auto;
-            padding: 16px 20px;
-            font-size: 11px;
-            color: var(--ink-soft);
-          "
-        >
-          <div style="display: flex; align-items: center; gap: 6px">
-            <div
-              style="
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background: var(--ok);
-              "
-            ></div>
-            AI agents running
-          </div>
-        </div>
-      </aside>
-
-      <!-- MAIN -->
-      <main class="main">
-        <!-- PAGE HEADER -->
-        <div class="page-header">
-          <div>
-            <div class="page-title">All Leads</div>
-            <div class="page-subtitle">
-              0 contacts · AI-scored · updated just now
-            </div>
-          </div>
-          <div class="header-actions">
-            <button class="btn-pill ghost">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M2 4h12M4 8h8M6 12h4"
-                  stroke="currentColor"
-                  stroke-width="1.4"
-                  stroke-linecap="round"
-                />
-              </svg>
-              Filters
-            </button>
-            <button class="btn-pill warm">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M8 1v14M1 8h14"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                />
-              </svg>
-              Run outreach
-            </button>
-          </div>
-        </div>
-
-        <!-- STAT CARDS -->
-        <div class="stat-row">
-          <!-- 1 -->
-          <div class="stat-card">
-            <div
-              class="accent-bar"
-              style="
-                background: linear-gradient(
-                  90deg,
-                  var(--grad-mint),
-                  var(--grad-sky)
-                );
-              "
-            ></div>
-            <div class="stat-label">Total Leads</div>
-            <div class="stat-value">0</div>
-            <div class="stat-delta up">↑ 0% <span>vs last week</span></div>
-            <div class="spark">
-              <div class="spark-bar" style="height: 35%"></div>
-              <div class="spark-bar" style="height: 45%"></div>
-              <div class="spark-bar" style="height: 38%"></div>
-              <div class="spark-bar hi" style="height: 60%"></div>
-              <div class="spark-bar" style="height: 52%"></div>
-              <div class="spark-bar hi" style="height: 72%"></div>
-              <div class="spark-bar" style="height: 65%"></div>
-              <div class="spark-bar last" style="height: 100%"></div>
-            </div>
-          </div>
-          <!-- 2 -->
-          <div class="stat-card">
-            <div
-              class="accent-bar"
-              style="
-                background: linear-gradient(
-                  90deg,
-                  var(--grad-peach),
-                  var(--grad-rose)
-                );
-              "
-            ></div>
-            <div class="stat-label">Hot Leads</div>
-            <div class="stat-value">0</div>
-            <div class="stat-delta up">↑ 0 <span>new this week</span></div>
-            <div class="spark">
-              <div class="spark-bar" style="height: 40%"></div>
-              <div class="spark-bar" style="height: 55%"></div>
-              <div class="spark-bar hi" style="height: 70%"></div>
-              <div class="spark-bar" style="height: 50%"></div>
-              <div class="spark-bar" style="height: 60%"></div>
-              <div class="spark-bar" style="height: 45%"></div>
-              <div class="spark-bar hi" style="height: 80%"></div>
-              <div class="spark-bar last" style="height: 95%"></div>
-            </div>
-          </div>
-          <!-- 3 -->
-          <div class="stat-card">
-            <div
-              class="accent-bar"
-              style="
-                background: linear-gradient(
-                  90deg,
-                  var(--grad-lav),
-                  var(--grad-rose)
-                );
-              "
-            ></div>
-            <div class="stat-label">Conversion Rate</div>
-            <div class="stat-value">0%</div>
-            <div class="stat-delta">0% <span>vs last week</span></div>
-            <div class="spark">
-              <div class="spark-bar hi" style="height: 80%"></div>
-              <div class="spark-bar" style="height: 75%"></div>
-              <div class="spark-bar hi" style="height: 90%"></div>
-              <div class="spark-bar" style="height: 70%"></div>
-              <div class="spark-bar" style="height: 82%"></div>
-              <div class="spark-bar hi" style="height: 78%"></div>
-              <div class="spark-bar" style="height: 65%"></div>
-              <div class="spark-bar last" style="height: 60%"></div>
-            </div>
-          </div>
-          <!-- 4 -->
-          <div class="stat-card">
-            <div
-              class="accent-bar"
-              style="
-                background: linear-gradient(
-                  90deg,
-                  var(--grad-sky),
-                  var(--grad-mint)
-                );
-              "
-            ></div>
-            <div class="stat-label">Pipeline Value</div>
-            <div class="stat-value">$0</div>
-            <div class="stat-delta up">↑ $0 <span>this month</span></div>
-            <div class="spark">
-              <div class="spark-bar" style="height: 30%"></div>
-              <div class="spark-bar" style="height: 40%"></div>
-              <div class="spark-bar" style="height: 55%"></div>
-              <div class="spark-bar hi" style="height: 70%"></div>
-              <div class="spark-bar" style="height: 65%"></div>
-              <div class="spark-bar hi" style="height: 82%"></div>
-              <div class="spark-bar" style="height: 78%"></div>
-              <div class="spark-bar last" style="height: 100%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- MAIN TABLE + SIDE -->
-        <div class="content-row">
-          <!-- LEAD TABLE -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title">Recent Leads</span>
-              <span class="card-meta">Sorted by AI score</span>
-            </div>
-            <div class="filter-row">
-              <button class="filter-chip active">
-                All <span style="opacity: 0.6">0</span>
-              </button>
-              <button class="filter-chip">Hot 🔥 0</button>
-              <button class="filter-chip">New inbound 0</button>
-              <button class="filter-chip">Contacted 0</button>
-              <button class="filter-chip">In negotiation 0</button>
-              <button class="filter-chip">Won ✓</button>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Lead</th>
-                    <th>AI Score</th>
-                    <th>Stage</th>
-                    <th>Intent</th>
-                    <th>Last touched</th>
-                    <th>Next action</th>
-                  </tr>
-                </thead>
-                <tbody id="leads-body">
-                  <tr>
-                    <td
-                      colspan="6"
-                      style="
-                        text-align: center;
-                        padding: 40px;
-                        color: var(--ink-soft);
-                      "
-                    >
-                      No leads yet. Your AI workers will appear here once they
-                      start engaging.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- SIDE PANEL -->
-          <div class="side-panel">
-            <!-- AI Insight Card -->
-            <div class="side-card">
-              <div class="insight-head">
-                <div class="ai-icon"></div>
-                <span class="insight-title">Amara AI · Real-time Insight</span>
-              </div>
-              <div class="insight-body">
-                No insights yet. Amara is monitoring your channels for potential
-                leads.
-              </div>
-              <div class="insight-chips" style="display: none"></div>
-            </div>
-
-            <!-- Pipeline Funnel -->
-            <div class="side-card">
-              <div class="card-header">
-                <span class="card-title">Pipeline</span>
-                <span class="card-meta">This month</span>
-              </div>
-              <div class="funnel">
-                <div class="funnel-row">
-                  <span class="funnel-label" style="color: var(--sky)"
-                    >New</span
-                  >
-                  <div class="funnel-track">
-                    <div
-                      class="funnel-fill"
-                      style="width: 0%; background: var(--sky); opacity: 0.6"
-                    ></div>
-                  </div>
-                  <span class="funnel-n">0</span>
-                </div>
-                <div class="funnel-row">
-                  <span class="funnel-label" style="color: var(--ink-muted)"
-                    >Qualified</span
-                  >
-                  <div class="funnel-track">
-                    <div
-                      class="funnel-fill"
-                      style="width: 0%; background: var(--ink-muted)"
-                    ></div>
-                  </div>
-                  <span class="funnel-n">0</span>
-                </div>
-                <div class="funnel-row">
-                  <span class="funnel-label" style="color: #7c3aed"
-                    >Engaged</span
-                  >
-                  <div class="funnel-track">
-                    <div
-                      class="funnel-fill"
-                      style="width: 0%; background: #7c3aed; opacity: 0.7"
-                    ></div>
-                  </div>
-                  <span class="funnel-n">0</span>
-                </div>
-                <div class="funnel-row">
-                  <span class="funnel-label" style="color: var(--warn)"
-                    >Negotiat.</span
-                  >
-                  <div class="funnel-track">
-                    <div
-                      class="funnel-fill"
-                      style="width: 0%; background: var(--warn)"
-                    ></div>
-                  </div>
-                  <span class="funnel-n">0</span>
-                </div>
-                <div class="funnel-row">
-                  <span class="funnel-label" style="color: var(--ok)">Won</span>
-                  <div class="funnel-track">
-                    <div
-                      class="funnel-fill"
-                      style="width: 0%; background: var(--ok)"
-                    ></div>
-                  </div>
-                  <span class="funnel-n">0</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Activity Feed -->
-            <div class="side-card">
-              <div class="card-header">
-                <span class="card-title">Activity</span>
-                <span
-                  class="card-meta"
-                  style="
-                    cursor: pointer;
-                    text-decoration: underline;
-                    text-underline-offset: 2px;
-                  "
-                  >See all</span
-                >
-              </div>
-              <div class="feed" id="activity-feed">
-                <div
-                  style="
-                    padding: 20px;
-                    text-align: center;
-                    font-size: 11px;
-                    color: var(--ink-soft);
-                  "
-                >
-                  No recent activity.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- end content-row -->
-
-        <!-- BOTTOM CHARTS -->
-        <div class="chart-row">
-          <!-- Volume chart -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title">Lead Volume</span>
-              <span class="card-meta">Last 8 weeks</span>
-            </div>
-            <div class="chart-area">
-              <div class="mini-chart">
-                <div class="mc-bar" style="height: 38%"></div>
-                <div class="mc-bar" style="height: 52%"></div>
-                <div class="mc-bar" style="height: 44%"></div>
-                <div class="mc-bar" style="height: 65%"></div>
-                <div class="mc-bar" style="height: 58%"></div>
-                <div class="mc-bar" style="height: 70%"></div>
-                <div class="mc-bar" style="height: 80%"></div>
-                <div class="mc-bar current" style="height: 100%"></div>
-              </div>
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  font-size: 10px;
-                  color: var(--ink-soft);
-                  font-family: var(--font-mono);
-                "
-              >
-                <span>W21</span><span>W22</span><span>W23</span><span>W24</span
-                ><span>W25</span><span>W26</span><span>W27</span
-                ><span>W28</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Source donut -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title">Lead Sources</span>
-              <span class="card-meta">This month</span>
-            </div>
-            <div class="donut-wrap" style="padding-top: 16px">
-              <div class="donut"></div>
-              <div class="donut-sources">
-                <div class="ds-row">
-                  <div class="ds-swatch" style="background: var(--ink)"></div>
-                  <span class="ds-label">Organic Search</span>
-                  <span class="ds-pct">35%</span>
-                </div>
-                <div class="ds-row">
-                  <div
-                    class="ds-swatch"
-                    style="background: var(--ink-soft)"
-                  ></div>
-                  <span class="ds-label">Outbound AI</span>
-                  <span class="ds-pct">25%</span>
-                </div>
-                <div class="ds-row">
-                  <div
-                    class="ds-swatch"
-                    style="background: var(--hairline)"
-                  ></div>
-                  <span class="ds-label">Referrals</span>
-                  <span class="ds-pct">20%</span>
-                </div>
-                <div class="ds-row">
-                  <div
-                    class="ds-swatch"
-                    style="background: var(--grad-sky)"
-                  ></div>
-                  <span class="ds-label">Paid / Ads</span>
-                  <span class="ds-pct">20%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- end chart-row -->
-      </main>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leads — Neoscona Reva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<link rel="stylesheet" href="/static/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sidebar-w: 228px;
+    --topbar-h:  56px;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--copy);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── LIVE EQUALIZER: neoscona signature ─── */
+  .nd-live {
+    display: inline-flex; align-items: flex-end; gap: 2px;
+    height: 13px; margin-right: 0.5rem; position: relative; top: 1px;
+  }
+  .nd-live i {
+    display: block; width: 3px; border-radius: 1px;
+    background: var(--live); transform-origin: bottom;
+    animation: live-eq 1.1s ease-in-out infinite;
+  }
+  .nd-live i:nth-child(1) { height: 6px;  animation-delay: -0.9s; }
+  .nd-live i:nth-child(2) { height: 13px; animation-delay: -0.5s; }
+  .nd-live i:nth-child(3) { height: 9px;  animation-delay: -0.2s; }
+  @keyframes live-eq {
+    0%, 100% { transform: scaleY(0.35); }
+    50%      { transform: scaleY(1); }
+  }
+
+  /* ─── LAYOUT ──────────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: var(--topbar-h) 1fr;
+    min-height: 100vh;
+  }
+
+  /* ─── TOP BAR ─────────────────────────────────────────────── */
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: var(--topbar-h);
+    border-bottom: 1px solid var(--border);
+    background: var(--nav-bg);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    z-index: 100;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: var(--sidebar-w);
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--heading);
+  }
+
+  .topbar-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 4px;
+    border-left: 1px solid var(--hairline);
+    height: 100%;
+  }
+
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 9999px;
+    background: var(--canvas-soft);
+    box-shadow: var(--shadow-inset);
+    width: 260px;
+  }
+  .search-wrap svg { color: var(--ink-soft); flex-shrink: 0; }
+  .search-wrap input {
+    border: none; background: transparent;
+    font-family: var(--font-body);
+    font-size: 13px; color: var(--ink);
+    outline: none; width: 100%;
+    letter-spacing: 0.01em;
+  }
+  .search-wrap input::placeholder { color: var(--ink-soft); }
+
+  .topbar-right {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 20px;
+    border-left: 1px solid var(--hairline);
+    height: 100%;
+  }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--primary-alt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .btn-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border); cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 500;
+    transition: all .2s;
+    white-space: nowrap;
+    background: transparent;
+    color: var(--heading);
+  }
+  .btn-pill:hover { background: var(--bg-hover); }
+  .btn-pill.primary {
+    background: var(--primary);
+    color: var(--primary-text);
+    border-color: var(--primary);
+  }
+  .btn-pill.primary:hover { background: var(--primary-dark); }
+
+  /* ─── SIDEBAR ─────────────────────────────────────────────── */
+  .sidebar {
+    border-right: 1px solid var(--hairline);
+    background: var(--surface);
+    padding: 20px 0;
+    display: flex; flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    padding: 0 12px 16px;
+  }
+  .nav-label {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 0 8px 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 400;
+    color: var(--ink-body);
+    transition: background .1s;
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--canvas-soft); }
+  .nav-item.active {
+    background: var(--canvas-soft);
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 16px; border-radius: 9999px;
+    background: var(--ink);
+  }
+  .nav-item svg { color: var(--ink-muted); flex-shrink: 0; }
+  .nav-item.active svg { color: var(--ink); }
+
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px; font-weight: 500;
+    background: var(--ink);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .nav-divider {
+    height: 1px; background: var(--hairline);
+    margin: 4px 12px 12px;
+  }
+
+  /* score dot in nav */
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.hot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
+  .dot.warm { background: var(--warn); }
+  .dot.cool { background: var(--sky); }
+
+  /* ─── MAIN CONTENT ────────────────────────────────────────── */
+  .main {
+    overflow-y: auto;
+    padding: 28px 32px;
+    display: flex; flex-direction: column; gap: 24px;
+    background: var(--canvas);
+  }
+
+  /* Page heading */
+  .page-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .page-subtitle {
+    font-size: 13px; color: var(--ink-muted);
+    margin-top: 4px; letter-spacing: 0.01em;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ─── STAT CARDS ──────────────────────────────────────────── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .stat-card:hover {
+    box-shadow: rgba(0,0,0,0.08) 0 0 0 1px,
+                rgba(0,0,0,0.06) 0 4px 8px,
+                rgba(0,0,0,0.04) 0 12px 24px;
+  }
+
+  .stat-card .accent-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--primary);
+  }
+
+  .stat-label {
+    font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 36px; font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .stat-delta {
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .stat-delta.up { color: var(--ok); }
+  .stat-delta.down { color: var(--hot); }
+  .stat-delta span { color: var(--ink-muted); font-weight: 400; }
+
+  /* spark line – pure CSS */
+  .spark { height: 28px; margin-top: 12px; display: flex; align-items: flex-end; gap: 2px; }
+  .spark-bar {
+    flex: 1; border-radius: 2px;
+    background: var(--hairline);
+    transition: background .2s;
+  }
+  .spark-bar.hi { background: var(--primary); opacity: 0.6; }
+  .spark-bar.last { background: var(--primary); opacity: 1; }
+
+  /* ─── TWO-COL CONTENT ROW ─────────────────────────────────── */
+  .content-row {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ─── LEAD TABLE ──────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .card-title {
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .card-meta { font-size: 12px; color: var(--ink-soft); }
+
+  .filter-row {
+    display: flex; gap: 6px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--hairline);
+    overflow-x: auto;
+  }
+  .filter-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    transition: background .1s, box-shadow .1s;
+    white-space: nowrap;
+    border: none;
+    background: var(--canvas-soft);
+    color: var(--ink-muted);
+    box-shadow: var(--shadow-inset);
+  }
+  .filter-chip:hover { background: var(--hairline); color: var(--ink); }
+  .filter-chip.active {
+    background: var(--ink);
+    color: #fff;
+    box-shadow: rgba(0,0,0,0.4) 0 0 1px, rgba(0,0,0,0.06) 0 2px 4px;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%; border-collapse: collapse;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  thead th:first-child { padding-left: 20px; }
+  thead th:last-child { padding-right: 20px; }
+
+  tbody tr {
+    transition: background .1s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: var(--canvas-soft); }
+  tbody tr + tr td { border-top: 1px solid var(--hairline-soft); }
+
+  td {
+    padding: 11px 12px;
+    vertical-align: middle;
+  }
+  td:first-child { padding-left: 20px; }
+  td:last-child { padding-right: 20px; }
+
+  .lead-cell {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .lead-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    flex-shrink: 0; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-inset);
+  }
+  .lead-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .lead-co { font-size: 11px; color: var(--ink-muted); }
+
+  /* AI score gauge */
+  .score-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-track {
+    width: 56px; height: 4px; border-radius: 9999px;
+    background: var(--hairline);
+    position: relative; overflow: hidden;
+  }
+  .score-fill {
+    height: 100%; border-radius: 9999px;
+    position: absolute; left: 0; top: 0;
+  }
+  .score-num { font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--ink-muted); }
+
+  /* stage pill */
+  .stage-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500;
+  }
+  .stage-pill.new      { background: rgba(168,200,232,0.25); color: var(--sky); }
+  .stage-pill.qual     { background: rgba(167,229,211,0.25); color: var(--ok); }
+  .stage-pill.engaged  { background: rgba(200,184,224,0.25); color: #7c3aed; }
+  .stage-pill.negotiat { background: rgba(244,197,168,0.25); color: var(--warn); }
+  .stage-pill.closed   { background: rgba(220,38,38,0.08);   color: var(--hot); }
+
+  /* intent signal */
+  .signal-bars { display: flex; gap: 2px; align-items: flex-end; }
+  .signal-bar { width: 4px; border-radius: 1px; background: var(--hairline); }
+  .signal-bar.lit { background: var(--live); }
+  .signal-bar.mid { background: var(--warn); }
+  .signal-bar.hot-bar { background: var(--hot); }
+
+  /* row action */
+  .row-action {
+    font-size: 11px; font-weight: 500;
+    color: var(--ink-muted);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap;
+  }
+  .row-action svg { flex-shrink: 0; }
+
+  .time-label { font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); }
+
+  /* ─── SIDE PANEL ──────────────────────────────────────────── */
+  .side-panel { display: flex; flex-direction: column; gap: 14px; }
+
+  .side-card {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* AI insight */
+  .insight-head {
+    padding: 14px 16px 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ai-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ink); position: relative;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ai-icon::after {
+    content: '';
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    animation: live-eq 1.1s ease-in-out infinite alternate;
+  }
+  .insight-title { font-size: 12px; font-weight: 500; color: var(--ink); }
+  .insight-body {
+    padding: 10px 16px 14px;
+    font-size: 12px; line-height: 1.55;
+    color: var(--ink-body);
+  }
+  .insight-body strong { color: var(--ink); font-weight: 500; }
+
+  .insight-chips {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 0 16px 14px;
+  }
+  .i-chip {
+    padding: 3px 10px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--canvas-soft);
+    color: var(--ink-muted);
+    box-shadow: var(--shadow-inset);
+  }
+
+  /* pipeline funnel */
+  .funnel {
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .funnel-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .funnel-label { font-size: 12px; color: var(--ink-muted); width: 72px; flex-shrink: 0; }
+  .funnel-track {
+    flex: 1; height: 6px; border-radius: 9999px;
+    background: var(--hairline); overflow: hidden;
+  }
+  .funnel-fill { height: 100%; border-radius: 9999px; }
+  .funnel-n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted); text-align: right; width: 24px; }
+
+  /* activity feed */
+  .feed { padding: 4px 0; }
+  .feed-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 16px;
+    transition: background .1s;
+    cursor: pointer;
+  }
+  .feed-item:hover { background: var(--canvas-soft); }
+  .feed-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-inset);
+  }
+  .feed-text { font-size: 12px; line-height: 1.45; color: var(--ink-body); }
+  .feed-text strong { color: var(--ink); font-weight: 500; }
+  .feed-time { font-size: 10px; color: var(--ink-soft); margin-top: 2px; font-family: var(--font-mono); }
+
+  .feed-divider {
+    height: 1px; background: var(--hairline-soft);
+    margin: 0 16px;
+  }
+
+  /* ─── BOTTOM CHART ROW ────────────────────────────────────── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .chart-area {
+    padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 60px;
+  }
+  .mc-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    background: var(--hairline);
+    transition: background .2s;
+    cursor: pointer;
+  }
+  .mc-bar:hover { background: var(--ink-soft); }
+  .mc-bar.current { background: var(--primary); opacity: 0.9; }
+
+  .chart-legend {
+    display: flex; gap: 14px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--ink-muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  /* Source donut - CSS only */
+  .donut-wrap {
+    display: flex; align-items: center; gap: 20px;
+    padding: 0 20px 16px;
+  }
+  .donut {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--primary) 0deg 126deg,
+      var(--primary-alt) 126deg 216deg,
+      var(--border) 216deg 288deg,
+      var(--primary-light) 288deg 360deg
+    );
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .donut::after {
+    content: '';
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    position: absolute;
+  }
+  .donut-sources { display: flex; flex-direction: column; gap: 6px; }
+  .ds-row { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+  .ds-swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .ds-label { color: var(--ink-muted); flex: 1; }
+  .ds-pct { font-family: var(--font-mono); color: var(--ink); font-weight: 400; }
+
+  /* ─── ANIMATIONS ──────────────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .stat-card { animation: fadeUp .4s ease both; }
+  .stat-card:nth-child(1) { animation-delay: .05s; }
+  .stat-card:nth-child(2) { animation-delay: .1s; }
+  .stat-card:nth-child(3) { animation-delay: .15s; }
+  .stat-card:nth-child(4) { animation-delay: .2s; }
+  .card { animation: fadeUp .4s ease .25s both; }
+  .side-card { animation: fadeUp .4s ease .3s both; }
+
+  /* ─── SCROLLBARS ──────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 9999px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a href="/dashboard" class="topbar-brand" style="text-decoration:none">
+      <div class="nd-live"><i></i><i></i><i></i></div>
+      <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 24px; object-fit: contain">
+    </a>
+    <div class="topbar-center">
+      <div class="search-wrap">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M11 11L14.5 14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <input type="text" placeholder="Search leads, companies, contacts…" />
+        <span style="font-size:10px;color:var(--ink-soft);font-family:var(--font-mono);white-space:nowrap">⌘K</span>
+      </div>
     </div>
-  </body>
-  <script>
-    (() => {
-      const API = "/api";
-      let currentStage = "";
+    <div class="topbar-right" style="margin-left:auto">
+      <button class="btn-pill ghost" style="gap:4px">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Import
+      </button>
+      <button class="btn-pill primary">
+        + Add lead
+      </button>
+      <div class="avatar" title="Your workspace">MK</div>
+    </div>
+  </header>
 
-      function qs(sel, ctx = document) {
-        return ctx.querySelector(sel);
-      }
-      function qsa(sel, ctx = document) {
-        return Array.from(ctx.querySelectorAll(sel));
-      }
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <a href="/products/reva/console" class="nav-item active">
+        <span class="material-symbols-outlined" style="font-size:18px">dashboard</span>
+        All Leads
+        <span class="nav-badge">0</span>
+      </a>
+      <a href="#" class="nav-item">
+        <div class="dot hot"></div>
+        Hot Leads
+        <span class="nav-badge" style="background:var(--hot)">0</span>
+      </a>
+      <a href="#" class="nav-item">
+        <div class="dot warm"></div>
+        Engaged
+      </a>
+      <a href="#" class="nav-item">
+        <div class="dot cool"></div>
+        New Inbound
+      </a>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Amara AI</div>
+      <a href="#" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">psychology</span>
+        Scoring Agent
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">campaign</span>
+        Outreach AI
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">database</span>
+        Enrichment
+      </a>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <a href="#" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">group</span>
+        Team
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-symbols-outlined" style="font-size:18px">settings</span>
+        Settings
+      </a>
+    </div>
 
-      async function fetchStats() {
-        try {
-          const res = await fetch(`${API}/stats`, { credentials: "include" });
-          if (!res.ok) return;
-          const data = await res.json();
-          renderStats(data);
-        } catch (e) {
-          console.warn("Failed to fetch stats", e);
-        }
-      }
+    <!-- bottom credit -->
+    <div style="margin-top:auto;padding:16px 20px;font-size:11px;color:var(--ink-soft);">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--ok);"></div>
+        AI agents running
+      </div>
+    </div>
+  </aside>
 
-      function renderStats(s) {
-        // badges
-        qs("#badge-all").textContent = s.total ?? 0;
-        qs("#badge-hot").textContent = s.hot_leads ?? s.hot_leads ?? 0;
-        // optional small badges
-        if (qs("#badge-engaged"))
-          qs("#badge-engaged").textContent = s.qualified ?? 0;
-        if (qs("#badge-new")) qs("#badge-new").textContent = s.new ?? 0;
+  <!-- MAIN -->
+  <main class="main">
 
-        // stat cards (ordered in markup)
-        const statValues = qsa(".stat-row .stat-card .stat-value");
-        if (statValues[0]) statValues[0].textContent = s.total ?? 0;
-        if (statValues[1]) statValues[1].textContent = s.hot_leads ?? 0;
-        if (statValues[2])
-          statValues[2].textContent = (s.conversion_rate ?? 0) + "%";
-        if (statValues[3])
-          statValues[3].textContent = "$" + (s.pipeline_value ?? 0);
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">All Leads</div>
+        <div class="page-subtitle">0 contacts · AI-scored · updated just now</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-pill ghost">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Filters
+        </button>
+        <button class="btn-pill warm">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Run outreach
+        </button>
+      </div>
+    </div>
 
-        // page subtitle
-        const sub = qs(".page-subtitle");
-        if (sub)
-          sub.textContent = `${s.total ?? 0} contacts · AI-scored · updated just now`;
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <!-- 1 -->
+      <div class="stat-card">
+        <div class="accent-bar" style="background:linear-gradient(90deg,var(--grad-mint),var(--grad-sky))"></div>
+        <div class="stat-label">Total Leads</div>
+        <div class="stat-value">0</div>
+        <div class="stat-delta up">↑ 0%  <span>vs last week</span></div>
+        <div class="spark">
+          <div class="spark-bar" style="height:35%"></div>
+          <div class="spark-bar" style="height:45%"></div>
+          <div class="spark-bar" style="height:38%"></div>
+          <div class="spark-bar hi" style="height:60%"></div>
+          <div class="spark-bar" style="height:52%"></div>
+          <div class="spark-bar hi" style="height:72%"></div>
+          <div class="spark-bar" style="height:65%"></div>
+          <div class="spark-bar last" style="height:100%"></div>
+        </div>
+      </div>
+      <!-- 2 -->
+      <div class="stat-card">
+        <div class="accent-bar" style="background:linear-gradient(90deg,var(--grad-peach),var(--grad-rose))"></div>
+        <div class="stat-label">Hot Leads</div>
+        <div class="stat-value">0</div>
+        <div class="stat-delta up">↑ 0  <span>new this week</span></div>
+        <div class="spark">
+          <div class="spark-bar" style="height:40%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar hi" style="height:70%"></div>
+          <div class="spark-bar" style="height:50%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:45%"></div>
+          <div class="spark-bar hi" style="height:80%"></div>
+          <div class="spark-bar last" style="height:95%"></div>
+        </div>
+      </div>
+      <!-- 3 -->
+      <div class="stat-card">
+        <div class="accent-bar" style="background:linear-gradient(90deg,var(--grad-lav),var(--grad-rose))"></div>
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-value">0%</div>
+        <div class="stat-delta">0%  <span>vs last week</span></div>
+        <div class="spark">
+          <div class="spark-bar hi" style="height:80%"></div>
+          <div class="spark-bar" style="height:75%"></div>
+          <div class="spark-bar hi" style="height:90%"></div>
+          <div class="spark-bar" style="height:70%"></div>
+          <div class="spark-bar" style="height:82%"></div>
+          <div class="spark-bar hi" style="height:78%"></div>
+          <div class="spark-bar" style="height:65%"></div>
+          <div class="spark-bar last" style="height:60%"></div>
+        </div>
+      </div>
+      <!-- 4 -->
+      <div class="stat-card">
+        <div class="accent-bar" style="background:linear-gradient(90deg,var(--grad-sky),var(--grad-mint))"></div>
+        <div class="stat-label">Pipeline Value</div>
+        <div class="stat-value">$0</div>
+        <div class="stat-delta up">↑ $0  <span>this month</span></div>
+        <div class="spark">
+          <div class="spark-bar" style="height:30%"></div>
+          <div class="spark-bar" style="height:40%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar hi" style="height:70%"></div>
+          <div class="spark-bar" style="height:65%"></div>
+          <div class="spark-bar hi" style="height:82%"></div>
+          <div class="spark-bar" style="height:78%"></div>
+          <div class="spark-bar last" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
 
-        // pipeline fills
-        const fills = qsa(".funnel .funnel-fill");
-        if (fills.length >= 5) {
-          const total = s.total || 1;
-          fills[0].style.width = `${Math.round(((s.new || 0) / total) * 100)}%`;
-          fills[1].style.width = `${Math.round(((s.qualified || 0) / total) * 100)}%`;
-          fills[2].style.width = `${Math.round(((s.qualified || 0) / total) * 100)}%`;
-          fills[3].style.width = `${Math.round(((s.booked || 0) / total) * 100)}%`;
-          fills[4].style.width = `${Math.round(((s.booked || 0) / total) * 100)}%`;
-        }
-      }
+    <!-- MAIN TABLE + SIDE -->
+    <div class="content-row">
 
-      async function fetchLeads(stage) {
-        try {
-          const url = new URL(`${API}/leads`, location.origin);
-          if (stage && stage !== "__hot") url.searchParams.set("stage", stage);
-          const res = await fetch(url.toString(), { credentials: "include" });
-          if (!res.ok) return [];
-          const data = await res.json();
-          let leads = data.leads || [];
-          if (stage === "__hot") {
-            leads = leads.filter((l) => (l.seriousness_score || 0) >= 8);
-          }
-          return leads;
-        } catch (e) {
-          console.warn("Failed to fetch leads", e);
-          return [];
-        }
-      }
+      <!-- LEAD TABLE -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent Leads</span>
+          <span class="card-meta">Sorted by AI score</span>
+        </div>
+        <div class="filter-row">
+          <button class="filter-chip active">All <span style="opacity:.6">0</span></button>
+          <button class="filter-chip">Hot 🔥 0</button>
+          <button class="filter-chip">New inbound 0</button>
+          <button class="filter-chip">Contacted 0</button>
+          <button class="filter-chip">In negotiation 0</button>
+          <button class="filter-chip">Won ✓</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>AI Score</th>
+                <th>Stage</th>
+                <th>Intent</th>
+                <th>Last touched</th>
+                <th>Next action</th>
+              </tr>
+            </thead>
+            <tbody id="leads-body">
+            <tr>
+              <td colspan="6" style="text-align:center; padding:40px; color:var(--ink-soft);">
+                No leads yet. Your AI workers will appear here once they start engaging.
+              </td>
+            </tr>
+          </tbody>
+          </table>
+        </div>
+      </div>
 
-      function renderLeads(leads) {
-        const tbody = qs("#leads-body");
-        if (!tbody) return;
-        tbody.innerHTML = "";
-        if (!leads || leads.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--ink-soft);">No leads yet. Your AI workers will appear here once they start engaging.</td></tr>`;
-          return;
-        }
-        for (const lead of leads) {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>
-              <div class="lead-cell">
-                <div class="lead-avatar">${(lead.name || lead.phone_number || "--").slice(0, 2).toUpperCase()}</div>
-                <div>
-                  <div class="lead-name">${escapeHtml(lead.name || lead.phone_number || "Unknown")}</div>
-                  <div class="lead-co">${escapeHtml(lead.source || "")}</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div class="score-wrap">
-                <div class="score-track"><div class="score-fill" style="width:${((lead.seriousness_score || 5) / 10) * 100}%;background:var(--primary);"></div></div>
-                <div class="score-num">${lead.seriousness_score ?? "-"}</div>
-              </div>
-            </td>
-            <td><div class="stage-pill ${escapeHtml(lead.stage || "new")}">${escapeHtml(cap(lead.stage || "new"))}</div></td>
-            <td><div class="signal-bars">${renderIntent(lead)}</div></td>
-            <td>${escapeHtml(lead.last_message_at || lead.created_at || "")}</td>
-            <td><div class="row-action">View</div></td>
-          `;
-          tbody.appendChild(tr);
-        }
-      }
+      <!-- SIDE PANEL -->
+      <div class="side-panel">
 
-      function renderIntent(lead) {
-        const lvl = Math.min(10, lead.seriousness_score || 5);
-        const bars = [];
-        for (let i = 0; i < 3; i++) {
-          const cls =
-            i === 2 ? "hot-bar" : lvl >= 7 ? "lit" : lvl >= 4 ? "mid" : "";
-          bars.push(`<div class="signal-bar ${cls}"></div>`);
-        }
-        return bars.join("");
-      }
+        <!-- AI Insight Card -->
+        <div class="side-card">
+          <div class="insight-head">
+            <div class="ai-icon"></div>
+            <span class="insight-title">Amara AI · Real-time Insight</span>
+          </div>
+          <div class="insight-body">
+          No insights yet. Amara is monitoring your channels for potential leads.
+        </div>
+        <div class="insight-chips" style="display:none">
+        </div>
+        </div>
 
-      function cap(s) {
-        return (s || "").replace(/_/g, " ");
-      }
-      function escapeHtml(s) {
-        if (!s) return "";
-        return String(s).replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[c],
-        );
-      }
+        <!-- Pipeline Funnel -->
+        <div class="side-card">
+          <div class="card-header">
+            <span class="card-title">Pipeline</span>
+            <span class="card-meta">This month</span>
+          </div>
+          <div class="funnel">
+            <div class="funnel-row">
+              <span class="funnel-label" style="color:var(--sky)">New</span>
+              <div class="funnel-track"><div class="funnel-fill" style="width:0%;background:var(--sky);opacity:.6"></div></div>
+              <span class="funnel-n">0</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label" style="color:var(--ink-muted)">Qualified</span>
+              <div class="funnel-track"><div class="funnel-fill" style="width:0%;background:var(--ink-muted)"></div></div>
+              <span class="funnel-n">0</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label" style="color:#7c3aed">Engaged</span>
+              <div class="funnel-track"><div class="funnel-fill" style="width:0%;background:#7c3aed;opacity:.7"></div></div>
+              <span class="funnel-n">0</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label" style="color:var(--warn)">Negotiat.</span>
+              <div class="funnel-track"><div class="funnel-fill" style="width:0%;background:var(--warn)"></div></div>
+              <span class="funnel-n">0</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label" style="color:var(--ok)">Won</span>
+              <div class="funnel-track"><div class="funnel-fill" style="width:0%;background:var(--ok)"></div></div>
+              <span class="funnel-n">0</span>
+            </div>
+          </div>
+        </div>
 
-      async function load(stage) {
-        currentStage = stage ?? "";
-        // highlight nav
-        qsa(".sidebar .nav-item").forEach((el) =>
-          el.classList.remove("active"),
-        );
-        const sel =
-          stage === ""
-            ? "#nav-all"
-            : stage === "__hot"
-              ? "#nav-hot"
-              : stage === "new"
-                ? "#nav-new"
-                : "#nav-engaged";
-        const el = qs(sel);
-        if (el) el.classList.add("active");
+        <!-- Activity Feed -->
+        <div class="side-card">
+          <div class="card-header">
+            <span class="card-title">Activity</span>
+            <span class="card-meta" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">See all</span>
+          </div>
+          <div class="feed" id="activity-feed">
+            <div style="padding:20px; text-align:center; font-size:11px; color:var(--ink-soft);">
+              No recent activity.
+            </div>
+          </div>
+        </div>
 
-        const leads = await fetchLeads(stage);
-        renderLeads(leads);
-      }
+      </div>
+    </div><!-- end content-row -->
 
-      function wireNav() {
-        qsa(".sidebar .nav-item").forEach((el) => {
-          el.addEventListener("click", async (ev) => {
-            ev.preventDefault();
-            const stage = el.getAttribute("data-stage") || "";
-            await load(stage);
-          });
-        });
-      }
+    <!-- BOTTOM CHARTS -->
+    <div class="chart-row">
 
-      // initial load
-      fetchStats();
-      load("");
-      wireNav();
+      <!-- Volume chart -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Lead Volume</span>
+          <span class="card-meta">Last 8 weeks</span>
+        </div>
+        <div class="chart-area">
+          <div class="mini-chart">
+            <div class="mc-bar" style="height:38%"></div>
+            <div class="mc-bar" style="height:52%"></div>
+            <div class="mc-bar" style="height:44%"></div>
+            <div class="mc-bar" style="height:65%"></div>
+            <div class="mc-bar" style="height:58%"></div>
+            <div class="mc-bar" style="height:70%"></div>
+            <div class="mc-bar" style="height:80%"></div>
+            <div class="mc-bar current" style="height:100%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-soft);font-family:var(--font-mono)">
+            <span>W21</span><span>W22</span><span>W23</span><span>W24</span><span>W25</span><span>W26</span><span>W27</span><span>W28</span>
+          </div>
+        </div>
+      </div>
 
-      // periodic refresh
-      setInterval(() => {
-        fetchStats();
-        load(currentStage);
-      }, 30000);
-    })();
-  </script>
+      <!-- Source donut -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Lead Sources</span>
+          <span class="card-meta">This month</span>
+        </div>
+        <div class="donut-wrap" style="padding-top:16px">
+          <div class="donut"></div>
+          <div class="donut-sources">
+            <div class="ds-row">
+              <div class="ds-swatch" style="background:var(--ink)"></div>
+              <span class="ds-label">Organic Search</span>
+              <span class="ds-pct">35%</span>
+            </div>
+            <div class="ds-row">
+              <div class="ds-swatch" style="background:var(--ink-soft)"></div>
+              <span class="ds-label">Outbound AI</span>
+              <span class="ds-pct">25%</span>
+            </div>
+            <div class="ds-row">
+              <div class="ds-swatch" style="background:var(--hairline)"></div>
+              <span class="ds-label">Referrals</span>
+              <span class="ds-pct">20%</span>
+            </div>
+            <div class="ds-row">
+              <div class="ds-swatch" style="background:var(--grad-sky)"></div>
+              <span class="ds-label">Paid / Ads</span>
+              <span class="ds-pct">20%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end chart-row -->
+
+  </main>
+</div>
+</body>
 </html>
