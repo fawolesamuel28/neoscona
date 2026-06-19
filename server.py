@@ -37,20 +37,32 @@ from app.routers.health import router as health_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup tasks
-    logger.info("Starting Redis listener...")
-    try:
-        await dashboard_ws_manager.start_redis_listener()
-        ping_task = asyncio.create_task(dashboard_ws_manager.run_ping_loop())
-    except Exception as e:
-        logger.error(f"Failed to start Redis listener: {e}")
-        ping_task = None
+    ping_task = None
+    redis_url = os.getenv("REDIS_URL")
+    dev_no_redis = os.getenv("DEV_NO_REDIS", "").lower() in ("1", "true", "yes")
+    if not redis_url or dev_no_redis:
+        logger.info("Skipping Redis listener (DEV_NO_REDIS set or REDIS_URL unset).")
+    else:
+        logger.info("Starting Redis listener...")
+        try:
+            await dashboard_ws_manager.start_redis_listener()
+            ping_task = asyncio.create_task(dashboard_ws_manager.run_ping_loop())
+        except Exception as e:
+            logger.error(f"Failed to start Redis listener: {e}")
+            ping_task = None
         
     yield
     # Shutdown tasks
     if ping_task:
         ping_task.cancel()
-    await dashboard_ws_manager.stop_redis_listener()
-    await close_redis_client()
+        try:
+            await dashboard_ws_manager.stop_redis_listener()
+        except Exception:
+            logger.exception("Error stopping Redis listener during shutdown")
+        try:
+            await close_redis_client()
+        except Exception:
+            logger.exception("Error closing Redis client during shutdown")
 
 app = FastAPI(
     title="Neoscona Unified Platform",
@@ -167,8 +179,16 @@ async def reva_landing(request: Request):
 
 @app.get("/products/reva/console", response_class=HTMLResponse)
 async def reva_console(request: Request):
+    # Allow local dev access to the static console when running on localhost
+    client_host = getattr(request.client, 'host', None)
+    if client_host in ("127.0.0.1", "::1"):
+        dashboard_file = Path(__file__).parent / "ai-leads-dashboard.html"
+        if dashboard_file.exists():
+            return FileResponse(str(dashboard_file))
+
     if not page_session_ok(request):
         return RedirectResponse(url="/login")
+
     dashboard_file = Path(__file__).parent / "ai-leads-dashboard.html"
     if dashboard_file.exists():
         return FileResponse(str(dashboard_file))
