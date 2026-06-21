@@ -71,8 +71,8 @@ function render() {
     setNext("Get started", () => advance("channel"));
   } else if (step === "channel") {
     body.innerHTML = `<h2 class="wiz-h">Connect a channel</h2>
-      <p class="auth-sub">Reva talks to leads on WhatsApp & Telegram. Add credentials in your environment
-      (Telegram bot token / WhatsApp Evolution), then continue. You can do this later too.</p>`;
+      <p class="auth-sub">Reva talks to leads on WhatsApp. Add credentials in your environment
+      (WhatsApp Evolution), then continue. You can do this later too.</p>`;
     setNext("I've connected a channel", () => advance("inventory"));
     setSkip(() => advance("inventory"));
   } else if (step === "inventory") {

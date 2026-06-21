@@ -48,21 +48,19 @@ export default function OnboardingPage() {
         <div className="flex items-center gap-4 mb-12">
           {(['org', 'billing', 'channel', 'inventory', 'complete'] as OnboardingStep[]).map((s, i) => (
             <div key={s} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(s) <=
-                ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(step)
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(s) <=
+                  ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(step)
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-500'
-              }`}>
+                }`}>
                 {i + 1}
               </div>
               {i < 4 && (
-                <div className={`h-1 w-20 ${
-                  ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(s) <
-                  ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(step)
+                <div className={`h-1 w-20 ${['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(s) <
+                    ['org', 'billing', 'channel', 'inventory', 'complete'].indexOf(step)
                     ? 'bg-blue-600'
                     : 'bg-gray-200'
-                }`} />
+                  }`} />
               )}
             </div>
           ))}
@@ -166,7 +164,7 @@ export default function OnboardingPage() {
               <p className="text-gray-600 mb-6">Connect the channels you want Neoscona to manage</p>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {['WhatsApp', 'Telegram', 'Instagram', 'Voice'].map((channel) => (
+                {['WhatsApp', 'Instagram', 'Voice'].map((channel) => (
                   <div key={channel} className="border border-gray-200 rounded-xl p-6 flex items-center gap-4 hover:border-blue-500 transition-colors cursor-pointer">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-2xl">
                       💬

@@ -1,8 +1,9 @@
 import datetime
 import logging
 from typing import Dict, Any, List
-from app.cache.redis import get_redis_client
+from app.cache.redis import get_redis_client, _tns
 from app.core.logger import get_logger
+from app.core.tenant import require_tenant
 
 logger = get_logger(__name__)
 
@@ -20,13 +21,18 @@ class ScoringEngine:
     ]
 
     @staticmethod
-    async def calculate_behavioural_score(phone_number: str, current_message: str) -> float:
+    async def calculate_behavioural_score(phone_number: str, current_message: str, *, tenant_id: str) -> float:
         """
         Signals:
         1. Keyword density (max 3 points)
         2. Response speed (max 4 points)
         3. Message volume (max 3 points)
+
+        `tenant_id` scopes the per-lead timing/volume state so behavioral signals
+        from one workspace don't pollute another's score for the same phone number.
         """
+        tenant_id = require_tenant(tenant_id)
+        ns = _tns(tenant_id)
         score = 0.0
 
         # 1. Keywords
@@ -36,13 +42,13 @@ class ScoringEngine:
         # 2. Timing/Speed (requires history)
         try:
             redis = await get_redis_client()
-            last_msg_time_str = await redis.get(f"lead:{phone_number}:last_msg_time")
+            last_msg_time_str = await redis.get(f"{ns}:lead:{phone_number}:last_msg_time")
             now = datetime.datetime.now()
-            
+
             if last_msg_time_str:
                 last_time = datetime.datetime.fromisoformat(last_msg_time_str)
                 delta = (now - last_time).total_seconds()
-                
+
                 # If they respond within 2 mins, they are engaged
                 if delta < 120:
                     score += 4.0
@@ -50,12 +56,12 @@ class ScoringEngine:
                     score += 2.0
                 elif delta < 3600: # Within 1 hour
                     score += 1.0
-            
+
             # Update last message time
-            await redis.set(f"lead:{phone_number}:last_msg_time", now.isoformat())
+            await redis.set(f"{ns}:lead:{phone_number}:last_msg_time", now.isoformat())
 
             # 3. Message volume — track total messages sent by this lead
-            vol_key = f"lead:{phone_number}:msg_count"
+            vol_key = f"{ns}:lead:{phone_number}:msg_count"
             msg_count = await redis.incr(vol_key)
             if msg_count == 1:
                 await redis.expire(vol_key, 86400 * 7)  # 7-day window
@@ -73,13 +79,13 @@ class ScoringEngine:
         return score
 
     @classmethod
-    async def get_combined_score(cls, phone_number: str, message: str, seriousness_score: int) -> int:
+    async def get_combined_score(cls, phone_number: str, message: str, seriousness_score: int, *, tenant_id: str) -> int:
         """
         seriousness_score: 1-10 from LLM
         behavioural_score: 0-10 from rules
         Combined: weighted average (60% AI, 40% Behavioural)
         """
-        beh_score = await cls.calculate_behavioural_score(phone_number, message)
+        beh_score = await cls.calculate_behavioural_score(phone_number, message, tenant_id=tenant_id)
         
         # Scale beh_score if it exceeds 10 (unlikely with current weights)
         beh_score = min(10.0, beh_score)

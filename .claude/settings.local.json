@@ -35,7 +35,26 @@
       "Bash(git commit -m 'style\\(reva\\): consistent sidebar icons; add .gitattributes, CLAUDE.md, tenant-isolation skill *)",
       "Bash(git fetch *)",
       "Bash(git stash *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(python3 -c \"import ast,glob; files=['app/services/channels.py','app/webhooks/gateway.py','app/workers/tasks.py','app/services/agent_commands.py','app/webhooks/whatsapp.py','app/models/lead.py','app/webhooks/telegram.py','app/webhooks/instagram.py','app/webhooks/vapi.py']; [ast.parse\\(open\\(f\\).read\\(\\), f\\) for f in files]; print\\('AST OK for', len\\(files\\), 'files'\\)\")",
+      "Bash(ls -d venv .venv env)",
+      "Bash(command -v python3)",
+      "Bash(.venv/bin/python --version)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(git symbolic-ref *)",
+      "Bash(git remote *)",
+      "Bash(python -m py_compile app/services/agent_notify.py app/workers/tasks.py)",
+      "Bash(python3 -m py_compile app/services/agent_notify.py app/workers/tasks.py)",
+      "Bash(python3 -m py_compile app/services/channels.py app/routers/onboarding.py)",
+      "Bash(python3 -m py_compile app/services/channels.py app/routers/onboarding.py app/webhooks/gateway.py)",
+      "Bash(git --no-pager diff --stat HEAD)",
+      "Bash(git --no-pager log --oneline -8)",
+      "Bash(git --no-pager diff HEAD -- app/workers/tasks.py app/services/agent_commands.py app/services/agent_notify.py app/models/lead.py)",
+      "Bash(git --no-pager diff HEAD -- app/webhooks/whatsapp.py app/webhooks/telegram.py app/webhooks/instagram.py app/webhooks/vapi.py)",
+      "Bash(git --no-pager diff HEAD -- schema.sql)",
+      "WebFetch(domain:docs.krosai.com)",
+      "WebFetch(domain:elevenlabs.io)",
+      "WebSearch"
     ]
   }
 }

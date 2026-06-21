@@ -225,30 +225,38 @@ async def search_properties(
     location: str,
     property_type: str,
     max_budget: float,
-    bedrooms: int | None = None
+    bedrooms: int | None = None,
+    *,
+    tenant_id: str,
 ) -> list[dict]:
     """
     Unified search using PostgreSQL Full-Text Search and the v_available_inventory view.
+
+    `tenant_id` is REQUIRED and passed to the FTS function as p_tenant_id: this runs
+    under the service-role client (RLS bypassed), so the function-level tenant filter
+    is the only thing keeping one workspace's catalog out of another's search results.
     """
-    logger.info(f"FTS search started | location={location} | type={property_type} | budget={max_budget} | beds={bedrooms}")
+    tenant_id = require_tenant(tenant_id)
+    logger.info(f"FTS search started | tenant={tenant_id} | location={location} | type={property_type} | budget={max_budget} | beds={bedrooms}")
     results = []
     try:
         db = get_supabase()
-        
+
         # Build search query string for FTS
         query_parts = []
         if location:
             query_parts.append(location)
         if property_type:
             query_parts.append(property_type)
-            
+
         search_query = " ".join(query_parts)
-        
+
         # Call the native Postgres function
         def _fetch():
             return db.rpc(
                 'search_inventory_fts',
                 {
+                    'p_tenant_id': tenant_id,
                     'search_query': search_query,
                     'max_budget': max_budget,
                     'target_bedrooms': bedrooms
@@ -450,7 +458,7 @@ async def save_lead_matches(
     from app.cache.redis import cache_lead_matches
 
     snapshot = [m.model_dump() for m in matches]
-    await cache_lead_matches(phone_number, snapshot)
+    await cache_lead_matches(tenant_id, phone_number, snapshot)
 
     try:
         db = get_supabase()
@@ -499,7 +507,7 @@ async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> l
 
     from app.cache.redis import get_cached_lead_matches
 
-    cached = await get_cached_lead_matches(phone_number)
+    cached = await get_cached_lead_matches(tenant_id, phone_number)
     if not cached:
         return []
 

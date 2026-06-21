@@ -16,8 +16,6 @@ def infer_channel_source(phone_number: str) -> str:
     digits = phone_number.lstrip("+")
     if phone_number.startswith("+234") or (digits.isdigit() and len(digits) >= 12):
         return "whatsapp_organic"
-    if digits.isdigit() and len(digits) <= 12:
-        return "telegram"
     if digits.isdigit():
         return "whatsapp_evolution"
     return "unknown"
@@ -218,7 +216,7 @@ async def log_message(
 async def get_all_leads(stage: str | None = None, tenant_id: str | None = None) -> list:
     """
     Fetches all leads for a tenant, optionally filtered by stage. Merges in any
-    phone numbers that have conversation_logs but no leads row (e.g. Telegram chat
+    phone numbers that have conversation_logs but no leads row (e.g. chat
     IDs when upsert previously failed).
     """
     tenant_id = require_tenant(tenant_id)

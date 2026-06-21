@@ -56,6 +56,10 @@ def parse_360dialog_payload(payload: dict) -> Optional[IncomingMessage]:
             source = source_match.group(1).lower()
             body = body[source_match.end():].strip()
 
+        # 360dialog v1 webhooks don't reliably carry the recipient business number;
+        # the gateway falls back to the ?channel=... URL param when this is None.
+        external_id = (payload.get("metadata") or {}).get("phone_number_id")
+
         return IncomingMessage(
             phone_number=msg["from"],
             message=body,
@@ -63,6 +67,8 @@ def parse_360dialog_payload(payload: dict) -> Optional[IncomingMessage]:
             message_type=msg_type,
             source=source,
             media_url=media_url,
+            channel_provider="360dialog",
+            channel_external_id=external_id,
         )
 
     except (KeyError, TypeError, ValueError) as exc:
@@ -114,12 +120,18 @@ def parse_evolution_payload(payload: dict) -> Optional[IncomingMessage]:
         remote_jid = data["key"]["remoteJid"]
         phone_number = remote_jid.split("@")[0]
 
+        # The Evolution instance name identifies which connected WhatsApp the
+        # message landed on — that's the per-tenant channel key.
+        instance = payload.get("instance")
+
         return IncomingMessage(
             phone_number=phone_number,
             message=body,
             message_id=data["key"]["id"],
             message_type=msg_type,
             source="evolution",
+            channel_provider="evolution",
+            channel_external_id=instance,
         )
 
     except (KeyError, TypeError, ValueError) as exc:
@@ -143,10 +155,14 @@ def parse_cloud_api_payload(payload: dict) -> Optional[IncomingMessage]:
             return None
 
         value = changes[0].get("value", {})
-        
+
         # We also receive statuses (read receipts), we only want messages
         if "messages" not in value or not value["messages"]:
             return None
+
+        # The business phone number that received the message — the per-tenant
+        # channel key for Cloud API (stable across the account's display number).
+        external_id = (value.get("metadata") or {}).get("phone_number_id")
 
         msg = value["messages"][0]
         phone_number = msg.get("from")
@@ -186,6 +202,8 @@ def parse_cloud_api_payload(payload: dict) -> Optional[IncomingMessage]:
             message_type=msg_type,
             source="cloud",
             media_url=media_url,
+            channel_provider="cloud",
+            channel_external_id=external_id,
         )
 
     except (KeyError, TypeError, ValueError, IndexError) as exc:

@@ -43,45 +43,51 @@ async def route_lead_by_score(lead: dict, score: int):
         return "cold"
 
 
-async def assign_agent(development_id: str | None = None) -> dict | None:
+async def assign_agent(development_id: str | None = None, *, tenant_id: str) -> dict | None:
     """
     Picks the next available agent, scoped by development if provided.
     Fallback to round-robin among all active agents.
+
+    `tenant_id` (the channel-resolved tenant) is REQUIRED and scopes every query:
+    a hot lead must only ever be routed to one of its OWN workspace's agents, never
+    another tenant's. The service-role client bypasses RLS, so this filter is the
+    only thing preventing cross-tenant assignment.
     """
     db = get_supabase()
-    
-    # 1. Fetch agents for this development
-    query = db.table("agents").select("*").eq("active", True)
+
+    # 1. Fetch this tenant's agents for this development
+    query = db.table("agents").select("*").eq("active", True).eq("tenant_id", tenant_id)
     if development_id:
         # Assuming an intermediate 'agent_developments' table or agent has 'development_id'
         # For this spec, we'll check if the agent has a matching development_id field
         query = query.eq("development_id", development_id)
-    
+
     def _fetch_agents():
         return query.execute()
-        
+
     agents_res = await asyncio.to_thread(_fetch_agents)
-    
-    # Fallback to all agents if development-specific agents not found
+
+    # Fallback to all of THIS tenant's agents if development-specific agents not found
     if not agents_res.data and development_id:
-        logger.info(f"No agents found for development {development_id}. Falling back to global pool.")
+        logger.info(f"No agents found for development {development_id}. Falling back to tenant pool.")
         def _fetch_all():
-            return db.table("agents").select("*").eq("active", True).execute()
+            return db.table("agents").select("*").eq("active", True).eq("tenant_id", tenant_id).execute()
         agents_res = await asyncio.to_thread(_fetch_all)
 
     if not agents_res.data:
-        logger.warning("No active agents found in DB for assignment!")
+        logger.warning("No active agents found for tenant %s for assignment!", tenant_id)
         return None
-    
-    # 2. Least-loaded selection
+
+    # 2. Least-loaded selection (lead counts scoped to the same tenant)
     counts = {}
     for agent in agents_res.data:
         def _get_count(agent_id=agent["id"]):
             return db.table("leads")\
                 .select("id", count="exact")\
                 .eq("assigned_agent_id", agent_id)\
+                .eq("tenant_id", tenant_id)\
                 .execute()
-        
+
         result = await asyncio.to_thread(_get_count)
         counts[agent["id"]] = result.count or 0
     

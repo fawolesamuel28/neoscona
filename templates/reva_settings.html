@@ -233,6 +233,9 @@
       <div class="settings-nav-item" onclick="showSection('channels', this)">
         <span class="material-symbols-outlined">hub</span> Channels
       </div>
+      <div class="settings-nav-item" onclick="showSection('voice', this)">
+        <span class="material-symbols-outlined">call</span> Voice Receptionist
+      </div>
       <div class="settings-nav-label">Amara AI</div>
       <div class="settings-nav-item" onclick="showSection('persona', this)">
         <span class="material-symbols-outlined">psychology</span> AI Persona
@@ -384,16 +387,6 @@
 
               <div class="channel-card">
                 <div class="channel-card-top">
-                  <div class="channel-icon" style="background:#229ED9">✈️</div>
-                  <span class="channel-badge not-connected">Not Connected</span>
-                </div>
-                <div class="channel-name">Telegram</div>
-                <div class="channel-number">–</div>
-                <button class="btn primary" style="font-size:11px;padding:5px 10px;width:100%">Connect</button>
-              </div>
-
-              <div class="channel-card">
-                <div class="channel-card-top">
                   <div class="channel-icon" style="background:var(--canvas-soft)">📱</div>
                   <span class="channel-badge not-connected">Not Connected</span>
                 </div>
@@ -435,6 +428,117 @@
               </div>
               <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice Receptionist -->
+      <div class="settings-section" id="section-voice">
+        <div class="settings-heading">Voice Receptionist</div>
+        <div class="settings-sub">Give your business an AI receptionist on a real phone number. It answers calls, qualifies callers, and drops every transcript into your pipeline for follow-up.</div>
+
+        <!-- Status card (shown when a receptionist exists) -->
+        <div class="settings-card" id="voice-status-card" style="display:none">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Your Receptionist</div>
+              <div class="settings-card-sub">Inbound calls to this number are answered by your AI receptionist.</div>
+            </div>
+            <span class="channel-badge connected" id="voice-status-badge">Active</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input class="form-input" type="text" id="voice-number" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Persona Source</label>
+                <input class="form-input" type="text" id="voice-source" readonly>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn danger" onclick="disableVoice()">Disable Receptionist</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setup card (shown when no receptionist exists) -->
+        <div class="settings-card" id="voice-setup-card" style="display:none">
+          <div class="settings-card-header">
+            <div>
+              <div class="settings-card-title">Set Up Your Receptionist</div>
+              <div class="settings-card-sub">Choose a persona, pick a phone number, and go live in under a minute.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+
+            <div class="form-row single">
+              <div class="form-group">
+                <label class="form-label">Persona</label>
+                <span class="form-hint">Reuse your Amara persona for a consistent voice + chat experience, or set up a dedicated voice agent.</span>
+                <select class="form-input" id="voice-persona-source" onchange="onPersonaSourceChange()">
+                  <option value="reva">Continue with my Reva (Amara) persona</option>
+                  <option value="dedicated">Dedicated voice setup</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Dedicated persona fields -->
+            <div id="voice-dedicated-fields" style="display:none">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Receptionist Name</label>
+                  <input class="form-input" type="text" id="voice-d-name" placeholder="e.g. Tola">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Business Name</label>
+                  <input class="form-input" type="text" id="voice-d-company" placeholder="e.g. Lagos Prime Realty">
+                </div>
+              </div>
+              <div class="form-row single">
+                <div class="form-group">
+                  <label class="form-label">Greeting (first thing said on pickup)</label>
+                  <input class="form-input" type="text" id="voice-d-greeting" placeholder="Hi, thanks for calling Lagos Prime Realty — how can I help?">
+                </div>
+              </div>
+              <div class="form-row single">
+                <div class="form-group">
+                  <label class="form-label">Instructions</label>
+                  <span class="form-hint">What should the receptionist do and ask?</span>
+                  <textarea class="form-input" id="voice-d-prompt" style="min-height:96px" placeholder="Greet the caller, find out which property they're interested in, capture their name, phone and budget, and offer to book a viewing."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Number picker -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Country</label>
+                <select class="form-input" id="voice-country">
+                  <option value="NG">Nigeria (NG)</option>
+                  <option value="US">United States (US)</option>
+                  <option value="GB">United Kingdom (GB)</option>
+                  <option value="ZA">South Africa (ZA)</option>
+                  <option value="KE">Kenya (KE)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Available Numbers</label>
+                <select class="form-input" id="voice-number-pick"><option value="">Load numbers…</option></select>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn" onclick="loadAvailableNumbers()">Find Numbers</button>
+              <button class="btn primary" onclick="provisionVoice()" id="voice-provision-btn">Activate Receptionist</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Locked / upsell card (shown when plan lacks voice) -->
+        <div class="settings-card" id="voice-locked-card" style="display:none">
+          <div class="settings-card-body">
+            <p style="font-size:13px;color:var(--ink-muted)">The Voice Receptionist is available on plans that include voice. <a href="/products/reva/settings#billing">Upgrade your plan</a> to enable it.</p>
           </div>
         </div>
       </div>
@@ -808,6 +912,88 @@
     }
   }
 
+  // ─── Voice Receptionist ─────────────────────────────────────────
+  function onPersonaSourceChange() {
+    const src = document.getElementById('voice-persona-source').value;
+    document.getElementById('voice-dedicated-fields').style.display = src === 'dedicated' ? 'block' : 'none';
+  }
+
+  async function loadVoice() {
+    try {
+      const res = await fetch('/api/voice/receptionist');
+      if (res.status === 402) {  // plan lacks the voice feature
+        document.getElementById('voice-locked-card').style.display = 'block';
+        return;
+      }
+      if (!res.ok) return;
+      const { receptionist } = await res.json();
+      if (receptionist && receptionist.status === 'active') {
+        document.getElementById('voice-status-card').style.display = 'block';
+        document.getElementById('voice-setup-card').style.display = 'none';
+        document.getElementById('voice-number').value = receptionist.e164 || '—';
+        document.getElementById('voice-source').value =
+          receptionist.persona_source === 'reva' ? 'Reva (Amara) persona' : 'Dedicated voice setup';
+      } else {
+        document.getElementById('voice-status-card').style.display = 'none';
+        document.getElementById('voice-setup-card').style.display = 'block';
+      }
+    } catch (e) { console.warn('Could not load voice receptionist:', e); }
+  }
+
+  async function loadAvailableNumbers() {
+    const country = document.getElementById('voice-country').value;
+    const pick = document.getElementById('voice-number-pick');
+    pick.innerHTML = '<option value="">Loading…</option>';
+    try {
+      const res = await fetch('/api/voice/numbers/available?country=' + encodeURIComponent(country));
+      if (!res.ok) { pick.innerHTML = '<option value="">No numbers available</option>'; return; }
+      const { numbers } = await res.json();
+      if (!numbers || !numbers.length) { pick.innerHTML = '<option value="">No numbers available</option>'; return; }
+      pick.innerHTML = numbers.map(n =>
+        `<option value="${n.inventory_id || n.id}">${n.e164 || n.phone_number} ${n.monthlyCostCents ? '(₦' + (n.monthlyCostCents/100) + '/mo)' : ''}</option>`
+      ).join('');
+    } catch (e) { pick.innerHTML = '<option value="">Lookup failed</option>'; }
+  }
+
+  async function provisionVoice() {
+    const inventory_id = document.getElementById('voice-number-pick').value;
+    if (!inventory_id) { showToast('Pick a phone number first.', true); return; }
+    const persona_source = document.getElementById('voice-persona-source').value;
+    const body = { inventory_id, persona_source, country: document.getElementById('voice-country').value };
+    if (persona_source === 'dedicated') {
+      body.dedicated = {
+        name: document.getElementById('voice-d-name').value || 'Voice Receptionist',
+        company_name: document.getElementById('voice-d-company').value,
+        greeting: document.getElementById('voice-d-greeting').value,
+        prompt: document.getElementById('voice-d-prompt').value,
+      };
+    }
+    const btn = document.getElementById('voice-provision-btn');
+    btn.disabled = true; btn.textContent = 'Activating…';
+    try {
+      const res = await fetch('/api/voice/receptionist', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.detail || 'Could not activate receptionist.', true);
+      } else {
+        showToast('Voice receptionist activated.');
+        await loadVoice();
+      }
+    } catch (e) { showToast('Could not activate receptionist.', true); }
+    finally { btn.disabled = false; btn.textContent = 'Activate Receptionist'; }
+  }
+
+  async function disableVoice() {
+    if (!confirm('Disable your voice receptionist? The phone number will be released.')) return;
+    try {
+      const res = await fetch('/api/voice/receptionist', { method: 'DELETE' });
+      if (res.ok) { showToast('Receptionist disabled.'); await loadVoice(); }
+      else showToast('Could not disable receptionist.', true);
+    } catch (e) { showToast('Could not disable receptionist.', true); }
+  }
+
   // ─── Toast notification ─────────────────────────────────────────
   function showToast(msg, isError) {
     const t = document.createElement('div');
@@ -817,7 +1003,7 @@
     setTimeout(() => t.remove(), 3000);
   }
 
-  document.addEventListener('DOMContentLoaded', loadSettings);
+  document.addEventListener('DOMContentLoaded', () => { loadSettings(); loadVoice(); });
 </script>
 </body>
 </html>

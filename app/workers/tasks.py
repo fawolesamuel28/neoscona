@@ -15,19 +15,26 @@ from app.services.conversation import build_conversation_context, save_ai_respon
 from app.llm.client import get_ai_response
 from app.services.agent_commands import handle_agent_command
 from app.core.dashboard_events import notify_dashboard_update
+from app.core.tenant import require_tenant
 
-async def _process_message_async(phone_number: str, message: str, message_id: str, message_type: str, source: str, media_url: str = None):
+async def _process_message_async(phone_number: str, message: str, message_id: str, message_type: str, source: str, media_url: str = None, tenant_id: str = None):
     """
     Detailed message processing pipeline.
+
+    `tenant_id` is resolved by the gateway from the channel registry and is REQUIRED
+    — it scopes every read/write so a message never lands in the wrong workspace.
     """
-    
+
+    # 0. Tenant chokepoint — the gateway guarantees this; fail loudly if it didn't.
+    tenant_id = require_tenant(tenant_id)
+
     # 1. Worker-level Idempotency Check (prevent re-processing 'done' messages)
     if await is_already_done(message_id):
         logger.info("Message %s already processed. Skipping.", message_id)
         return
 
     # 1.1 Agent Command Check
-    is_command = await handle_agent_command(phone_number, message)
+    is_command = await handle_agent_command(phone_number, message, tenant_id=tenant_id)
     if is_command:
         await mark_as_done(message_id)
         return
@@ -49,16 +56,17 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
             incoming.message = f"[VOICE_NOTE]: {transcript}"
 
         # 3. Log Inbound
-        await log_message(incoming.phone_number, "user", incoming.message)
+        await log_message(incoming.phone_number, "user", incoming.message, tenant_id=tenant_id)
 
         # 4. Build Context
-        context = await build_conversation_context(incoming)
+        context = await build_conversation_context(incoming, tenant_id=tenant_id)
 
         # Ensure every inbound message creates/updates a dashboard lead row
         await upsert_lead(
             incoming.phone_number,
             {"source": incoming.source},
             stage=context.get("stage") or "new",
+            tenant_id=tenant_id,
         )
         
         # 5. Check for PAUSE state
@@ -69,8 +77,9 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
 
         # 5.1 Plan entitlement gate — skip the AI reply when the tenant's plan or
         # subscription disallows it (soft by default; see app/core/entitlements.py).
+        # Use the channel-resolved tenant, not the lead row's (authoritative source).
         from app.core.entitlements import reply_allowed
-        decision = await reply_allowed(lead.get("tenant_id"))
+        decision = await reply_allowed(tenant_id)
         if not decision.allowed:
             logger.info(
                 "Reply gated for %s (%s). Skipping AI response.",
@@ -89,11 +98,12 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
         
         if message_type in MEDIA_RESPONSES and not (message_type == "audio" and media_url):
             media_msg = MEDIA_RESPONSES[message_type]
-            await log_message(incoming.phone_number, "assistant", media_msg)
+            await log_message(incoming.phone_number, "assistant", media_msg, tenant_id=tenant_id)
             await upsert_lead(
                 incoming.phone_number,
                 {"source": incoming.source},
                 stage=context.get("stage") or "qualifying",
+                tenant_id=tenant_id,
             )
             await send_outbound_message(incoming.phone_number, media_msg, incoming.source)
             await mark_as_done(message_id)
@@ -115,6 +125,7 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
             stage=context["stage"],
             phone_number=incoming.phone_number,
             lead_data=context["lead_data"],
+            tenant_id=tenant_id,
         )
 
         # 10. Update Lead Data
@@ -125,14 +136,16 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
             "intent": beh_intel["intent"] if beh_intel["intent"] != "unknown" else context["lead_data"].get("intent"),
             "urgency": beh_intel["urgency"],
             "source": incoming.source,
+            "tenant_id": tenant_id,
         }
         
         # 10.1 Combined Scoring
         llm_score = extracted_data.get("seriousness_score") or 5
         final_score = await scoring_engine.get_combined_score(
-            incoming.phone_number, 
-            incoming.message, 
-            llm_score
+            incoming.phone_number,
+            incoming.message,
+            llm_score,
+            tenant_id=tenant_id,
         )
         merged_lead_data["seriousness_score"] = final_score
 
@@ -141,6 +154,7 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
             incoming.phone_number,
             context["stage"],
             merged_lead_data,
+            tenant_id=tenant_id,
         )
 
         # 12. Persist
@@ -149,16 +163,17 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
             context["history"],
             ai_message,
             extracted_data,
+            tenant_id=tenant_id,
         )
         
-        await upsert_lead(incoming.phone_number, merged_lead_data, new_stage)
-        await log_message(incoming.phone_number, "assistant", ai_message)
+        await upsert_lead(incoming.phone_number, merged_lead_data, new_stage, tenant_id=tenant_id)
+        await log_message(incoming.phone_number, "assistant", ai_message, tenant_id=tenant_id)
 
         # 12.1 Hot Lead Routing
         score = merged_lead_data.get("seriousness_score", 0)
         if score >= 8:
             logger.info(f"HOT LEAD detected: {phone_number} (Score: {score})")
-            senior_agent = await assign_agent(merged_lead_data.get("development_id"))
+            senior_agent = await assign_agent(merged_lead_data.get("development_id"), tenant_id=tenant_id)
             if senior_agent:
                 await notify_agent(merged_lead_data, senior_agent)
 
@@ -167,7 +182,7 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
 
         # 13.1 Meter the outbound AI reply (all channels converge here). Fire-and-forget.
         from app.services.usage import record_usage
-        await record_usage(merged_lead_data.get("tenant_id"), "message")
+        await record_usage(tenant_id, "message")
 
         # 14. Mark as done
         await mark_as_done(message_id)
@@ -177,11 +192,11 @@ async def _process_message_async(phone_number: str, message: str, message_id: st
         raise e
 
 @celery_app.task(name="process_message_task", bind=True, max_retries=3)
-def process_message_task(self, phone_number: str, message: str, message_id: str, message_type: str, source: str, media_url: str = None):
+def process_message_task(self, phone_number: str, message: str, message_id: str, message_type: str, source: str, media_url: str = None, tenant_id: str = None):
     """Celery task wrapper for message processing."""
     try:
         asyncio.run(_process_message_async(
-            phone_number, message, message_id, message_type, source, media_url
+            phone_number, message, message_id, message_type, source, media_url, tenant_id
         ))
         notify_dashboard_update("pipeline_updated", phone_number=phone_number)
     except Exception as exc:

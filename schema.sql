@@ -73,10 +73,10 @@ $$;
 
 
 --
--- Name: search_inventory_fts(text, numeric, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: search_inventory_fts(uuid, text, numeric, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.search_inventory_fts(search_query text, max_budget numeric DEFAULT NULL::numeric, target_bedrooms integer DEFAULT NULL::integer) RETURNS TABLE(id uuid, name text, location text, property_type text, bedrooms integer, price numeric, highlights text, source text, rank real)
+CREATE FUNCTION public.search_inventory_fts(p_tenant_id uuid, search_query text, max_budget numeric DEFAULT NULL::numeric, target_bedrooms integer DEFAULT NULL::integer) RETURNS TABLE(id uuid, name text, location text, property_type text, bedrooms integer, price numeric, highlights text, source text, rank real)
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -86,14 +86,14 @@ BEGIN
     -- Format query for FTS (e.g., "lekki apartment" -> "lekki" & "apartment")
     -- We use plainto_tsquery to safely handle user input
     formatted_query := plainto_tsquery('english', COALESCE(search_query, ''));
-    
+
     -- Allow a 20% stretch on the budget (industry standard fuzziness)
     IF max_budget IS NOT NULL THEN
         budget_stretch := max_budget * 1.2;
     END IF;
 
     RETURN QUERY
-    SELECT 
+    SELECT
         v.id,
         v.title as name,
         v.location,
@@ -102,7 +102,7 @@ BEGIN
         v.price_naira as price,
         v.highlights,
         v.source_table as source,
-        CASE 
+        CASE
             WHEN formatted_query::text = '' THEN 1.0::REAL
             ELSE ts_rank(
                 setweight(to_tsvector('english', COALESCE(v.location, '')), 'A') ||
@@ -110,10 +110,12 @@ BEGIN
                 setweight(to_tsvector('english', COALESCE(v.title, '')), 'B') ||
                 setweight(to_tsvector('english', COALESCE(v.highlights, '')), 'C'),
                 formatted_query
-            )::REAL 
+            )::REAL
         END as rank
     FROM v_available_inventory v
-    WHERE 
+    WHERE
+        -- Tenant isolation: only this workspace's catalog is searchable.
+        v.tenant_id = p_tenant_id AND
         (max_budget IS NULL OR v.price_naira <= budget_stretch) AND
         (target_bedrooms IS NULL OR v.bedrooms = target_bedrooms OR v.bedrooms IS NULL) AND
         (formatted_query::text = '' OR (
@@ -122,8 +124,8 @@ BEGIN
             setweight(to_tsvector('english', COALESCE(v.title, '')), 'B') ||
             setweight(to_tsvector('english', COALESCE(v.highlights, '')), 'C')
         ) @@ formatted_query)
-    ORDER BY 
-        rank DESC, 
+    ORDER BY
+        rank DESC,
         (CASE WHEN max_budget IS NOT NULL THEN abs(v.price_naira - max_budget) ELSE v.price_naira END) ASC
     LIMIT 3;
 END;
@@ -141,6 +143,21 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
+$$;
+
+
+--
+-- Name: user_tenant_ids(); Type: FUNCTION; Schema: auth; Owner: -
+-- The RLS primitive: the set of tenants the current user belongs to. SECURITY
+-- DEFINER so it can read memberships regardless of that table's own RLS. Every
+-- tenant-scoped policy is keyed on this.
+--
+
+CREATE FUNCTION public.user_tenant_ids() RETURNS SETOF uuid
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path = public
+    AS $$
+    SELECT tenant_id FROM public.memberships WHERE user_id = auth.uid()
 $$;
 
 
@@ -182,11 +199,29 @@ CREATE TABLE public.agent_developments (
 
 CREATE TABLE public.agents (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
     name text NOT NULL,
     whatsapp text NOT NULL,
     email text,
     active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: channels; Type: TABLE; Schema: public; Owner: -
+-- Channel->tenant registry. Resolves which customer's workspace an inbound
+-- message belongs to, keyed on the business inbox it arrived on. Consumed by
+-- app/services/channels.py; populated via register_channel / onboarding.
+--
+
+CREATE TABLE public.channels (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    provider text NOT NULL,
+    external_id text NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -286,7 +321,32 @@ CREATE TABLE public.elevenlabs_leads (
     created_at timestamp with time zone DEFAULT now(),
     name text,
     viewed_at timestamp with time zone,
-    tenant_id uuid DEFAULT 'a0000000-0000-4000-8000-000000000001'::uuid
+    tenant_id uuid NOT NULL
+);
+
+
+--
+-- Name: voice_agents; Type: TABLE; Schema: public; Owner: -
+--
+-- Per-tenant voice receptionist: an ElevenLabs ConvAI agent (the brain) bound to a
+-- KrosAI phone number (inbound). Post-call webhooks are attributed to the owning
+-- tenant by elevenlabs_agent_id via the channels registry. See migration 004 and
+-- app/services/voice/. RLS keyed on public.user_tenant_ids().
+--
+
+CREATE TABLE public.voice_agents (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    provider text DEFAULT 'elevenlabs'::text NOT NULL,
+    elevenlabs_agent_id text,
+    krosai_phone_id text,
+    e164 text,
+    label text,
+    status text DEFAULT 'provisioning'::text NOT NULL,
+    persona_source text DEFAULT 'dedicated'::text NOT NULL,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -596,7 +656,8 @@ CREATE VIEW public.v_available_inventory AS
     properties.bedrooms,
     properties.price AS price_naira,
     properties.highlights,
-    'properties'::text AS source_table
+    'properties'::text AS source_table,
+    properties.tenant_id
    FROM public.properties
   WHERE (properties.available = true)
 UNION ALL
@@ -607,7 +668,8 @@ UNION ALL
     u.bedrooms,
     u.price_naira,
     u.highlights,
-    'units'::text AS source_table
+    'units'::text AS source_table,
+    u.tenant_id
    FROM (public.units u
      JOIN public.developments dev ON ((u.development_id = dev.id)))
   WHERE (u.status = 'available'::text)
@@ -619,7 +681,8 @@ UNION ALL
     NULL::integer AS bedrooms,
     developments.price_min AS price_naira,
     developments.description AS highlights,
-    'developments'::text AS source_table
+    'developments'::text AS source_table,
+    developments.tenant_id
    FROM public.developments
   WHERE (developments.price_min IS NOT NULL);
 
@@ -646,6 +709,23 @@ ALTER TABLE ONLY public.agent_developments
 
 ALTER TABLE ONLY public.agents
     ADD CONSTRAINT agents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: channels channels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.channels
+    ADD CONSTRAINT channels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: channels channels_provider_external_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- One business inbox maps to exactly one tenant (global uniqueness on the pair).
+--
+
+ALTER TABLE ONLY public.channels
+    ADD CONSTRAINT channels_provider_external_id_key UNIQUE (provider, external_id);
 
 
 --
@@ -721,11 +801,13 @@ ALTER TABLE ONLY public.lead_unit_matches
 
 
 --
--- Name: leads leads_phone_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: leads leads_tenant_id_phone_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- A phone number is unique WITHIN a tenant, not globally: two businesses may both
+-- talk to the same lead. Also backs the upsert on_conflict=(tenant_id,phone_number).
 --
 
 ALTER TABLE ONLY public.leads
-    ADD CONSTRAINT leads_phone_number_key UNIQUE (phone_number);
+    ADD CONSTRAINT leads_tenant_id_phone_number_key UNIQUE (tenant_id, phone_number);
 
 
 --
@@ -817,10 +899,24 @@ ALTER TABLE ONLY public.usage_events
 
 
 --
+-- Name: idx_agents_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_agents_tenant ON public.agents USING btree (tenant_id);
+
+
+--
 -- Name: idx_audit_tenant_time; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_audit_tenant_time ON public.audit_log USING btree (tenant_id, created_at DESC);
+
+
+--
+-- Name: idx_channels_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_channels_tenant ON public.channels USING btree (tenant_id);
 
 
 --
@@ -955,6 +1051,22 @@ CREATE TRIGGER leads_updated_at BEFORE UPDATE ON public.leads FOR EACH ROW EXECU
 
 ALTER TABLE ONLY public.agent_configs
     ADD CONSTRAINT agent_configs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: agents agents_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agents
+    ADD CONSTRAINT agents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: channels channels_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.channels
+    ADD CONSTRAINT channels_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --
@@ -1125,6 +1237,13 @@ ALTER TABLE ONLY public.usage_events
     ADD CONSTRAINT usage_events_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
+-- One consistent RLS model across every tenant-scoped table: a row is visible/
+-- writable iff its tenant_id is one the current user belongs to. The user-facing
+-- client (app/db/supabase.py get_request_client) runs as `authenticated`, so these
+-- isolate per tenant; the service-role client (webhooks/jobs) has BYPASSRLS and
+-- relies on explicit .eq(tenant_id) filters in application code. Keyed on
+-- public.user_tenant_ids() — never a hardcoded UUID or the unset app.current_tenant_id.
+
 --
 -- Name: agent_configs; Type: ROW SECURITY; Schema: public; Owner: -
 --
@@ -1135,7 +1254,7 @@ ALTER TABLE public.agent_configs ENABLE ROW LEVEL SECURITY;
 -- Name: agent_configs agent_configs_tenant; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY agent_configs_tenant ON public.agent_configs USING ((tenant_id = (current_setting('app.current_tenant_id'::text, true))::uuid));
+CREATE POLICY agent_configs_tenant ON public.agent_configs TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
 
 
 --
@@ -1145,10 +1264,37 @@ CREATE POLICY agent_configs_tenant ON public.agent_configs USING ((tenant_id = (
 ALTER TABLE public.agents ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: agents agents_tenant; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY agents_tenant ON public.agents TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
+
+
+--
+-- Name: channels; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.channels ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: channels channels_tenant; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY channels_tenant ON public.channels TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
+
+
+--
 -- Name: conversation_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.conversation_logs ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: conversation_logs conversation_logs_tenant; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY conversation_logs_tenant ON public.conversation_logs TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
+
 
 --
 -- Name: developments; Type: ROW SECURITY; Schema: public; Owner: -
@@ -1166,14 +1312,7 @@ ALTER TABLE public.lead_notes ENABLE ROW LEVEL SECURITY;
 -- Name: lead_notes lead_notes_tenant; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY lead_notes_tenant ON public.lead_notes USING ((tenant_id = (current_setting('app.current_tenant_id'::text, true))::uuid));
-
-
---
--- Name: leads lead_tenant_access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY lead_tenant_access ON public.leads USING ((tenant_id = 'a0000000-0000-4000-8000-000000000001'::uuid)) WITH CHECK ((tenant_id = 'a0000000-0000-4000-8000-000000000001'::uuid));
+CREATE POLICY lead_notes_tenant ON public.lead_notes TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
 
 
 --
@@ -1183,10 +1322,10 @@ CREATE POLICY lead_tenant_access ON public.leads USING ((tenant_id = 'a0000000-0
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: conversation_logs log_tenant_access; Type: POLICY; Schema: public; Owner: -
+-- Name: leads leads_tenant; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY log_tenant_access ON public.conversation_logs USING ((tenant_id = 'a0000000-0000-4000-8000-000000000001'::uuid)) WITH CHECK ((tenant_id = 'a0000000-0000-4000-8000-000000000001'::uuid));
+CREATE POLICY leads_tenant ON public.leads TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
 
 
 --
@@ -1218,7 +1357,7 @@ ALTER TABLE public.usage_counters ENABLE ROW LEVEL SECURITY;
 -- Name: usage_counters usage_counters_tenant; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY usage_counters_tenant ON public.usage_counters USING ((tenant_id = (current_setting('app.current_tenant_id'::text, true))::uuid));
+CREATE POLICY usage_counters_tenant ON public.usage_counters TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
 
 
 --
@@ -1231,7 +1370,7 @@ ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 -- Name: usage_events usage_events_tenant; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY usage_events_tenant ON public.usage_events USING ((tenant_id = (current_setting('app.current_tenant_id'::text, true))::uuid));
+CREATE POLICY usage_events_tenant ON public.usage_events TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
 
 
 --
