@@ -7,10 +7,13 @@ from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-async def handle_agent_command(agent_phone: str, message: str) -> bool:
+async def handle_agent_command(agent_phone: str, message: str, *, tenant_id: str) -> bool:
     """
     Parses and executes commands sent by agents.
     Returns True if a command was handled, False otherwise.
+
+    `tenant_id` (the channel's tenant — the agent texts on the business's own line)
+    scopes every lead write so a command can't touch another workspace's lead.
     """
     msg = message.strip().upper()
     
@@ -21,9 +24,10 @@ async def handle_agent_command(agent_phone: str, message: str) -> bool:
         amount = int(closed_match.group(2))
         
         await upsert_lead(
-            lead_phone, 
-            {"closing_revenue": amount, "attribution": "reva"}, 
-            LeadStage.CLOSED.value
+            lead_phone,
+            {"closing_revenue": amount, "attribution": "reva"},
+            LeadStage.CLOSED.value,
+            tenant_id=tenant_id,
         )
         
         await send_outbound_message(
@@ -39,9 +43,10 @@ async def handle_agent_command(agent_phone: str, message: str) -> bool:
         lead_phone = pause_match.group(1)
         
         await upsert_lead(
-            lead_phone, 
-            {"is_paused": True}, 
-            None # Keep current stage
+            lead_phone,
+            {"is_paused": True},
+            None,  # Keep current stage
+            tenant_id=tenant_id,
         )
         
         await send_outbound_message(
@@ -57,9 +62,10 @@ async def handle_agent_command(agent_phone: str, message: str) -> bool:
         lead_phone = resume_match.group(1)
         
         await upsert_lead(
-            lead_phone, 
-            {"is_paused": False}, 
-            None
+            lead_phone,
+            {"is_paused": False},
+            None,
+            tenant_id=tenant_id,
         )
         
         await send_outbound_message(

@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any
 
-from app.core.tenant import apply_tenant_defaults
+from app.core.tenant import apply_tenant_defaults, require_tenant
 from app.db.supabase import get_supabase
 from app.models.inventory import UnitMatch
 
@@ -180,6 +180,7 @@ def _score_unit(
 
 
 async def fetch_available_units(tenant_id: str | None = None) -> list[dict[str, Any]]:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
@@ -192,9 +193,8 @@ async def fetch_available_units(tenant_id: str | None = None) -> list[dict[str, 
                     "developments(name, phase, location, area_tags)"
                 )
                 .eq("status", "available")
+                .eq("tenant_id", tenant_id)
             )
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
             return query.execute()
 
         result = await asyncio.to_thread(_fetch)
@@ -225,30 +225,38 @@ async def search_properties(
     location: str,
     property_type: str,
     max_budget: float,
-    bedrooms: int | None = None
+    bedrooms: int | None = None,
+    *,
+    tenant_id: str,
 ) -> list[dict]:
     """
     Unified search using PostgreSQL Full-Text Search and the v_available_inventory view.
+
+    `tenant_id` is REQUIRED and passed to the FTS function as p_tenant_id: this runs
+    under the service-role client (RLS bypassed), so the function-level tenant filter
+    is the only thing keeping one workspace's catalog out of another's search results.
     """
-    logger.info(f"FTS search started | location={location} | type={property_type} | budget={max_budget} | beds={bedrooms}")
+    tenant_id = require_tenant(tenant_id)
+    logger.info(f"FTS search started | tenant={tenant_id} | location={location} | type={property_type} | budget={max_budget} | beds={bedrooms}")
     results = []
     try:
         db = get_supabase()
-        
+
         # Build search query string for FTS
         query_parts = []
         if location:
             query_parts.append(location)
         if property_type:
             query_parts.append(property_type)
-            
+
         search_query = " ".join(query_parts)
-        
+
         # Call the native Postgres function
         def _fetch():
             return db.rpc(
                 'search_inventory_fts',
                 {
+                    'p_tenant_id': tenant_id,
                     'search_query': search_query,
                     'max_budget': max_budget,
                     'target_bedrooms': bedrooms
@@ -445,23 +453,22 @@ async def save_lead_matches(
     if not matches:
         return
 
+    tenant_id = require_tenant(tenant_id)
+
     from app.cache.redis import cache_lead_matches
 
     snapshot = [m.model_dump() for m in matches]
-    await cache_lead_matches(phone_number, snapshot)
+    await cache_lead_matches(tenant_id, phone_number, snapshot)
 
     try:
         db = get_supabase()
-        # apply_tenant_defaults fills the seeded default tenant when tenant_id is
-        # None, so matches are always tenant-tagged (matches migration 010's column).
         rows = [
             apply_tenant_defaults({
                 "phone_number": phone_number,
                 "unit_id": m.unit_id,
                 "match_score": m.match_score,
                 "rank": m.rank,
-                "tenant_id": tenant_id,
-            })
+            }, tenant_id)
             for m in matches
         ]
 
@@ -475,6 +482,7 @@ async def save_lead_matches(
 
 
 async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> list[dict[str, Any]]:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
@@ -487,9 +495,8 @@ async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> l
                     "developments(name, location, phase))"
                 )
                 .eq("phone_number", phone_number)
+                .eq("tenant_id", tenant_id)
             )
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
             return query.order("rank").execute()
 
         result = await asyncio.to_thread(_fetch)
@@ -500,7 +507,7 @@ async def get_lead_matches(phone_number: str, tenant_id: str | None = None) -> l
 
     from app.cache.redis import get_cached_lead_matches
 
-    cached = await get_cached_lead_matches(phone_number)
+    cached = await get_cached_lead_matches(tenant_id, phone_number)
     if not cached:
         return []
 

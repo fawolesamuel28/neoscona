@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from app.core.tenant import get_default_tenant_id
+from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
 from app.services.leads import get_lead, log_message, upsert_lead
 
@@ -97,14 +97,21 @@ def normalize_elevenlabs_lead(row: dict[str, Any]) -> dict[str, Any]:
 
 
 async def get_all_elevenlabs_leads(tenant_id: str | None = None) -> list[dict[str, Any]]:
+    # These helpers run under the service-role client (RLS bypassed), so the explicit
+    # tenant filter is the ONLY guard against a cross-tenant read. Require it — never
+    # silently return every workspace's voice leads.
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
         def _fetch():
-            query = db.table("elevenlabs_leads").select("*")
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return query.order("created_at", desc=True).execute()
+            return (
+                db.table("elevenlabs_leads")
+                .select("*")
+                .eq("tenant_id", tenant_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
 
         result = await asyncio.to_thread(_fetch)
         return [normalize_elevenlabs_lead(row) for row in result.data]
@@ -115,14 +122,19 @@ async def get_all_elevenlabs_leads(tenant_id: str | None = None) -> list[dict[st
 
 
 async def get_elevenlabs_lead(lead_id: int, tenant_id: str | None = None) -> dict[str, Any] | None:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
 
         def _fetch():
-            query = db.table("elevenlabs_leads").select("*").eq("id", lead_id)
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return query.single().execute()
+            return (
+                db.table("elevenlabs_leads")
+                .select("*")
+                .eq("id", lead_id)
+                .eq("tenant_id", tenant_id)
+                .single()
+                .execute()
+            )
 
         result = await asyncio.to_thread(_fetch)
         return normalize_elevenlabs_lead(result.data)
@@ -133,15 +145,20 @@ async def get_elevenlabs_lead(lead_id: int, tenant_id: str | None = None) -> dic
 
 
 async def mark_elevenlabs_lead_viewed(lead_id: int, tenant_id: str | None = None) -> dict[str, Any] | None:
+    tenant_id = require_tenant(tenant_id)
     try:
         db = get_supabase()
         now = datetime.now(timezone.utc).isoformat()
 
         def _update():
-            query = db.table("elevenlabs_leads").update({"viewed_at": now}).eq("id", lead_id)
-            if tenant_id:
-                query = query.eq("tenant_id", tenant_id)
-            return query.select("*").execute()
+            return (
+                db.table("elevenlabs_leads")
+                .update({"viewed_at": now})
+                .eq("id", lead_id)
+                .eq("tenant_id", tenant_id)
+                .select("*")
+                .execute()
+            )
 
         result = await asyncio.to_thread(_update)
         if not result.data:
@@ -153,9 +170,15 @@ async def mark_elevenlabs_lead_viewed(lead_id: int, tenant_id: str | None = None
         return None
 
 
-async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | None:
-    """Create or update a main `leads` row from a voice receptionist capture."""
-    voice_lead = await get_elevenlabs_lead(lead_id)
+async def import_elevenlabs_lead_to_pipeline(lead_id: int, tenant_id: str) -> dict[str, Any] | None:
+    """Create or update a main `leads` row from a voice receptionist capture.
+
+    `tenant_id` is REQUIRED and must be the resolved owning workspace (from the channel
+    registry on the webhook path, or the authenticated principal on the API path) — the
+    capture is filed under that tenant, never a hardcoded default.
+    """
+    tenant_id = require_tenant(tenant_id)
+    voice_lead = await get_elevenlabs_lead(lead_id, tenant_id=tenant_id)
     if not voice_lead:
         return None
 
@@ -163,13 +186,8 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
     if not phone:
         return None
 
-    existing = await get_lead(phone)
+    existing = await get_lead(phone, tenant_id)
     stage = existing.get("stage", "new") if existing else "new"
-
-    tenant_id = get_default_tenant_id()
-    if not tenant_id:
-        logger.error("DEFAULT_TENANT_ID is not configured; cannot import voice lead")
-        return None
 
     extracted = {
         "name": voice_lead.get("name"),
@@ -181,7 +199,7 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
         "tenant_id": tenant_id,
     }
 
-    lead = await upsert_lead(phone, extracted, stage=stage)
+    lead = await upsert_lead(phone, extracted, stage=stage, tenant_id=tenant_id)
     if lead:
         summary = voice_lead.get("ai_summary")
         if summary:
@@ -189,12 +207,48 @@ async def import_elevenlabs_lead_to_pipeline(lead_id: int) -> dict[str, Any] | N
                 phone,
                 "assistant",
                 f"[VOICE_RECEPTIONIST]: {summary}",
+                tenant_id=tenant_id,
             )
-        await mark_elevenlabs_lead_viewed(lead_id)
+        await mark_elevenlabs_lead_viewed(lead_id, tenant_id=tenant_id)
     return lead
 
 
+async def upsert_voice_lead(tenant_id: str, call_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
+    """Insert (or update on retry) a voice capture from a post-call webhook.
+
+    Scoped to `tenant_id` and idempotent on `(tenant_id, call_id)` — the post-call
+    webhook may be retried, so a repeat delivery updates the same row rather than
+    duplicating it. Service-role write with an explicit tenant_id (the webhook resolves
+    the owning tenant from the channel registry before calling this).
+    """
+    tenant_id = require_tenant(tenant_id)
+    if not call_id:
+        logger.warning("upsert_voice_lead called without call_id (tenant=%s); skipping", tenant_id)
+        return None
+    try:
+        db = get_supabase()
+        row = {
+            "tenant_id": tenant_id,
+            "call_id": call_id,
+            **{k: v for k, v in fields.items() if v is not None},
+        }
+
+        def _upsert():
+            return db.table("elevenlabs_leads").upsert(
+                row, on_conflict="tenant_id,call_id"
+            ).execute()
+
+        res = await asyncio.to_thread(_upsert)
+        if not res.data:
+            return None
+        return normalize_elevenlabs_lead(res.data[0])
+    except Exception as exc:
+        logger.error("Failed to upsert voice lead (tenant=%s call=%s): %s", tenant_id, call_id, exc)
+        return None
+
+
 async def get_elevenlabs_stats(tenant_id: str | None = None) -> dict[str, int]:
+    tenant_id = require_tenant(tenant_id)
     leads = await get_all_elevenlabs_leads(tenant_id=tenant_id)
     today = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0,

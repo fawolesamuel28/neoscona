@@ -27,12 +27,15 @@ from app.core.sso import router as sso_router, page_session_ok, ACCESS_COOKIE
 from app.core.auth import _decode_token, _auth_disabled
 from app.webhooks.whatsapp import router as whatsapp_router
 from app.webhooks.paystack import router as paystack_webhook_router
+from app.webhooks.voice_elevenlabs import router as voice_webhook_router
 from app.routers.leads import router as leads_router
 from app.routers.billing import router as billing_router
 from app.routers.agent_config import router as agent_config_router
 from app.routers.onboarding import router as onboarding_router
 from app.routers.config import router as config_router
 from app.routers.health import router as health_router
+from app.routers.voice import router as voice_router
+from app.routers.elevenlabs_leads import router as elevenlabs_leads_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -95,12 +98,15 @@ app.include_router(sso_router)  # /auth/session, /auth/refresh, /auth/logout
 # ─── Include Reva Routers ──────────────────────────────────────────────────
 app.include_router(whatsapp_router, prefix="/webhook", tags=["Webhooks"])
 app.include_router(paystack_webhook_router, prefix="/webhook", tags=["Webhooks"])
+app.include_router(voice_webhook_router, prefix="/webhook", tags=["Webhooks"])
 app.include_router(leads_router, prefix="/api", tags=["Leads"])
 app.include_router(billing_router, prefix="/api", tags=["Billing"])
 app.include_router(agent_config_router, prefix="/api", tags=["Agent Config"])
 app.include_router(onboarding_router, prefix="/api", tags=["Onboarding"])
 app.include_router(config_router, prefix="/api", tags=["Configuration"])
 app.include_router(health_router, prefix="/api", tags=["System"])
+app.include_router(voice_router, prefix="/api", tags=["Voice Receptionist"])
+app.include_router(elevenlabs_leads_router, prefix="/api", tags=["Voice Leads"])
 
 # ─── Marketing & Platform Routes ───────────────────────────────────────────
 
@@ -209,6 +215,14 @@ async def reva_settings(request: Request):
     if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
         return RedirectResponse(url="/login")
     return render_template(request, "reva_settings.html")
+
+@app.get("/products/reva/voice", response_class=HTMLResponse)
+async def reva_voice(request: Request):
+    # Mirror the console's localhost dev bypass so the sidebar links work locally.
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "reva_voice.html")
 
 @app.get("/healthz")
 async def healthz():

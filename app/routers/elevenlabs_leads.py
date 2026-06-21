@@ -84,14 +84,14 @@ async def import_to_pipeline(
     if not await get_elevenlabs_lead(lead_id, tenant_id=principal.tenant_id):
         raise HTTPException(status_code=404, detail="Lead not found")
 
-    lead = await import_elevenlabs_lead_to_pipeline(lead_id)
+    lead = await import_elevenlabs_lead_to_pipeline(lead_id, principal.tenant_id)
     if lead:
         phone = lead.get("phone_number")
         notify_dashboard_update("pipeline_updated", phone_number=phone)
         notify_dashboard_update("voice_updated", voice_lead_id=lead_id)
         return {"lead": lead, "message": "Imported to pipeline"}
 
-    voice = await get_elevenlabs_lead(lead_id)
+    voice = await get_elevenlabs_lead(lead_id, tenant_id=principal.tenant_id)
     if not voice:
         raise HTTPException(status_code=404, detail="Lead not found")
     if not voice.get("contact_phone"):

@@ -30,7 +30,31 @@
       "Bash(\".venv/Scripts/python.exe\" -m pytest tests/test_auth.py tests/test_auth_cookie.py -q)",
       "Bash(SUPABASE_URL=\"https://x.supabase.co\" SUPABASE_ANON_KEY=\"k\" \".venv/Scripts/python.exe\" -c \"import server; from app.core import sso; print\\('OK server.app =', type\\(server.app\\).__name__\\); print\\('sso routes:', [r.path for r in sso.router.routes]\\)\")",
       "Read(//Users/dev/workspace-b1974feb/**)",
-      "Bash(awk '/^  \\\\.nav-item \\\\{/{f=1} f{print} /^  \\\\}/{if\\(f\\){exit}}')"
+      "Bash(awk '/^  \\\\.nav-item \\\\{/{f=1} f{print} /^  \\\\}/{if\\(f\\){exit}}')",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('server.py'\\).read\\(\\)\\); print\\('server.py: syntax OK'\\)\")",
+      "Bash(git commit -m 'style\\(reva\\): consistent sidebar icons; add .gitattributes, CLAUDE.md, tenant-isolation skill *)",
+      "Bash(git fetch *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)",
+      "Bash(python3 -c \"import ast,glob; files=['app/services/channels.py','app/webhooks/gateway.py','app/workers/tasks.py','app/services/agent_commands.py','app/webhooks/whatsapp.py','app/models/lead.py','app/webhooks/telegram.py','app/webhooks/instagram.py','app/webhooks/vapi.py']; [ast.parse\\(open\\(f\\).read\\(\\), f\\) for f in files]; print\\('AST OK for', len\\(files\\), 'files'\\)\")",
+      "Bash(ls -d venv .venv env)",
+      "Bash(command -v python3)",
+      "Bash(.venv/bin/python --version)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(git symbolic-ref *)",
+      "Bash(git remote *)",
+      "Bash(python -m py_compile app/services/agent_notify.py app/workers/tasks.py)",
+      "Bash(python3 -m py_compile app/services/agent_notify.py app/workers/tasks.py)",
+      "Bash(python3 -m py_compile app/services/channels.py app/routers/onboarding.py)",
+      "Bash(python3 -m py_compile app/services/channels.py app/routers/onboarding.py app/webhooks/gateway.py)",
+      "Bash(git --no-pager diff --stat HEAD)",
+      "Bash(git --no-pager log --oneline -8)",
+      "Bash(git --no-pager diff HEAD -- app/workers/tasks.py app/services/agent_commands.py app/services/agent_notify.py app/models/lead.py)",
+      "Bash(git --no-pager diff HEAD -- app/webhooks/whatsapp.py app/webhooks/telegram.py app/webhooks/instagram.py app/webhooks/vapi.py)",
+      "Bash(git --no-pager diff HEAD -- schema.sql)",
+      "WebFetch(domain:docs.krosai.com)",
+      "WebFetch(domain:elevenlabs.io)",
+      "WebSearch"
     ]
   }
 }

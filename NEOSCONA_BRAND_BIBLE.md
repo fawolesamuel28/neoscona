@@ -39,7 +39,7 @@ A category nobody owns yet. Chatbots answer; *workers do the job* — qualify th
 
 | Twilio | Neoscona |
 |---|---|
-| Messaging API | **Neoscona Reach** (multi-channel: WhatsApp, Telegram, IG, SMS) |
+| Messaging API | **Neoscona Reach** (multi-channel: WhatsApp, IG, SMS) |
 | Voice API | **Neoscona Voice** (AI receptionist, inbound + outbound) |
 | Building blocks for developers | **Ready-to-run workers** for *operators* — no code required |
 | Twilio Marketplace (add-ons) | **Neoscona Marketplace** (templates by us + partners) |
@@ -50,7 +50,7 @@ Twilio gave developers primitives. **Neoscona gives every business a finished wo
 ### 1.4 The unique value (what only we can say)
 
 1. **Grounded, not guessing.** Our anti-hallucination core cross-checks every price and fact against your real data. (This is real — it ships in Reva today. It is the single most defensible claim we have. Lead with it.)
-2. **Lives where Africa lives.** WhatsApp-first, with Telegram, Instagram, and voice. Naira pricing, Paystack billing, NDPR-aware.
+2. **Lives where Africa lives.** WhatsApp-first, with Instagram, and voice. Naira pricing, Paystack billing, NDPR-aware.
 3. **From template to bespoke, one brand.** Start self-serve in minutes; graduate to a custom system without changing vendors.
 4. **Human-handoff built in.** The AI pauses the moment a person takes over. Trust, not replacement.
 
@@ -70,7 +70,7 @@ Twilio gave developers primitives. **Neoscona gives every business a finished wo
 |---|---|---|---|
 | AI receptionist | **Neoscona Voice** | Answers every call, books, qualifies, 24/7 | Plumbing live (Vapi/ElevenLabs) |
 | Lead engine | **Neoscona Reva** | Real-estate lead qualify + nurture + follow-up | Production-track (Reva) |
-| Messaging layer | **Neoscona Reach** | One inbox across WhatsApp/Telegram/IG | Live (gateway) |
+| Messaging layer | **Neoscona Reach** | One inbox across WhatsApp/IG | Live (gateway) |
 | Custom workflows | **Neoscona Flow** | Bespoke automations for enterprise | Sell-as-service now |
 | Ecosystem | **Neoscona Marketplace** | Templates by Neoscona + partners | Vision / phase 2 |
 
@@ -114,7 +114,7 @@ Twilio gave developers primitives. **Neoscona gives every business a finished wo
 
 - **Voice:** *"Never miss a call again."* — Every call answered, qualified, and booked. 24/7, in your voice.
 - **Reva:** *"Stop losing leads to a slow reply."* — Reva answers in seconds, qualifies, and follows up until they book.
-- **Reach:** *"One inbox. Every channel."* — WhatsApp, Telegram, Instagram — your AI handles them all in one place.
+- **Reach:** *"One inbox. Every channel."* — WhatsApp, Instagram — your AI handles them all in one place.
 - **Flow:** *"If it's repetitive, we can automate it."* — Custom AI workflows, built by Neoscona, owned by you.
 
 ### 3.6 Enterprise line

@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from app.billing.plans import get_plan, paystack_plan_code
+from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
 from app.services.paystack import initialize_transaction
 from app.services.usage import get_usage
@@ -28,6 +29,7 @@ async def start_subscription(
     tenant_id: str, plan: str, email: str, callback_url: Optional[str] = None
 ) -> dict[str, Any]:
     """Initialize a Paystack checkout for a selectable plan. Returns the auth URL."""
+    tenant_id = require_tenant(tenant_id)
     cfg = get_plan(plan)
     if not cfg.get("selectable") or cfg.get("price_kobo") is None:
         raise ValueError(f"plan '{plan}' is not self-serve purchasable")
@@ -46,6 +48,7 @@ async def start_subscription(
 
 async def get_billing(tenant_id: str) -> dict[str, Any]:
     """Subscription status + trial + current usage for the billing panel."""
+    tenant_id = require_tenant(tenant_id)
     db = get_supabase()
 
     def _get():

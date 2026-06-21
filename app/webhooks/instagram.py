@@ -24,6 +24,9 @@ async def instagram_webhook(request: Request):
 
     results = []
     for entry in payload.get("entry", []):
+        # entry.id is the Instagram business account that received the DM — the
+        # per-tenant channel key.
+        ig_account_id = entry.get("id")
         for messaging_event in entry.get("messaging", []):
             if "message" in messaging_event and not messaging_event.get("message", {}).get("is_echo"):
                 sender_id = messaging_event.get("sender", {}).get("id")
@@ -38,7 +41,9 @@ async def instagram_webhook(request: Request):
                     message=text,
                     message_id=message_id,
                     message_type="text",
-                    source="instagram"
+                    source="instagram",
+                    channel_provider="instagram",
+                    channel_external_id=ig_account_id,
                 )
 
                 # Ingest via gateway (don't return — process all messages in the batch)

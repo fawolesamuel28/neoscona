@@ -57,7 +57,11 @@ async def vapi_webhook(request: Request) -> WebhookAckResponse:
             message=f"[VOICE_CALL]: {transcript}",
             message_id=f"vapi_{call_id}_{event_type}",
             message_type="text",
-            source="vapi"
+            source="vapi",
+            channel_provider="vapi",
+            # The Vapi phone number that took the call identifies the tenant's line;
+            # fall back to the assistant id if a number isn't attached.
+            channel_external_id=call_data.get("phoneNumberId") or call_data.get("assistantId"),
         )
 
         return await gateway.ingest(request, incoming)

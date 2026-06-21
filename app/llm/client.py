@@ -185,11 +185,17 @@ def parse_ai_response(raw_response: str) -> tuple[str, dict[str, Any]]:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-async def execute_tool(tool_name: str, tool_input: dict, phone_number: str, lead_data: dict) -> str:
-    """Execute the tool and return a response for the AI."""
+async def execute_tool(tool_name: str, tool_input: dict, phone_number: str, lead_data: dict, *, tenant_id: str | None = None) -> str:
+    """Execute the tool and return a response for the AI.
+
+    `tenant_id` (channel-resolved, preferred over lead_data) scopes the catalog and
+    knowledge-base reads so a tool call can't surface another workspace's data.
+    """
     from app.services.inventory import search_properties, handle_inventory_result
     from app.services.messaging import send_property_images
     from app.services.calendly import create_booking_link
+
+    tenant_id = tenant_id or (lead_data or {}).get("tenant_id")
     
     if tool_name == "search_inventory":
         location = tool_input.get("location")
@@ -206,7 +212,7 @@ async def execute_tool(tool_name: str, tool_input: dict, phone_number: str, lead
             except:
                 budget = 0
         
-        properties = await search_properties(location, prop_type, budget, bedrooms)
+        properties = await search_properties(location, prop_type, budget, bedrooms, tenant_id=tenant_id)
         return await handle_inventory_result(properties, phone_number, lead_data)
         
     elif tool_name == "send_properties":
@@ -227,7 +233,6 @@ async def execute_tool(tool_name: str, tool_input: dict, phone_number: str, lead
         
     elif tool_name == "search_knowledge_base":
         query = tool_input.get("query", "")
-        tenant_id = (lead_data or {}).get("tenant_id")
         if not tenant_id:
             return "No knowledge base available for this account."
 
@@ -264,16 +269,22 @@ async def get_ai_response(
     stage: str,
     phone_number: str,
     lead_data: dict[str, Any] | None = None,
+    tenant_id: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """
     Single function the webhook calls for every inbound message.
+
+    `tenant_id` should be the channel-resolved tenant (passed by the worker). We
+    prefer it over any tenant_id sitting in `lead_data`, which isn't reliably present
+    on early turns — and which scopes the per-tenant persona, knowledge base, and
+    inventory catalog tools.
     """
     # Build context-enriched system prompt. The base persona is per-tenant (falls back
     # to the default "Amara" persona when the tenant has no config / lookup fails).
     from app.llm.prompts import build_dealflow_prompt
     from app.services.agent_config import get_agent_config
 
-    tenant_id = (lead_data or {}).get("tenant_id")
+    tenant_id = tenant_id or (lead_data or {}).get("tenant_id")
     cfg = await get_agent_config(tenant_id)
     context_sections = [
         build_dealflow_prompt(cfg),
@@ -343,7 +354,7 @@ async def get_ai_response(
             logger.info(f"AI requested tool: {tool_name} with {tool_input}")
             
             try:
-                tool_result = await execute_tool(tool_name, tool_input, phone_number, lead_data or {})
+                tool_result = await execute_tool(tool_name, tool_input, phone_number, lead_data or {}, tenant_id=tenant_id)
                 TOOL_CALLS.labels(tool=tool_name, status="success").inc()
             except Exception as tool_err:
                 TOOL_CALLS.labels(tool=tool_name, status="failure").inc()

@@ -12,24 +12,8 @@ logger = get_logger(__name__)
 
 async def send_typing_indicator(phone_number: str, source: str = "whatsapp_organic") -> None:
     """
-    Sends typing indicator. Telegram also supports `sendChatAction`.
+    Sends a WhatsApp typing/presence indicator.
     """
-    if source == "telegram":
-        # Telegram chat action
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if not bot_token:
-            return
-        bot_token = bot_token.strip('"').strip("'")
-        url = f"https://api.telegram.org/bot{bot_token}/sendChatAction"
-        payload = {"chat_id": phone_number, "action": "typing"}
-        try:
-            async with httpx.AsyncClient() as client:
-                await client.post(url, json=payload)
-        except Exception as exc:
-            logger.error("Telegram typing error: %s", exc)
-        return
-
-    # Fallback to WhatsApp
     provider = os.getenv("WHATSAPP_PROVIDER", "360dialog")
     if provider == "evolution":
         # Evolution automatically handles typing if enabled, or we skip
@@ -55,29 +39,6 @@ async def send_property_images(phone_number: str, property_data: dict, source: s
     Sends property images directly in WhatsApp chat.
     Lead never has to click a link or open a browser.
     """
-    if source == "telegram":
-        # Telegram photo sending
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if not bot_token:
-            return
-        bot_token = bot_token.strip('"').strip("'")
-        images = property_data.get("images", [])
-        if not images:
-            return
-        
-        async with httpx.AsyncClient() as client:
-            for image_url in images[:3]:
-                await client.post(
-                    f"https://api.telegram.org/bot{bot_token}/sendPhoto",
-                    json={
-                        "chat_id": phone_number,
-                        "photo": image_url,
-                        "caption": f"{property_data['name']} — ₦{property_data['price']:,.0f}"
-                    }
-                )
-        return
-
-    # WhatsApp
     provider = os.getenv("WHATSAPP_PROVIDER", "cloud").lower()
     
     images = property_data.get("images", [])
@@ -181,15 +142,11 @@ async def send_cloud_api_image(phone_number: str, image_url: str, caption: str) 
 
 async def send_outbound_message(phone_number: str, text: str, source: str = "whatsapp_organic") -> None:
     """
-    Unified outbound messaging interface. Routes to Telegram, Evolution, 360dialog, or Cloud API.
+    Unified outbound messaging interface. Routes to Evolution, 360dialog, or Cloud API.
     WhatsApp providers are protected by the circuit breaker.
     """
     logger.info("Sending outbound message | source=%s | target=%s", source, phone_number)
-    if source == "telegram":
-        await send_telegram_message(phone_number, text)
-        return
-
-    # Fallback to WhatsApp provider — protected by circuit breaker
+    # WhatsApp provider — protected by circuit breaker
     provider = os.getenv("WHATSAPP_PROVIDER", "cloud").lower()
     try:
         if provider == "cloud":
@@ -201,38 +158,6 @@ async def send_outbound_message(phone_number: str, text: str, source: str = "wha
     except RuntimeError as e:
         # Circuit breaker is open — log but don't crash
         logger.error(f"WhatsApp circuit breaker OPEN: {e}")
-
-
-async def send_telegram_message(chat_id: str, text: str) -> None:
-    """Send an outbound Telegram message."""
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token:
-        logger.info("[DEV TELEGRAM] -> %s: %s", chat_id, text)
-        return
-    
-    bot_token = bot_token.strip('"').strip("'")
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML"
-    }
-    
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(url, json=payload)
-        
-        if response.status_code != 200:
-            if "can't parse entities" in response.text:
-                # HTML parse error — fallback to plain text
-                logger.warning("Telegram HTML parse error, falling back to plain text")
-                payload.pop("parse_mode")
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    await client.post(url, json=payload)
-            else:
-                logger.error("Telegram send failed: %s %s", response.status_code, response.text)
-    except Exception as exc:
-        logger.error("Telegram network error: %s", exc)
 
 
 async def send_evolution_message(phone_number: str, text: str) -> None:

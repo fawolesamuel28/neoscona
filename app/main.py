@@ -12,7 +12,6 @@ from fastapi.staticfiles import StaticFiles
 load_dotenv()
 
 from app.webhooks.whatsapp import router as whatsapp_router
-from app.webhooks.telegram import router as telegram_router
 from app.webhooks.calendly import router as calendly_router
 from app.webhooks.paystack import router as paystack_webhook_router
 from app.routers.leads import router as leads_router
@@ -106,7 +105,6 @@ app.add_middleware(
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(whatsapp_router, prefix="/webhook")
-app.include_router(telegram_router, prefix="/webhook")
 app.include_router(calendly_router, prefix="/webhook")
 app.include_router(paystack_webhook_router, prefix="/webhook")
 app.include_router(leads_router, prefix="/api")

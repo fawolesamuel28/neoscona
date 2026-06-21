@@ -517,7 +517,6 @@ td:last-child  { padding-right: 20px; }
 
 /* source pills */
 .source-pill { font-size:10px;font-weight:600;padding:2px 8px;border-radius:9999px;background:var(--bg-warm);color:var(--ink-muted);font-family:var(--font-mono); }
-.source-pill--telegram  { background:rgba(91,91,214,.12); color:var(--accent); }
 .source-pill--voice     { background:rgba(122,108,240,.12); color:var(--accent-2); }
 .source-pill--whatsapp  { background:rgba(22,163,74,.10); color:var(--ok); }
 

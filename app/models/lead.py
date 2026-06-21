@@ -26,6 +26,13 @@ class IncomingMessage(BaseModel):
     source: str = "whatsapp_organic"
     media_url: Optional[str] = None
 
+    # Channel identity — *which business inbox* received this message, used to
+    # resolve the owning tenant (see app/services/channels.py). Set by the webhook
+    # parser and kept distinct from `source`, which a "[source:facebook_ad]" tag can
+    # overwrite for marketing attribution.
+    channel_provider: Optional[str] = None  # cloud | 360dialog | evolution | instagram | vapi | elevenlabs
+    channel_external_id: Optional[str] = None  # provider's business-account id (phone_number_id, IG id, instance, …)
+
 
 class LeadProfile(BaseModel):
     phone_number: str
