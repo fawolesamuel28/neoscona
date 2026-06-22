@@ -104,6 +104,12 @@ async def _update_tenant(match_col: str, match_val: str, updates: dict) -> None:
     await asyncio.to_thread(_upd)
 
 
+async def _credit_balance(tenant_id: str, amount: float) -> None:
+    db = get_supabase()
+    def _upd():
+        return db.rpc("credit_balance", {"p_tenant": tenant_id, "p_amount": amount}).execute()
+    await asyncio.to_thread(_upd)
+
 async def apply_flw_event(event_type: str, data: dict) -> None:
     """Map a verified Flutterwave event to a tenant subscription change."""
     # Example: event_type == 'charge.completed'
@@ -129,6 +135,10 @@ async def apply_flw_event(event_type: str, data: dict) -> None:
                 updates["flw_token_email"] = email
             await _update_tenant("id", tenant_id, updates)
             logger.info("Activated subscription for tenant %s (%s) via Flutterwave", tenant_id, plan)
+        elif status == "successful" and tenant_id and meta.get("topup"):
+            amount = float(data.get("amount", 0.0))
+            await _credit_balance(tenant_id, amount)
+            logger.info("Credited NGN %s to tenant %s via Flutterwave top-up", amount, tenant_id)
         else:
             logger.warning("Flutterwave charge not successful or missing metadata: %s", data)
 

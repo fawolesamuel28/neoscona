@@ -247,38 +247,23 @@
       <h3
         style="margin-top: 4rem; margin-bottom: 1.5rem; color: var(--heading)"
       >
-        Usage History
+        Current Billing Cycle
       </h3>
-      <table class="nd-history-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Product</th>
-            <th>Activity</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="color: var(--copy-50)">Jun 17, 2026</td>
-            <td>Neoscona Reva</td>
-            <td>5 Leads Processed</td>
-            <td style="color: #ef4444">- ₦1,250.00</td>
-          </tr>
-          <tr>
-            <td style="color: var(--copy-50)">Jun 16, 2026</td>
-            <td>Neoscona Voice</td>
-            <td>12 Min Call Time</td>
-            <td style="color: #ef4444">- ₦2,400.00</td>
-          </tr>
-          <tr>
-            <td style="color: var(--copy-50)">Jun 15, 2026</td>
-            <td>Balance Top-up</td>
-            <td>Payment</td>
-            <td style="color: #22c55e">+ ₦50,000.00</td>
-          </tr>
-        </tbody>
-      </table>
+      <div id="usage-container" style="display: grid; grid-template-columns: 1fr; gap: 1rem; max-width: 600px;">
+        <div style="padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-input);">
+          <div style="font-weight: 700; color: var(--copy-50); font-size: 0.75rem; text-transform: uppercase;">Current Plan</div>
+          <div id="plan-name" style="font-size: 1.5rem; font-weight: 600; color: var(--heading); margin-top: 0.2rem; margin-bottom: 1rem;">Loading...</div>
+          
+          <div style="font-size: 0.9rem; color: var(--copy); display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+            <span>AI Messages</span>
+            <span id="usage-messages" style="font-weight: 500;">-- / --</span>
+          </div>
+          <div style="font-size: 0.9rem; color: var(--copy); display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+            <span>Voice Minutes</span>
+            <span id="usage-voice" style="font-weight: 500;">-- / --</span>
+          </div>
+        </div>
+      </div>
     </main>
 
     <script>
@@ -289,6 +274,36 @@
           document.documentElement.setAttribute("data-theme", saved);
         }
       })();
+
+      // Fetch live usage meter
+      (function () {
+        const API = window.location.origin + "/api";
+        async function fetchUsage() {
+          try {
+            const res = await fetch(API + "/billing");
+            if (res.ok) {
+              const data = await res.json();
+              if (data.usage) {
+                const planSpan = document.getElementById("plan-name");
+                if (planSpan) planSpan.textContent = (data.usage.plan || "Trial").toUpperCase();
+                
+                const msgsSpan = document.getElementById("usage-messages");
+                if (msgsSpan && data.usage.messages) {
+                  msgsSpan.textContent = `${data.usage.messages.used} / ${data.usage.messages.limit || '∞'}`;
+                }
+                const voiceSpan = document.getElementById("usage-voice");
+                if (voiceSpan && data.usage.voice_minutes) {
+                  voiceSpan.textContent = `${data.usage.voice_minutes.used} / ${data.usage.voice_minutes.limit || '∞'} min`;
+                }
+              }
+            }
+          } catch(e) {
+            console.error("Failed to fetch live usage data", e);
+          }
+        }
+        fetchUsage();
+      })();
+
       // Billing top-up handlers with confirmation modal and loading states
       (function () {
         const API = window.location.origin + "/api";
