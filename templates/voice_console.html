@@ -1,115 +1,188 @@
 <!doctype html>
 <html lang="en" data-theme="light" data-product="voice">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
     <title>Overview — Neoscona Voice</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/tokens.css" />
-    <link rel="stylesheet" href="/static/voice.css" />
+    <link href="/static/tokens.css" rel="stylesheet" />
+    <style>
+      /* Base styles aligned with Reva console design */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: "Inter", sans-serif; background-color: var(--bg); color: var(--copy); height: 100vh; display: flex; overflow: hidden; }
+      a { text-decoration: none; color: inherit; }
+
+      .nd-sidebar { width: 260px; height: 100%; background: var(--bg-input); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+      .nd-sidebar-header { padding: 2rem 1.5rem; font-weight: 800; font-size: 1.15rem; color: var(--heading); letter-spacing: -0.04em; }
+      .nd-nav-group { padding: 0 1rem 2rem; }
+      .nd-nav-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--copy-75); padding: 0 0.5rem 0.75rem; }
+      .nd-nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--copy); margin-bottom: 0.25rem; transition: background 0.2s, color 0.2s; }
+      .nd-nav-item:hover, .nd-nav-item.active { background: var(--bg-hover); color: var(--heading); }
+      .nd-nav-item.active { color: var(--primary); }
+      .nd-nav-item .material-symbols-outlined { font-size: 1.25rem; color: var(--copy-75); }
+      .nd-nav-item.active .material-symbols-outlined { color: var(--primary); }
+      .nd-sidebar-footer { margin-top: auto; padding: 1.5rem; font-size: 0.75rem; color: var(--copy-75); line-height: 1.5; }
+
+      .nd-main { flex: 1; overflow-y: auto; padding: 3rem; display: flex; flex-direction: column; }
+      .nd-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
+      .nd-top-header h1 { font-size: 1.75rem; color: var(--heading); letter-spacing: -0.03em; }
+      .nd-status { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--copy-75); margin-top: 0.35rem; }
+      .nd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--copy-75); }
+      .nd-dot.live { background: var(--live); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6); animation: pulse 2s infinite; }
+      @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); } 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); } }
+
+      .nd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+      .nd-grid-2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; }
+      
+      .nd-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; }
+      .nd-card h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--copy-75); margin-bottom: 0.5rem; }
+      .nd-card-val { font-size: 2rem; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; }
+      .nd-card-sub { font-size: 0.8rem; color: var(--copy-75); margin-top: 0.25rem; }
+
+      .nd-btn-primary { background: var(--primary); color: var(--primary-text); padding: 0.85rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; cursor: pointer; transition: opacity 0.2s; }
+      .nd-btn-primary:hover { opacity: 0.9; }
+
+      .nd-hero { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; }
+      .nd-hero-icon { width: 3.5rem; height: 3.5rem; flex-shrink: 0; border-radius: 12px; background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); display: flex; align-items: center; justify-content: center; }
+      .nd-hero-icon .material-symbols-outlined { font-size: 2rem; }
+      .nd-hero-body { flex: 1; min-width: 0; }
+      .nd-hero-title { font-family: "ui-monospace", "SF Mono", monospace; font-size: 1.25rem; font-weight: 600; color: var(--heading); margin-bottom: 0.25rem; }
+      .nd-hero-sub { font-size: 0.875rem; color: var(--copy-75); }
+      .nd-hero-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 9999px; background: color-mix(in srgb, var(--live) 15%, transparent); color: var(--live); }
+
+      /* Sparkline */
+      .spark { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin-top: 1rem; }
+      .spark .bar { flex: 1; min-height: 4px; border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--primary) 15%, transparent); position: relative; }
+      .spark .bar > span { background: var(--primary); display: block; width: 100%; height: 100%; border-radius: 4px 4px 0 0; opacity: 0.9; }
+      .spark-labels { display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.7rem; font-weight: 500; color: var(--copy-75); }
+
+      /* Recent list */
+      .recent-call { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+      .recent-call:last-child { border-bottom: none; }
+      .rc-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+      .rc-body { flex: 1; min-width: 0; }
+      .rc-name { font-size: 0.95rem; font-weight: 600; font-family: "ui-monospace", "SF Mono", monospace; color: var(--heading); }
+      .rc-sub { font-size: 0.8rem; color: var(--copy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem; }
+      .rc-meta { text-align: right; }
+      .rc-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 4px; background: var(--border); color: var(--copy-75); margin-bottom: 0.25rem; }
+      .rc-badge.ok { background: color-mix(in srgb, var(--live) 15%, transparent); color: var(--live); }
+      .rc-badge.failed { background: color-mix(in srgb, #dc2626 15%, transparent); color: #dc2626; }
+      .rc-time { font-size: 0.75rem; color: var(--copy-75); }
+
+      /* Locked out */
+      .nd-locked { display: none; text-align: center; padding: 4rem 2rem; }
+      .nd-locked .material-symbols-outlined { font-size: 3rem; color: var(--primary); opacity: 0.3; margin-bottom: 1rem; }
+      .nd-locked h3 { font-size: 1.25rem; color: var(--heading); margin-bottom: 0.75rem; }
+      .nd-locked p { font-size: 0.95rem; color: var(--copy); max-width: 400px; margin: 0 auto 1.5rem; }
+
+      .skeleton { background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border) 37%, var(--bg-hover) 63%); background-size: 400% 100%; animation: sk 1.4s ease infinite; border-radius: 8px; }
+      @keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+    </style>
   </head>
   <body>
-    <div class="shell">
-      <header class="topbar">
-        <a href="/dashboard" class="topbar-brand">
-          <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 30px; object-fit: contain" />
+    <aside class="nd-sidebar">
+      <div class="nd-sidebar-header">
+        <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 32px; object-fit: contain" />
+      </div>
+
+      <nav class="nd-nav-group">
+        <div class="nd-nav-label">Voice</div>
+        <a href="/products/voice/console" class="nd-nav-item active">
+          <span class="material-symbols-outlined">grid_view</span> Overview
         </a>
-        <div class="topbar-center">
-          <span class="product-tag"><span class="material-symbols-outlined" style="font-size:15px">call</span> Voice</span>
+        <a href="/products/voice/calls" class="nd-nav-item">
+          <span class="material-symbols-outlined">call_log</span> Calls
+          <span style="margin-left:auto; font-size:0.7rem; background:var(--primary); color:#fff; padding:0.15rem 0.5rem; border-radius:999px" id="nav-calls-badge">0</span>
+        </a>
+      </nav>
+
+      <div class="nd-nav-divider" style="height:1px; background:var(--border); margin: 0.5rem 1rem 1.5rem"></div>
+
+      <nav class="nd-nav-group">
+        <div class="nd-nav-label">Workspace</div>
+        <a href="/products/voice/settings" class="nd-nav-item">
+          <span class="material-symbols-outlined">settings</span> Settings
+        </a>
+        <a href="/dashboard" class="nd-nav-item">
+          <span class="material-symbols-outlined">arrow_back</span> All products
+        </a>
+      </nav>
+      
+      <div class="nd-sidebar-footer" id="rcpt-foot">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+          <span class="nd-dot"></span> <span id="rcpt-status-text">Receptionist offline</span>
         </div>
-        <div class="topbar-right">
-          <button class="theme-btn" onclick="Voice.toggleTheme()" aria-label="Toggle theme">
-            <span class="material-symbols-outlined" style="font-size:18px">contrast</span>
-          </button>
-          <div class="avatar">{{ user.email[0].upper() if user.email else 'A' }}</div>
+        AI receptionist · ElevenLabs + KrosAI
+      </div>
+    </aside>
+
+    <main class="nd-main">
+      <header class="nd-top-header">
+        <div>
+          <h1>Voice Overview</h1>
+          <div class="nd-status" id="header-status">
+            <span class="nd-dot"></span> Waiting for status...
+          </div>
         </div>
+        <a href="/products/voice/settings" class="nd-btn-primary">
+          <span class="material-symbols-outlined" style="font-size:18px">tune</span> Manage receptionist
+        </a>
       </header>
 
-      <aside class="sidebar">
-        <div class="nav-section">
-          <div class="nav-label">Voice</div>
-          <a href="/products/voice/console" class="nav-item active">
-            <span class="material-symbols-outlined" style="color: var(--primary)">grid_view</span> Overview
+      <div id="hero-slot">
+        <div class="nd-hero">
+          <div class="nd-hero-icon skeleton"></div>
+          <div class="nd-hero-body">
+            <div class="skeleton" style="height:1.25rem;width:180px;margin-bottom:0.5rem"></div>
+            <div class="skeleton" style="height:0.85rem;width:240px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nd-grid" id="stats">
+        <div class="nd-card"><h3>Total calls</h3><div class="nd-card-val" id="s-total">—</div><div class="nd-card-sub" id="s-total-sub">This week</div></div>
+        <div class="nd-card"><h3>Calls today</h3><div class="nd-card-val" id="s-today">—</div><div class="nd-card-sub">Since midnight</div></div>
+        <div class="nd-card"><h3>Voice minutes</h3><div class="nd-card-val" id="s-mins">—</div><div class="nd-card-sub" id="s-mins-sub">This week</div></div>
+        <div class="nd-card"><h3>Avg duration</h3><div class="nd-card-val" id="s-avg">—</div><div class="nd-card-sub">Per answered call</div></div>
+      </div>
+
+      <!-- Volume & Recent -->
+      <div class="nd-grid-2" id="lower-grid">
+        <div class="nd-card" style="padding-bottom:1rem">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <h3>Call volume</h3>
+            <span style="font-size:0.75rem; color:var(--copy-75)">Last 7 days</span>
+          </div>
+          <div class="spark" id="spark"></div>
+          <div class="spark-labels" id="spark-labels"></div>
+        </div>
+        
+        <div class="nd-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+            <h3>Recent calls</h3>
+            <a href="/products/voice/calls" style="font-size:0.8rem; font-weight:600; color:var(--primary)">View all →</a>
+          </div>
+          <div id="recent" style="display:flex; flex-direction:column; gap:0.5rem">
+            <div class="skeleton" style="height:3.5rem; border-radius:8px"></div>
+            <div class="skeleton" style="height:3.5rem; border-radius:8px"></div>
+            <div class="skeleton" style="height:3.5rem; border-radius:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Locked view -->
+      <div class="nd-locked" id="locked-state">
+        <div class="nd-card" style="align-items:center; border:none; background:transparent">
+          <span class="material-symbols-outlined">lock</span>
+          <h3>Voice isn't on your plan yet</h3>
+          <p>The AI receptionist is available on the Professional plan and above.</p>
+          <a href="/billing" class="nd-btn-primary" style="display:inline-flex; width:auto; text-decoration:none">
+            Upgrade to enable Voice →
           </a>
-          <a href="/products/voice/calls" class="nav-item">
-            <span class="material-symbols-outlined">call_log</span> Calls
-            <span class="nav-badge" id="nav-calls-badge" role="status" aria-live="polite">0</span>
-          </a>
         </div>
-        <div class="nav-divider"></div>
-        <div class="nav-section">
-          <div class="nav-label">Workspace</div>
-          <a href="/products/voice/settings" class="nav-item">
-            <span class="material-symbols-outlined">settings</span> Settings
-          </a>
-          <a href="/dashboard" class="nav-item">
-            <span class="material-symbols-outlined">arrow_back</span> All products
-          </a>
-        </div>
-        <div class="sidebar-footer">
-          <span class="status-dot" id="rcpt-foot"><i></i> Receptionist offline</span>
-          <div style="margin-top:8px">AI receptionist · ElevenLabs + KrosAI</div>
-        </div>
-      </aside>
-
-      <main class="main">
-        <div class="page-header">
-          <div>
-            <div class="page-title">
-              Overview
-              <span class="badge live" id="live-badge" style="display:none"><i></i> Live</span>
-            </div>
-            <div class="page-subtitle">Your AI voice receptionist at a glance — status, volume and the latest calls.</div>
-          </div>
-          <a href="/products/voice/settings" class="btn"><span class="material-symbols-outlined">tune</span> Manage receptionist</a>
-        </div>
-
-        <!-- Receptionist hero -->
-        <div id="hero-slot">
-          <div class="hero">
-            <div class="hero-icon skeleton" style="background:var(--canvas-soft)"></div>
-            <div class="hero-body"><div class="skeleton" style="height:18px;width:180px"></div><div class="skeleton" style="height:12px;width:240px;margin-top:8px"></div></div>
-          </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stat-grid" id="stats">
-          <div class="stat-card"><div class="stat-label">Total calls</div><div class="stat-value" id="s-total">—</div><div class="stat-sub" id="s-total-sub">this week</div></div>
-          <div class="stat-card"><div class="stat-label">Calls today</div><div class="stat-value" id="s-today">—</div><div class="stat-sub">since midnight</div></div>
-          <div class="stat-card"><div class="stat-label">Voice minutes</div><div class="stat-value" id="s-mins">—</div><div class="stat-sub" id="s-mins-sub">this week</div></div>
-          <div class="stat-card"><div class="stat-label">Avg duration</div><div class="stat-value" id="s-avg">—</div><div class="stat-sub">per answered call</div></div>
-        </div>
-
-        <!-- Volume + recent -->
-        <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:16px; align-items:start" id="lower-grid">
-          <div class="card">
-            <div class="card-head"><div class="card-title">Call volume</div><div class="card-meta" id="vol-period">Last 7 days</div></div>
-            <div class="card-pad">
-              <div class="spark" id="spark"></div>
-              <div class="spark-labels" id="spark-labels"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-head"><div class="card-title">Recent calls</div><a href="/products/voice/calls" class="card-meta" style="color:var(--primary)">View all →</a></div>
-            <div class="card-pad" id="recent" style="display:flex; flex-direction:column; gap:10px">
-              <div class="skeleton" style="height:54px"></div><div class="skeleton" style="height:54px"></div><div class="skeleton" style="height:54px"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Locked (no voice plan) -->
-        <div class="locked">
-          <div class="empty-state">
-            <span class="material-symbols-outlined">lock</span>
-            <h3>Voice isn't on your plan yet</h3>
-            <p>The AI receptionist is available on the Professional plan and above. <a href="/billing">Upgrade to enable Voice →</a></p>
-          </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -119,29 +192,37 @@
     <script>
       function renderHero(r) {
         var slot = document.getElementById("hero-slot");
-        var foot = document.getElementById("rcpt-foot");
-        var live = document.getElementById("live-badge");
+        var footText = document.getElementById("rcpt-status-text");
+        var footDot = document.querySelector("#rcpt-foot .nd-dot");
+        var headStatus = document.getElementById("header-status");
+
         if (r && r.status === "active") {
-          live.style.display = "";
-          foot.className = "status-dot live"; foot.innerHTML = '<i></i> Receptionist online';
+          footText.textContent = "Receptionist online";
+          footDot.className = "nd-dot live";
+          headStatus.innerHTML = '<span class="nd-dot live"></span> Live · AI receptionist answering calls';
+
           slot.innerHTML =
-            '<div class="hero">' +
-            '  <div class="hero-icon"><span class="material-symbols-outlined">support_agent</span></div>' +
-            '  <div class="hero-body">' +
-            '    <div class="hero-num">' + Voice.esc(r.e164 || "Number provisioning…") + '</div>' +
-            '    <div class="hero-sub">Persona: ' + Voice.esc(r.persona_source || "dedicated") + ' · Language: ' + Voice.esc((r.language || "en").toUpperCase()) + '</div>' +
+            '<div class="nd-hero">' +
+            '  <div class="nd-hero-icon"><span class="material-symbols-outlined">support_agent</span></div>' +
+            '  <div class="nd-hero-body">' +
+            '    <div class="nd-hero-title">' + Voice.esc(r.e164 || "Number provisioning…") + '</div>' +
+            '    <div class="nd-hero-sub">Persona: ' + Voice.esc(r.persona_source || "dedicated") + ' &nbsp;·&nbsp; Language: ' + Voice.esc((r.language || "en").toUpperCase()) + '</div>' +
             '  </div>' +
-            '  <span class="badge ok"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span> Active</span>' +
+            '  <span class="nd-hero-badge"><span class="material-symbols-outlined" style="font-size:1rem">check_circle</span> Active</span>' +
             '</div>';
         } else {
+          footText.textContent = "Receptionist offline";
+          footDot.className = "nd-dot";
+          headStatus.innerHTML = '<span class="nd-dot"></span> Inactive · Setup required';
+
           slot.innerHTML =
-            '<div class="hero">' +
-            '  <div class="hero-icon"><span class="material-symbols-outlined">add_call</span></div>' +
-            '  <div class="hero-body">' +
-            '    <div class="hero-num" style="font-family:var(--font-body);font-size:16px">Set up your receptionist</div>' +
-            '    <div class="hero-sub">Provision a number and an AI persona to start answering calls 24/7.</div>' +
+            '<div class="nd-hero">' +
+            '  <div class="nd-hero-icon" style="background:var(--bg-hover); color:var(--copy-75)"><span class="material-symbols-outlined">add_call</span></div>' +
+            '  <div class="nd-hero-body">' +
+            '    <div class="nd-hero-title" style="font-family:var(--font-body)">Set up your receptionist</div>' +
+            '    <div class="nd-hero-sub">Provision a number and an AI persona to start answering calls 24/7.</div>' +
             '  </div>' +
-            '  <a href="/products/voice/settings" class="btn primary"><span class="material-symbols-outlined">bolt</span> Set up</a>' +
+            '  <a href="/products/voice/settings" class="nd-btn-primary">Set up</a>' +
             '</div>';
         }
       }
@@ -149,13 +230,18 @@
       function renderSpark(byDay) {
         var spark = document.getElementById("spark");
         var labels = document.getElementById("spark-labels");
-        if (!byDay || !byDay.length) { spark.innerHTML = '<div style="color:var(--ink-soft);font-size:12px;margin:auto">No calls in this window.</div>'; labels.innerHTML = ""; return; }
+        if (!byDay || !byDay.length) { 
+          spark.innerHTML = '<div style="color:var(--copy-75);font-size:0.8rem;margin:auto">No calls in this window.</div>'; 
+          labels.innerHTML = ""; 
+          return; 
+        }
         var max = Math.max(1, Math.max.apply(null, byDay.map(function (d) { return d.calls; })));
         spark.innerHTML = byDay.map(function (d) {
           var h = Math.round((d.calls / max) * 100);
           return '<div class="bar" title="' + d.date + ': ' + d.calls + ' calls" style="height:' + Math.max(4, h) + '%"><span></span></div>';
         }).join("");
-        // Label only a few points to avoid clutter.
+        
+        // Label edges and middle
         labels.innerHTML = byDay.map(function (d, i) {
           var show = i === 0 || i === byDay.length - 1 || i === Math.floor(byDay.length / 2);
           return '<span>' + (show ? d.date.slice(5) : "") + '</span>';
@@ -164,24 +250,45 @@
 
       function recentCard(c) {
         var name = c.caller_number || "Unknown caller";
-        var badge = c.status === "failed" ? '<span class="badge hot">failed</span>'
-          : c.status === "no-data" ? '<span class="badge warn">no data</span>'
-          : '<span class="badge ok">completed</span>';
-        return '<div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--hairline-soft)">' +
-          '<div class="call-avatar" style="width:34px;height:34px;font-size:12px">' + Voice.initials(c.caller_number) + '</div>' +
-          '<div style="flex:1; min-width:0">' +
-          '  <div style="font-size:13px;font-weight:600;color:var(--ink);font-family:var(--font-mono)">' + Voice.esc(name) + '</div>' +
-          '  <div style="font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + Voice.esc(c.summary || "No summary") + '</div>' +
+        var badgeCls = c.status === "failed" ? "failed" : c.status === "no-data" ? "" : "ok";
+        var badgeText = c.status === "failed" ? "failed" : c.status === "no-data" ? "no data" : "completed";
+        var abbrevName = Voice.esc(name);
+
+        return '<div class="recent-call">' +
+          '<div class="rc-avatar">' + Voice.initials(c.caller_number) + '</div>' +
+          '<div class="rc-body">' +
+          '  <div class="rc-name">' + abbrevName + '</div>' +
+          '  <div class="rc-sub">' + Voice.esc(c.summary || "No summary") + '</div>' +
           '</div>' +
-          '<div style="text-align:right">' + badge + '<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">' + Voice.fmtDuration(c.duration_secs) + '</div></div>' +
+          '<div class="rc-meta">' +
+          '  <div class="rc-badge ' + badgeCls + '">' + badgeText + '</div>' +
+          '  <div class="rc-time">' + Voice.fmtDuration(c.duration_secs) + '</div>' +
+          '</div>' +
           '</div>';
       }
 
       async function load() {
-        var rcpt = await Voice.getJSON("/voice/receptionist");
+        // Mock payload for design purposes if needed, otherwise rely on Voice fetch
+        var rcpt = null;
+        try {
+          rcpt = await Voice.getJSON("/voice/receptionist");
+        } catch(e) {}
+
+        if (rcpt && rcpt.locked) {
+            document.getElementById("locked-state").style.display = "block";
+            document.getElementById("hero-slot").style.display = "none";
+            document.getElementById("stats").style.display = "none";
+            document.getElementById("lower-grid").style.display = "none";
+            return;
+        }
+
         if (rcpt) renderHero(rcpt.receptionist);
 
-        var a = await Voice.getJSON("/voice/analytics?period=week");
+        var a = null;
+        try {
+          a = await Voice.getJSON("/voice/analytics?period=week");
+        } catch(e) {}
+        
         if (a) {
           document.getElementById("s-total").textContent = a.total_calls;
           document.getElementById("s-mins").textContent = a.voice_minutes;
@@ -193,14 +300,18 @@
           renderSpark(bd);
         }
 
-        var list = await Voice.getJSON("/voice/calls?period=week");
+        var list = null;
+        try {
+          list = await Voice.getJSON("/voice/calls?period=week");
+        } catch(e) {}
+        
         var recent = document.getElementById("recent");
         if (list) {
-          var calls = (list.calls || []).slice(0, 6);
+          var calls = (list.calls || []).slice(0, 5);
           document.getElementById("nav-calls-badge").textContent = (list.stats && list.stats.total_calls) || calls.length;
           recent.innerHTML = calls.length
             ? calls.map(recentCard).join("")
-            : '<div style="color:var(--ink-soft);font-size:13px;padding:18px 0;text-align:center">No calls yet. They appear here the moment your receptionist answers one.</div>';
+            : '<div style="color:var(--copy-75);font-size:0.85rem;padding:2rem 0;text-align:center">No calls yet.<br>They appear here instantly.</div>';
         }
       }
 

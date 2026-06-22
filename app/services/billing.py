@@ -15,7 +15,7 @@ from uuid import uuid4
 from app.billing.plans import get_plan, plan_amount_ngn
 from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
-from app.services.flutterwave import initialize_payment, tokenized_charge
+from app.services.flutterwave import initialize_payment, tokenized_charge, verify_transaction
 from app.services.usage import get_usage
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,14 @@ async def start_subscription(
     if not email:
         raise ValueError("a billing email is required to subscribe")
 
-    tx_ref = f"neo-{tenant_id}-{uuid4().hex[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+    # Check for proration (upgrade/downgrade logic)
+    current = await get_billing(tenant_id)
+    current_plan = current["billing"].get("plan")
+    
+    # If upgrading, we might want to apply a discount based on unused time
+    # For now, we'll keep it simple: 1. Start fresh checkout. 2. apply_flw_event handles the rest.
+    
+    tx_ref = f"sub-{tenant_id}-{uuid4().hex[:8]}"
     data = await initialize_payment(
         email=email,
         amount_ngn=amount_ngn,
@@ -45,7 +52,6 @@ async def start_subscription(
         redirect_url=callback_url,
         metadata={"tenant_id": tenant_id, "plan": plan},
     )
-    # Flutterwave returns a hosted link under `link` in the data object
     return {"payment_link": data.get("link"), "tx_ref": tx_ref}
 
 
@@ -66,10 +72,55 @@ async def get_billing(tenant_id: str) -> dict[str, Any]:
             .execute()
         )
 
+    def _history():
+        return (
+            db.table("billing_transactions")
+            .select("id, amount, currency, type, status, description, created_at")
+            .eq("tenant_id", tenant_id)
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+        )
+
     res = await asyncio.to_thread(_get)
+    history = await asyncio.to_thread(_history)
     tenant = res.data[0] if res.data else {}
     usage = await get_usage(tenant_id, plan=tenant.get("plan"))
-    return {"billing": tenant, "usage": usage}
+    return {
+        "billing": tenant,
+        "usage": usage,
+        "transactions": history.data if history.data else []
+    }
+
+
+async def add_transaction(
+    tenant_id: str,
+    amount: float,
+    tx_type: str,
+    status: str = "successful",
+    currency: str = "NGN",
+    flw_ref: Optional[str] = None,
+    description: Optional[str] = None,
+    metadata: Optional[dict] = None
+) -> str:
+    """Record a billing event in the ledger."""
+    db = get_supabase()
+    payload = {
+        "tenant_id": tenant_id,
+        "amount": amount,
+        "type": tx_type,
+        "status": status,
+        "currency": currency,
+        "flw_ref": flw_ref,
+        "description": description,
+        "metadata": metadata or {},
+    }
+
+    def _ins():
+        return db.table("billing_transactions").insert(payload).execute()
+
+    res = await asyncio.to_thread(_ins)
+    return res.data[0]["id"] if res.data else ""
 
 
 # ── Webhook-driven state ──────────────────────────────────────────────────────
@@ -112,19 +163,24 @@ async def _credit_balance(tenant_id: str, amount: float) -> None:
 
 async def apply_flw_event(event_type: str, data: dict) -> None:
     """Map a verified Flutterwave event to a tenant subscription change."""
-    # Example: event_type == 'charge.completed'
     if event_type == "charge.completed":
         status = data.get("status")
         meta = data.get("meta") or {}
         tenant_id = meta.get("tenant_id")
         plan = meta.get("plan")
+        amount = data.get("amount")
+        currency = data.get("currency", "NGN")
         card_token = (data.get("card") or {}).get("token")
         email = (data.get("customer") or {}).get("email")
         flw_customer = (data.get("customer") or {}).get("id") or data.get("customer_id")
         flw_tx_ref = data.get("tx_ref") or data.get("reference")
+        flw_id = data.get("id")
 
-        if status == "successful" and tenant_id and plan:
-            updates: dict[str, Any] = {"plan": plan, "subscription_status": "active"}
+        if status == "successful" and tenant_id:
+            # 1. Update tenant state
+            updates: dict[str, Any] = {"subscription_status": "active"}
+            if plan:
+                updates["plan"] = plan
             if flw_customer:
                 updates["flw_customer_id"] = flw_customer
             if flw_tx_ref:
@@ -133,17 +189,46 @@ async def apply_flw_event(event_type: str, data: dict) -> None:
                 updates["flw_card_token"] = card_token
             if email:
                 updates["flw_token_email"] = email
+            
+            # If it's a top-up or a renewal, we might want to advance the next_billing_date
+            # For simplicity, we assume monthly for now
+            next_date = datetime.now(timezone.utc) + timedelta(days=30)
+            updates["next_billing_date"] = next_date.isoformat()
+            
             await _update_tenant("id", tenant_id, updates)
-            logger.info("Activated subscription for tenant %s (%s) via Flutterwave", tenant_id, plan)
-        elif status == "successful" and tenant_id and meta.get("topup"):
-            amount = float(data.get("amount", 0.0))
-            await _credit_balance(tenant_id, amount)
-            logger.info("Credited NGN %s to tenant %s via Flutterwave top-up", amount, tenant_id)
+            
+            # 2. Record Transaction
+            await add_transaction(
+                tenant_id=tenant_id,
+                amount=amount,
+                tx_type="subscription" if plan else "topup",
+                status="successful",
+                currency=currency,
+                flw_ref=str(flw_id) if flw_id else flw_tx_ref,
+                description=f"Flutterwave {plan or 'Balance'} Payment"
+            )
+            
+            # 3. Update Balance (if it was a manual topup not tied to a specific plan)
+            if not plan:
+                db = get_supabase()
+                def _add_bal():
+                    return db.rpc("increment_tenant_balance", {"p_tenant": tenant_id, "p_amount": amount}).execute()
+                await asyncio.to_thread(_add_bal)
+
+            logger.info("Processed successful charge for tenant %s via Flutterwave", tenant_id)
         else:
-            logger.warning("Flutterwave charge not successful or missing metadata: %s", data)
+            if tenant_id:
+                await add_transaction(
+                    tenant_id=tenant_id,
+                    amount=amount or 0,
+                    tx_type="subscription",
+                    status="failed",
+                    flw_ref=flw_tx_ref,
+                    description=f"Failed transaction: {data.get('processor_response', 'Unknown error')}"
+                )
+            logger.warning("Flutterwave charge failed or missing metadata: %s", data)
 
     elif event_type in ("subscription.disable", "subscription.not_renew"):
-        # Map to tenant cancellation / past_due
         status = "canceled" if event_type == "subscription.disable" else "past_due"
         sub_ref = data.get("tx_ref") or data.get("reference")
         email = (data.get("customer") or {}).get("email")
@@ -151,4 +236,78 @@ async def apply_flw_event(event_type: str, data: dict) -> None:
             await _update_tenant("flw_tx_ref", sub_ref, {"subscription_status": status})
         elif email:
             await _update_tenant("billing_email", email, {"subscription_status": status})
+
+
+async def process_automated_renewals() -> None:
+    """Scan for active tenants whose billing date has passed and charge their saved tokens."""
+    db = get_supabase()
+    now = datetime.now(timezone.utc).isoformat()
+    
+    def _get_to_bill():
+        return (
+            db.table("tenants")
+            .select("id, plan, billing_email, flw_card_token, flw_token_email")
+            .eq("subscription_status", "active")
+            .lte("next_billing_date", now)
+            .not_.is_("flw_card_token", "null")
+            .execute()
+        )
+    
+    res = await asyncio.to_thread(_get_to_bill)
+    tenants = res.data or []
+    
+    for t in tenants:
+        tenant_id = t["id"]
+        plan = t["plan"]
+        token = t["flw_card_token"]
+        email = t["flw_token_email"] or t["billing_email"]
+        amount = plan_amount_ngn(plan)
+        
+        if not amount:
+            continue
+            
+        tx_ref = f"renew-{tenant_id}-{uuid4().hex[:6]}-{int(datetime.now(timezone.utc).timestamp())}"
+        
+        try:
+            charge = await tokenized_charge(token, email, amount, tx_ref)
+            if charge.get("status") == "successful":
+                # Success - advance billing date
+                next_date = datetime.now(timezone.utc) + timedelta(days=30)
+                await _update_tenant("id", tenant_id, {
+                    "next_billing_date": next_date.isoformat(),
+                    "subscription_status": "active"
+                })
+                await add_transaction(
+                    tenant_id=tenant_id,
+                    amount=amount,
+                    tx_type="subscription",
+                    status="successful",
+                    flw_ref=tx_ref,
+                    description=f"Auto-renewal for {plan} plan"
+                )
+            else:
+                # Failed - mark past_due
+                await _update_tenant("id", tenant_id, {"subscription_status": "past_due"})
+                await add_transaction(
+                    tenant_id=tenant_id,
+                    amount=amount,
+                    tx_type="subscription",
+                    status="failed",
+                    flw_ref=tx_ref,
+                    description=f"Auto-renewal failed: {charge.get('processor_response')}"
+                )
+        except Exception as e:
+            logger.error("Failed to process renewal for tenant %s: %s", tenant_id, e)
+
+
+async def verify_pending_transaction(tx_ref: str) -> bool:
+    """Manually pull transaction status from Flutterwave (fallback for missing webhooks)."""
+    # ... placeholder
+    return False
+
+
+async def apply_proration(tenant_id: str, new_plan: str) -> float:
+    """Calculate the remaining value of the current plan and credit it."""
+    # Placeholder
+    return 0.0
 
