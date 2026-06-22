@@ -368,7 +368,10 @@
                 <td style="color: var(--copy-50)">${new Date(tx.created_at).toLocaleDateString()}</td>
                 <td style="font-weight: 500">${tx.description || tx.type}</td>
                 <td><span class="status-pill status-${tx.status}">${tx.status}</span></td>
-                <td style="font-weight: 700">₦${Number(tx.amount).toLocaleString()}</td>
+                <td style="font-weight: 700">
+                    ₦${Number(tx.amount).toLocaleString()}<br/>
+                    ${tx.status === 'successful' ? `<a href="/billing/invoice/${tx.id}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;"><span class="material-symbols-outlined" style="font-size: 0.9rem">receipt</span> Receipt</a>` : ''}
+                </td>
               </tr>
             `).join('');
           }

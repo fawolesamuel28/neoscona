@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Receipt {{ tx.flw_ref or tx.id }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: hsl(265, 85%, 65%);
+      --bg: hsl(220, 20%, 98%);
+      --surface: hsl(0, 0%, 100%);
+      --text: hsl(220, 20%, 20%);
+      --text-light: hsl(220, 20%, 40%);
+      --border: hsl(220, 20%, 90%);
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 3rem;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+    }
+
+    .invoice-title {
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--text-light);
+      margin: 0;
+      letter-spacing: -1px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .info-block h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-light);
+      margin: 0 0 0.5rem 0;
+    }
+
+    .info-block p {
+      margin: 0;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    .table th, .table td {
+      padding: 1.25rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table th {
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      background: var(--bg);
+    }
+
+    .table td {
+      font-weight: 500;
+    }
+
+    .table th:first-child { border-top-left-radius: 8px; }
+    .table th:last-child { border-top-right-radius: 8px; }
+
+    .table th:last-child, .table td:last-child {
+      text-align: right;
+    }
+
+    .totals {
+      width: 50%;
+      margin-left: auto;
+      border-top: 2px solid var(--text);
+      padding-top: 1rem;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .totals-row.grand-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-successful { background: #dcfce7; color: #166534; }
+    .status-failed { background: #fee2e2; color: #991b1b; }
+    .status-pending { background: #fef9c3; color: #854d0e; }
+
+    .footer {
+      text-align: center;
+      margin-top: 4rem;
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+
+    .print-btn {
+      display: block;
+      width: 240px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s;
+    }
+
+    .print-btn:hover {
+      opacity: 0.9;
+    }
+
+    @media print {
+      body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; border-radius: 0; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <h1 class="logo">Neoscona</h1>
+      <p style="margin:0.5rem 0 0 0; color:var(--text-light); font-size:0.9rem;">
+        Reva AI LLC<br/>
+        123 Innovation Drive<br/>
+        Lagos, Nigeria
+      </p>
+    </div>
+    <div style="text-align:right">
+      <h2 class="invoice-title">RECEIPT</h2>
+      <p style="margin:0.5rem 0 0 0; font-weight:600; color: var(--text-light)">#{{ (tx.flw_ref or tx.id) | string | truncate(12, true, '') | upper }}</p>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-block">
+      <h3>Billed To</h3>
+      <p>{{ user.email }}</p>
+      <p style="font-weight:400; color:var(--text-light); font-size:0.9rem; margin-top:0.25rem">
+        Tenant ID: {{ tx.tenant_id }}
+      </p>
+    </div>
+    <div class="info-block" style="text-align:right">
+      <h3>Transaction Date</h3>
+      <p>{{ tx.created_at[:10] }}</p>
+      <div style="margin-top:1rem">
+        <span class="status status-{{ tx.status }}">{{ tx.status }}</span>
+      </div>
+    </div>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ tx.description or 'Account Top-up / Subscription' }}</td>
+        <td style="text-transform: capitalize">{{ tx.type }}</td>
+        <td>₦{{ "{:,.2f}".format(tx.amount) }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span>Subtotal</span>
+      <span>₦{{ "{:,.2f}".format(tx.amount) }}</span>
+    </div>
+    <div class="totals-row">
+      <span>Tax (0%)</span>
+      <span>₦0.00</span>
+    </div>
+    <div class="totals-row grand-total">
+      <span>Total Paid</span>
+      <span>₦{{ "{:,.2f}".format(tx.amount) }}</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Thank you for doing business with Neoscona.</p>
+    <p>If you have any questions about this receipt, please contact <strong>support@neoscona.xyz</strong>.</p>
+  </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">Download as PDF</button>
+
+</body>
+</html>
