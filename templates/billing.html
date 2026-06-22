@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
-    <title>Billing — Neoscona</title>
+    <title>Billing & Credits — Neoscona</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
@@ -14,644 +14,436 @@
     />
     <link href="/static/tokens.css" rel="stylesheet" />
     <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+      :root {
+        --glass: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --p-color: var(--primary);
       }
+      [data-theme="light"] {
+        --glass: rgba(0, 0, 0, 0.02);
+        --glass-border: rgba(0, 0, 0, 0.05);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       body {
         font-family: "Inter", sans-serif;
         background-color: var(--bg);
         color: var(--copy);
         display: flex;
         min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
       }
+
+      /* ─── SIDEBAR ───────────────────────────────────────────────────────── */
       .nd-sidebar {
-        width: 260px;
+        width: 280px;
         border-right: 1px solid var(--border);
-        padding: 2rem;
+        padding: 2.5rem 1.5rem;
         display: flex;
         flex-direction: column;
         background: var(--bg);
-      }
-      .nd-main {
-        flex: 1;
-        padding: 4rem;
-        overflow-y: auto;
+        position: sticky;
+        top: 0;
+        height: 100vh;
       }
       .nd-nav-item {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
+        gap: 0.85rem;
+        padding: 0.8rem 1rem;
+        border-radius: 12px;
         color: var(--copy-75);
         text-decoration: none;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
         font-weight: 500;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .nd-nav-item:hover {
-        background: var(--bg-input);
-        color: var(--heading);
-      }
-      .nd-nav-item.active {
-        background: var(--primary-alt);
-        color: var(--primary);
-      }
+      .nd-nav-item:hover { background: var(--bg-hover); color: var(--heading); }
+      .nd-nav-item.active { background: var(--primary-alt); color: var(--primary); font-weight: 600; }
+      .nd-nav-item span { font-size: 1.25rem; }
 
-      .nd-header {
-        margin-bottom: 3rem;
-      }
-      .nd-header h1 {
-        font-family: "Inter Tight", sans-serif;
-        font-size: 2rem;
-        color: var(--heading);
-        margin-bottom: 0.5rem;
-      }
+      /* ─── MAIN CONTENT ──────────────────────────────────────────────────── */
+      .nd-main { flex: 1; padding: 4rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+      
+      .nd-header { margin-bottom: 3.5rem; }
+      .nd-header h1 { font-family: "Inter Tight", sans-serif; font-size: 2.5rem; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+      .nd-header p { color: var(--copy-75); font-size: 1.1rem; }
 
-      .nd-billing-card {
+      .nd-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
+
+      /* ─── CARDS ─────────────────────────────────────────────────────────── */
+      .nd-card {
         background: var(--bg-input);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 3rem;
-        max-width: 600px;
-        margin-bottom: 2rem;
-      }
-      .nd-balance-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--copy-50);
-        margin-bottom: 0.5rem;
-      }
-      .nd-balance-val {
-        font-size: 3.5rem;
-        font-weight: 700;
-        color: var(--heading);
-        font-family: "Inter Tight";
-        margin-bottom: 2rem;
-      }
-
-      .nd-topup-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-      .nd-topup-btn {
-        padding: 1.5rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        text-align: center;
-        background: var(--bg);
-        color: var(--heading);
-        font-weight: 600;
-      }
-      .nd-topup-btn:hover {
-        border-color: var(--primary);
-        background: var(--primary-alt);
-        color: var(--primary);
-      }
-
-      .nd-btn-primary {
-        width: 100%;
-        padding: 1rem;
-        background: var(--primary);
-        color: var(--primary-text);
-        border-radius: 8px;
-        font-weight: 600;
-        text-align: center;
-        display: block;
-      }
-
-      .nd-history-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 3rem;
-      }
-      .nd-history-table th {
-        text-align: left;
-        padding: 1rem;
-        border-bottom: 1px solid var(--border);
-        font-size: 0.75rem;
-        color: var(--copy-50);
-        text-transform: uppercase;
-      }
-      .nd-history-table td {
-        padding: 1.25rem 1rem;
-        border-bottom: 1px solid var(--border);
-        font-size: 0.875rem;
-      }
-
-      /* ─── TOP-UP MODAL ──────────────────────────────────────────────────────── */
-      .nd-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-        padding: 20px;
-        animation: fadeIn 0.15s ease;
-      }
-      @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-      .nd-modal {
-        background: var(--bg-input);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        width: 100%;
-        max-width: 480px;
-        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+        border-radius: 24px;
+        padding: 2.5rem;
+        position: relative;
         overflow: hidden;
-        animation: slideUp 0.2s ease;
       }
-      @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-      .nd-modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid var(--border);
+      .nd-card::before {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
       }
-      .nd-modal-header h3 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--heading);
-      }
-      .nd-modal-close {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--copy-75);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        transition: background 0.15s;
-      }
-      .nd-modal-close:hover { background: var(--bg-hover); }
-      .nd-modal-body { padding: 2rem; }
-      .nd-modal-amount-display {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-      }
-      .nd-modal-amount-display .currency { font-size: 1.25rem; color: var(--copy-75); font-weight: 600; }
-      .nd-modal-amount-display .amount { font-size: 2.25rem; font-weight: 700; color: var(--heading); font-family: "Inter Tight", sans-serif; }
-      .nd-pay-methods {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
+
+      .nd-balance-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--copy-50); margin-bottom: 0.75rem; }
+      .nd-balance-amount { font-family: "Inter Tight", sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--heading); margin-bottom: 2rem; display: flex; align-items: baseline; gap: 0.5rem; }
+      .nd-balance-amount span { font-size: 1.5rem; color: var(--copy-50); font-weight: 600; }
+
+      .nd-plan-badge {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.4rem 0.8rem; border-radius: 20px;
+        background: var(--primary-alt); color: var(--primary);
+        font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
         margin-bottom: 1.5rem;
       }
-      .nd-pay-method {
-        border: 2px solid var(--border);
-        border-radius: 10px;
-        padding: 0.875rem 0.5rem;
-        text-align: center;
-        cursor: pointer;
-        transition: border-color 0.15s, background 0.15s;
-        background: var(--bg);
+
+      /* ─── USAGE METER ───────────────────────────────────────────────────── */
+      .nd-usage-section { margin-top: 3rem; }
+      .nd-usage-row { margin-bottom: 1.5rem; }
+      .nd-usage-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.6rem; font-weight: 500; }
+      .nd-usage-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+      .nd-usage-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; width: 0%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+      .nd-usage-bar-fill.warn { background: #f59e0b; }
+      .nd-usage-bar-fill.critical { background: #ef4444; }
+
+      /* ─── TRANSACTION LEDGER ────────────────────────────────────────────── */
+      .nd-ledger { margin-top: 4rem; }
+      .nd-ledger h3 { font-family: "Inter Tight", sans-serif; font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--heading); }
+      .nd-table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+      .nd-table th { text-align: left; padding: 1rem; color: var(--copy-50); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+      .nd-table tr { transition: transform 0.2s; }
+      .nd-table tr:not(.no-hover):hover { transform: translateY(-2px); }
+      .nd-table td { padding: 1.25rem 1rem; background: var(--bg-input); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+      .nd-table td:first-child { border-left: 1px solid var(--border); border-radius: 12px 0 0 12px; }
+      .nd-table td:last-child { border-right: 1px solid var(--border); border-radius: 0 12px 12px 0; text-align: right; }
+      
+      .status-pill { padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+      .status-successful { background: rgba(52, 211, 153, 0.15); color: #059669; }
+      .status-failed { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+      .status-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+
+      /* ─── BUTTONS ───────────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+        cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
       }
-      .nd-pay-method:hover { border-color: var(--primary); background: var(--primary-alt); }
-      .nd-pay-method.selected { border-color: var(--primary); background: var(--primary-alt); }
-      .nd-pay-method .pm-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
-      .nd-pay-method .pm-label { font-size: 0.7rem; font-weight: 600; color: var(--copy); }
-      .nd-pay-method.selected .pm-label { color: var(--primary); }
-      .nd-modal-note {
-        font-size: 0.8rem;
-        color: var(--copy-50);
-        margin-bottom: 1.5rem;
-        text-align: center;
-        line-height: 1.5;
+      .btn-primary { background: var(--primary); color: var(--primary-text); box-shadow: 0 4px 12px var(--primary-alt); }
+      .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
+      .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--heading); }
+      .btn-outline:hover { background: var(--bg-hover); }
+
+      /* ─── TOPUP GRID ────────────────────────────────────────────────────── */
+      .nd-topup-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
+      .nd-topup-item {
+        background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+        padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;
       }
-      .nd-modal-footer {
-        display: flex;
-        gap: 0.75rem;
-        padding: 1.25rem 2rem;
-        border-top: 1px solid var(--border);
-        background: var(--bg);
+      .nd-topup-item:hover { border-color: var(--primary); background: var(--primary-alt); }
+      .nd-topup-item span { display: block; font-size: 1.1rem; font-weight: 700; color: var(--heading); }
+      .nd-topup-item small { font-size: 0.7rem; color: var(--copy-50); }
+
+      /* ─── MODALS ────────────────────────────────────────────────────────── */
+      #topup-confirm-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s; }
+      .modal-content { background: var(--bg-input); border: 1px solid var(--border); border-radius: 28px; width: 100%; max-width: 440px; padding: 2.5rem; box-shadow: 0 32px 64px -12px rgba(0,0,0,0.5); transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+      /* ─── MOBILE RESPONSIVE ─────────────────────────────────────────────── */
+      @media (max-width: 1024px) {
+        .nd-grid { grid-template-columns: 1fr; }
+        .nd-sidebar { display: none; }
+        .nd-main { padding: 2rem; }
       }
-      .nd-modal-cancel {
-        flex: 0 0 auto;
-        padding: 0.75rem 1.5rem;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: transparent;
-        color: var(--copy);
-        font-weight: 600;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: background 0.15s;
-      }
-      .nd-modal-cancel:hover { background: var(--bg-hover); }
-      .nd-modal-confirm {
-        flex: 1;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        background: var(--primary);
-        color: var(--primary-text);
-        font-weight: 700;
-        font-size: 0.875rem;
-        cursor: pointer;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        transition: opacity 0.15s;
-      }
-      .nd-modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
   </head>
-  <body>
+  <body data-theme="dark">
     <aside class="nd-sidebar">
       <div style="margin-bottom: 3rem">
-        <img
-          src="/static/images/neoscona-logo.png"
-          alt="Neoscona"
-          style="height: 40px; object-fit: contain"
-        />
+        <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 42px; width: auto;" />
       </div>
-      <nav>
+      <nav style="flex: 1">
         <a href="/dashboard" class="nd-nav-item">
           <span class="material-symbols-outlined">dashboard</span> Overview
         </a>
         <a href="/billing" class="nd-nav-item active">
-          <span class="material-symbols-outlined">payments</span> Billing &
-          Credits
+          <span class="material-symbols-outlined">payments</span> Billing & Credits
+        </a>
+        <a href="/voice" class="nd-nav-item">
+            <span class="material-symbols-outlined">call</span> Voice Console
         </a>
         <a href="/docs" class="nd-nav-item">
-          <span class="material-symbols-outlined">help</span> Help Center
-        </a>
-        <hr
-          style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0"
-        />
-        <a href="/logout" class="nd-nav-item">
-          <span class="material-symbols-outlined">logout</span> Logout
+          <span class="material-symbols-outlined">auto_stories</span> Documentation
         </a>
       </nav>
+      <div style="padding-top: 2rem; border-top: 1px solid var(--border)">
+        <a href="/logout" class="nd-nav-item" style="color: #ef4444">
+          <span class="material-symbols-outlined">logout</span> Sign Out
+        </a>
+      </div>
     </aside>
 
     <main class="nd-main">
       <header class="nd-header">
-        <h1>Billing & Credits</h1>
-        <p>Manage your unified balance across all Neoscona products.</p>
-      </header>
-
-      <div class="nd-billing-card">
-        <div class="nd-balance-label">Available Balance</div>
-        <div class="nd-balance-val">₦{{ "{:,.2f}".format(user.balance) }}</div>
-
-        <p
-          style="
-            margin-bottom: 1.5rem;
-            font-size: 0.875rem;
-            color: var(--copy-75);
-          "
-        >
-          Top up your balance to keep your AI workers active. Credits are shared
-          between Reva, Voice, and Reach.
-        </p>
-
-        <div class="nd-topup-grid">
-          <button class="nd-topup-btn" data-amount="10000">+ ₦10,000</button>
-          <button class="nd-topup-btn" data-amount="50000">+ ₦50,000</button>
-          <button class="nd-topup-btn" data-amount="100000">+ ₦100,000</button>
-        </div>
-
-        <div
-          style="
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            align-items: center;
-            max-width: 600px;
-          "
-        >
-          <input
-            id="custom-amount"
-            class="form-input"
-            type="number"
-            min="14000"
-            placeholder="Enter amount in NGN (min ₦14,000)"
-            style="
-              flex: 1;
-              padding: 10px;
-              border-radius: 8px;
-              border: 1px solid var(--border);
-            "
-          />
-          <button
-            id="custom-topup-btn"
-            class="nd-btn-primary"
-            style="width: auto; padding: 10px 16px"
-          >
-            Top up
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <div>
+            <h1>Billing & Credits</h1>
+            <p>Your unified balance and subscription across all Neoscona services.</p>
+          </div>
+          <button class="btn btn-outline" onclick="location.reload()">
+            <span class="material-symbols-outlined">refresh</span> Refresh
           </button>
         </div>
+      </header>
 
-        <button id="quick-topup-btn" class="nd-btn-primary">
-          Top up via Flutterwave
-        </button>
-        <p style="margin-top: 8px; color: var(--copy-75); font-size: 0.9rem">
-          Minimum first payment: $10 (~₦14,000). We process payments via
-          Flutterwave (NGN only).
-        </p>
-      </div>
+      <div class="nd-grid">
+        <div class="nd-column">
+          <div class="nd-card">
+            <div class="nd-balance-title">Available Balance</div>
+            <div class="nd-balance-amount">
+                <span>₦</span><div id="balance-val">--</div>
+            </div>
+            
+            <div class="nd-plan-badge" id="plan-badge">
+                <span class="material-symbols-outlined" style="font-size: 1rem">verified</span>
+                <span id="plan-label">Loading...</span>
+            </div>
 
-      <h3
-        style="margin-top: 4rem; margin-bottom: 1.5rem; color: var(--heading)"
-      >
-        Current Billing Cycle
-      </h3>
-      <div id="usage-container" style="display: grid; grid-template-columns: 1fr; gap: 1rem; max-width: 600px;">
-        <div style="padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-input);">
-          <div style="font-weight: 700; color: var(--copy-50); font-size: 0.75rem; text-transform: uppercase;">Current Plan</div>
-          <div id="plan-name" style="font-size: 1.5rem; font-weight: 600; color: var(--heading); margin-top: 0.2rem; margin-bottom: 1rem;">Loading...</div>
-          
-          <div style="font-size: 0.9rem; color: var(--copy); display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
-            <span>AI Messages</span>
-            <span id="usage-messages" style="font-weight: 500;">-- / --</span>
+            <div class="nd-usage-section">
+              <div class="nd-usage-row">
+                <div class="nd-usage-label">
+                  <span>AI Messages</span>
+                  <span id="usage-msgs-text">-- / --</span>
+                </div>
+                <div class="nd-usage-bar-bg">
+                  <div class="nd-usage-bar-fill" id="usage-msgs-bar"></div>
+                </div>
+              </div>
+              <div class="nd-usage-row">
+                <div class="nd-usage-label">
+                  <span>Voice Minutes</span>
+                  <span id="usage-voice-text">-- / --</span>
+                </div>
+                <div class="nd-usage-bar-bg">
+                  <div class="nd-usage-bar-fill" id="usage-voice-bar"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 2.5rem; display: flex; gap: 1rem">
+                <a href="/plans" class="btn btn-primary" style="flex: 1">Manage Subscription</a>
+                <button class="btn btn-outline" onclick="window.scrollTo({top: 800, behavior:'smooth'})">View Ledger</button>
+            </div>
           </div>
-          <div style="font-size: 0.9rem; color: var(--copy); display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
-            <span>Voice Minutes</span>
-            <span id="usage-voice" style="font-weight: 500;">-- / --</span>
+
+          <div class="nd-ledger">
+            <h3>Recent Transactions</h3>
+            <table class="nd-table" id="transaction-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody id="tx-tbody">
+                <tr class="no-hover">
+                    <td colspan="4" style="text-align: center; color: var(--copy-50); padding: 3rem">Fetching transactions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nd-column">
+          <div class="nd-card" style="position: sticky; top: 2.5rem">
+            <h3 style="margin-bottom: 1.5rem; font-family: 'Inter Tight'">Top Up Credits</h3>
+            <p style="font-size: 0.9rem; color: var(--copy-75); line-height: 1.6">
+              Credits are shared across Reva, Reach, and Voice. Minimum top-up is <strong>₦14,000</strong>.
+            </p>
+
+            <div class="nd-topup-grid">
+              <div class="nd-topup-item" onclick="selectTopup(14000)">
+                <span>₦14k</span>
+                <small>~ $10.00</small>
+              </div>
+              <div class="nd-topup-item" onclick="selectTopup(50000)">
+                <span>₦50k</span>
+                <small>Popular</small>
+              </div>
+              <div class="nd-topup-item" onclick="selectTopup(100000)">
+                <span>₦100k</span>
+                <small>Enterprise</small>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem">
+                <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--copy-50); display: block; margin-bottom: 0.5rem">Custom Amount</label>
+                <div style="position: relative">
+                    <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--copy-50)">₦</span>
+                    <input type="number" id="custom-amt" placeholder="14000" min="14000" style="width: 100%; padding: 1rem 1rem 1rem 2.5rem; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--heading); font-weight: 600; font-size: 1.1rem; outline: none; transition: border-color 0.2s" />
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; padding: 1.25rem" id="pay-btn">
+                <span class="material-symbols-outlined">bolt</span>
+                Pay with Flutterwave
+            </button>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border)">
+                <div style="display: flex; align-items: center; gap: 0.75rem">
+                    <div style="width: 40px; height: 40px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center">
+                        <span class="material-symbols-outlined" style="color: var(--copy-50)">credit_card</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--heading)" id="card-last4">No card on file</div>
+                        <div style="font-size: 0.7rem; color: var(--copy-50)">Automatic renewals: <span id="auto-renew-status">Disabled</span></div>
+                    </div>
+                </div>
+            </div>
           </div>
         </div>
       </div>
     </main>
 
     <script>
-      // Theme persistence
-      (function () {
-        var saved = localStorage.getItem("nd-theme");
-        if (saved) {
-          document.documentElement.setAttribute("data-theme", saved);
-        }
-      })();
-
-      // Fetch live usage meter
-      (function () {
+      (function(){
         const API = window.location.origin + "/api";
-        async function fetchUsage() {
+        const state = { loading: true, billing: {}, usage: {}, transactions: [] };
+
+        async function init() {
           try {
             const res = await fetch(API + "/billing");
-            if (res.ok) {
+            if(res.ok) {
               const data = await res.json();
-              if (data.usage) {
-                const planSpan = document.getElementById("plan-name");
-                if (planSpan) planSpan.textContent = (data.usage.plan || "Trial").toUpperCase();
-                
-                const msgsSpan = document.getElementById("usage-messages");
-                if (msgsSpan && data.usage.messages) {
-                  msgsSpan.textContent = `${data.usage.messages.used} / ${data.usage.messages.limit || '∞'}`;
-                }
-                const voiceSpan = document.getElementById("usage-voice");
-                if (voiceSpan && data.usage.voice_minutes) {
-                  voiceSpan.textContent = `${data.usage.voice_minutes.used} / ${data.usage.voice_minutes.limit || '∞'} min`;
-                }
-              }
+              Object.assign(state, data);
+              render();
             }
-          } catch(e) {
-            console.error("Failed to fetch live usage data", e);
+          } catch(e) { console.error(e); }
+        }
+
+        function render() {
+          const { billing, usage, transactions } = state;
+          
+          const balEl = document.getElementById('balance-val');
+          if (balEl) balEl.textContent = Number(billing.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+          
+          const planEl = document.getElementById('plan-label');
+          if (planEl) planEl.textContent = (billing.plan || 'trial') + ' plan';
+          
+          // Usage
+          const msgs = usage.messages || {used: 0, limit: 1, pct: 0};
+          const msgsText = document.getElementById('usage-msgs-text');
+          if (msgsText) msgsText.textContent = `${msgs.used} / ${msgs.limit || '∞'}`;
+          const msgsBar = document.getElementById('usage-msgs-bar');
+          if (msgsBar) {
+            msgsBar.style.width = (msgs.pct * 100 || 0) + '%';
+            if(msgs.pct > 0.9) msgsBar.classList.add('critical');
           }
-        }
-        fetchUsage();
-      })();
-
-      // Billing top-up handlers with confirmation modal and loading states
-      (function () {
-        const API = window.location.origin + "/api";
-        function showToast(msg, isError) {
-          const t = document.createElement("div");
-          t.textContent = msg;
-          t.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;background:${isError ? "var(--hot)" : "var(--ok)"};box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;`;
-          document.body.appendChild(t);
-          setTimeout(() => t.remove(), 3500);
-        }
-
-        function createConfirmModal(amount) {
-          // Remove existing
-          const existing = document.getElementById("topup-confirm-modal");
-          if (existing) existing.remove();
-
-          const overlay = document.createElement("div");
-          overlay.id = "topup-confirm-modal";
-          overlay.className = "nd-modal-overlay";
-          overlay.innerHTML = `
-            <div class="nd-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-              <div class="nd-modal-header">
-                <h3 id="modal-title">Top up Balance</h3>
-                <button class="nd-modal-close" id="topup-modal-close" aria-label="Close">✕</button>
-              </div>
-              <div class="nd-modal-body">
-                <div class="nd-modal-amount-display">
-                  <span class="currency">₦</span>
-                  <span class="amount">${Number(amount).toLocaleString()}</span>
-                </div>
-
-                <p style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--copy-50);margin-bottom:0.75rem;">
-                  Pay with
-                </p>
-                <div class="nd-pay-methods">
-                  <button class="nd-pay-method selected" data-method="card">
-                    <div class="pm-icon">💳</div>
-                    <div class="pm-label">Card</div>
-                  </button>
-                  <button class="nd-pay-method" data-method="bank_transfer">
-                    <div class="pm-icon">🏦</div>
-                    <div class="pm-label">Bank Transfer</div>
-                  </button>
-                  <button class="nd-pay-method" data-method="ussd">
-                    <div class="pm-icon">📱</div>
-                    <div class="pm-label">USSD</div>
-                  </button>
-                </div>
-
-                <p class="nd-modal-note">
-                  You will be redirected to Flutterwave's secure checkout to complete your payment.<br>
-                  Minimum top-up: <strong>₦14,000</strong>
-                </p>
-              </div>
-              <div class="nd-modal-footer">
-                <button class="nd-modal-cancel" id="topup-cancel">Cancel</button>
-                <button class="nd-modal-confirm" id="topup-confirm">
-                  <span class="material-symbols-outlined" style="font-size:1rem;">lock</span>
-                  Pay ₦${Number(amount).toLocaleString()} securely
-                </button>
-              </div>
-            </div>`;
-
-          document.body.appendChild(overlay);
-
-          // Method selection
-          overlay.querySelectorAll(".nd-pay-method").forEach(btn => {
-            btn.addEventListener("click", () => {
-              overlay.querySelectorAll(".nd-pay-method").forEach(b => b.classList.remove("selected"));
-              btn.classList.add("selected");
-            });
-          });
-
-          // Close on overlay click or X
-          overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
-          document.getElementById("topup-modal-close").addEventListener("click", () => overlay.remove());
-          document.getElementById("topup-cancel").addEventListener("click", () => overlay.remove());
-
-          return document.getElementById("topup-confirm");
-        }
-
-        async function performTopUp(amount, btn) {
-          if (!amount || Number(amount) < 14000) {
-            showToast("Minimum top-up is ₦14,000", true);
-            return;
+          
+          const voice = usage.voice_minutes || {used: 0, limit: 1, pct: 0};
+          const voiceText = document.getElementById('usage-voice-text');
+          if (voiceText) voiceText.textContent = `${Math.round(voice.used)} / ${voice.limit || '∞'} min`;
+          const voiceBar = document.getElementById('usage-voice-bar');
+          if (voiceBar) voiceBar.style.width = (voice.pct * 100 || 0) + '%';
+          
+          // Card
+          if(billing.flw_card_token) {
+              document.getElementById('card-last4').textContent = "Stored Card Token";
+              const autoStatus = document.getElementById('auto-renew-status');
+              autoStatus.textContent = "Enabled";
+              autoStatus.style.color = "var(--live)";
           }
-          const disableBtns = (disable) => {
-            document
-              .querySelectorAll(".nd-topup-btn")
-              .forEach((b) => (b.disabled = disable));
-            const customBtn = document.getElementById("custom-topup-btn");
-            if (customBtn) customBtn.disabled = disable;
-            const quick = document.getElementById("quick-topup-btn");
-            if (quick) quick.disabled = disable;
-            if (btn) {
-              btn.disabled = disable;
-              btn.textContent = disable ? "Processing…" : "Confirm";
-            }
-          };
-          try {
-            disableBtns(true);
-            const res = await fetch(API + "/billing/topup", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ amount_ngn: Math.floor(Number(amount)) }),
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              showToast(err.detail || "Could not start checkout.", true);
-              return;
-            }
-            const data = await res.json();
-            const link = data.payment_link || data.link || data.paymentLink;
-            if (link) {
-              window.open(link, "_blank");
-              showToast("Opened checkout. Complete payment to top up.");
-            } else showToast("Checkout started.", false);
-            // If backend returned a tx_ref, poll billing to detect webhook confirmation
-            const txRef = data && (data.tx_ref || data.flw_tx_ref);
-            if (txRef) pollForTopUp(txRef, 3 * 60_000, 5_000);
-          } catch (e) {
-            showToast("Could not start checkout.", true);
-          } finally {
-            disableBtns(false);
-            const m = document.getElementById("topup-confirm-modal");
-            if (m) m.remove();
+
+          // Transactions
+          const tbody = document.getElementById('tx-tbody');
+          if(transactions.length === 0) {
+            tbody.innerHTML = '<tr class="no-hover"><td colspan="4" style="text-align: center; color: var(--copy-50); padding: 3rem">No transactions found.</td></tr>';
+          } else {
+            tbody.innerHTML = transactions.map(tx => `
+              <tr>
+                <td style="color: var(--copy-50)">${new Date(tx.created_at).toLocaleDateString()}</td>
+                <td style="font-weight: 500">${tx.description || tx.type}</td>
+                <td><span class="status-pill status-${tx.status}">${tx.status}</span></td>
+                <td style="font-weight: 700">₦${Number(tx.amount).toLocaleString()}</td>
+              </tr>
+            `).join('');
           }
         }
 
-        // Poll for a top-up confirmation by tx_ref (updated by webhook)
-        async function pollForTopUp(
-          txRef,
-          timeoutMs = 120000,
-          intervalMs = 5000,
-        ) {
-          if (!txRef) return;
-          const start = Date.now();
-          const check = async () => {
-            try {
-              const res = await fetch(API + "/billing");
-              if (!res.ok) return false;
-              const data = await res.json();
-              const billing = data && data.billing;
-              if (billing && billing.flw_tx_ref) {
-                if (
-                  billing.flw_tx_ref === txRef ||
-                  billing.flw_tx_ref.indexOf(txRef) !== -1
-                ) {
-                  showToast("Top-up confirmed. Updating balance...");
-                  // If backend returned a numeric balance, update the UI in-place
-                  try {
-                    const balEl = document.querySelector(".nd-balance-val");
-                    if (
-                      balEl &&
-                      typeof billing.balance !== "undefined" &&
-                      billing.balance !== null
-                    ) {
-                      // billing.balance assumed to be a number (whole or fractional)
-                      balEl.textContent =
-                        "₦" + Number(billing.balance).toLocaleString();
-                    } else {
-                      // Fallback: reload to pick up changes
-                      setTimeout(() => location.reload(), 800);
-                    }
-                  } catch (e) {
-                    setTimeout(() => location.reload(), 800);
-                  }
-                  return true;
-                }
-              }
-            } catch (e) {}
+        window.selectTopup = (amt) => {
+            const input = document.getElementById('custom-amt');
+            if (input) {
+                input.value = amt;
+                document.getElementById('pay-btn').click();
+            }
+        };
+
+        const showToast = (msg, isErr) => {
+            const t = document.createElement('div');
+            t.style.cssText = `position:fixed;bottom:2rem;right:2rem;padding:1rem 2rem;background:${isErr?'#ef4444':'var(--primary)'};color:#fff;border-radius:12px;box-shadow:0 12px 24px rgba(0,0,0,0.2);z-index:10000;font-weight:600;font-size:0.9rem;animation:slideUp 0.3s;`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        };
+
+        window.onerror = function(msg, url, line) {
+            showToast("System Error: " + msg, true);
             return false;
-          };
-          if (await check()) return;
-          const id = setInterval(async () => {
-            if (Date.now() - start > timeoutMs) {
-              clearInterval(id);
-              showToast(
-                "Top-up not confirmed yet. Check back in a few minutes.",
-                true,
-              );
-              return;
-            }
-            if (await check()) clearInterval(id);
-          }, intervalMs);
+        };
+
+        const payBtn = document.getElementById('pay-btn');
+        if (payBtn) {
+            payBtn.onclick = async () => {
+                const amtInput = document.getElementById('custom-amt');
+                const amt = amtInput ? amtInput.value : "";
+                
+                if(!amt || Number(amt) < 14000) return showToast("Minimum top-up is ₦14,000", true);
+                
+                payBtn.disabled = true;
+                const originalText = payBtn.innerHTML;
+                payBtn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite">sync</span> Processing...';
+
+                try {
+                    console.log("Initiating top-up for amount:", amt);
+                    const res = await fetch(API + "/billing/topup", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ amount_ngn: Number(amt) }),
+                    });
+                    
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail || "Payment initialization failed");
+                    }
+
+                    const data = await res.json();
+                    console.log("Top-up response:", data);
+                    
+                    if(data.payment_link) {
+                        window.location.href = data.payment_link;
+                    } else {
+                        showToast("Payment link not found in response", true);
+                        payBtn.disabled = false;
+                        payBtn.innerHTML = originalText;
+                    }
+                } catch(e) {
+                    console.error("Top-up error:", e);
+                    showToast(e.message || "Connection error. Try again.", true);
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = originalText;
+                }
+            };
         }
 
-        // Wire preset buttons to open confirm modal
-        document.querySelectorAll(".nd-topup-btn").forEach((b) =>
-          b.addEventListener("click", (e) => {
-            const a = e.currentTarget.getAttribute("data-amount");
-            if (!a) return;
-            const confirmBtn = createConfirmModal(a);
-            confirmBtn.addEventListener("click", () =>
-              performTopUp(a, confirmBtn),
-            );
-          }),
-        );
-        const customBtn = document.getElementById("custom-topup-btn");
-        if (customBtn)
-          customBtn.addEventListener("click", () => {
-            const v = document.getElementById("custom-amount").value;
-            const confirmBtn = createConfirmModal(v || "0");
-            confirmBtn.addEventListener("click", () =>
-              performTopUp(v, confirmBtn),
-            );
-          });
-        const quick = document.getElementById("quick-topup-btn");
-        if (quick)
-          quick.addEventListener("click", () => {
-            const v = document.getElementById("custom-amount").value;
-            const amt = v || 14000;
-            const confirmBtn = createConfirmModal(amt);
-            confirmBtn.addEventListener("click", () =>
-              performTopUp(amt, confirmBtn),
-            );
-          });
+        init();
       })();
     </script>
+    <style>
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
   </body>
 </html>
