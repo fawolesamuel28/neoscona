@@ -188,6 +188,28 @@ async def dashboard(request: Request):
         return RedirectResponse(url="/login")
     return render_template(request, "dashboard.html")
 
+@app.get("/billing", response_class=HTMLResponse)
+async def billing_page(request: Request):
+    if not page_session_ok(request):
+        return RedirectResponse(url="/login")
+        
+    session = _template_session(request)
+    tenant_id = session.get("user_id")
+    balance = 0.0
+    
+    if tenant_id:
+        try:
+            from app.services.billing import get_billing
+            billing_data = await get_billing(tenant_id)
+            tenant_info = billing_data.get("billing", {})
+            if tenant_info and tenant_info.get("balance") is not None:
+                balance = float(tenant_info.get("balance", 0.0))
+        except Exception as e:
+            logger.error(f"Failed to fetch billing balance for {tenant_id}: {e}")
+
+    user_data = {"email": session.get("user_email") or "Account", "balance": balance}
+    return render_template(request, "billing.html", user=user_data)
+
 @app.get("/products/reva", response_class=HTMLResponse)
 async def reva_landing(request: Request):
     return render_template(request, "reva_landing.html")
