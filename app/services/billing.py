@@ -37,20 +37,21 @@ async def start_subscription(
     if not email:
         raise ValueError("a billing email is required to subscribe")
 
-    # Check for proration (upgrade/downgrade logic)
+    # Passing the current plan into metadata ensures we safely issue proration
+    # credits ONLY if the checkout completes successfully.
     current = await get_billing(tenant_id)
     current_plan = current["billing"].get("plan")
-    
-    # If upgrading, we might want to apply a discount based on unused time
-    # For now, we'll keep it simple: 1. Start fresh checkout. 2. apply_flw_event handles the rest.
-    
+    meta = {"tenant_id": tenant_id, "plan": plan}
+    if current_plan and current_plan != plan and current_plan != "trial":
+        meta["prorate_from"] = current_plan
+        
     tx_ref = f"sub-{tenant_id}-{uuid4().hex[:8]}"
     data = await initialize_payment(
         email=email,
         amount_ngn=amount_ngn,
         tx_ref=tx_ref,
         redirect_url=callback_url,
-        metadata={"tenant_id": tenant_id, "plan": plan},
+        metadata=meta,
     )
     return {"payment_link": data.get("link"), "tx_ref": tx_ref}
 
@@ -184,6 +185,11 @@ async def apply_flw_event(event_type: str, data: dict) -> None:
             if email:
                 updates["flw_token_email"] = email
             
+            # Proration: issue credit for the previous plan if this was an upgrade/switch
+            prorate_from = meta.get("prorate_from")
+            if prorate_from:
+                await apply_proration(tenant_id, prorate_from)
+            
             # If it's a top-up or a renewal, we might want to advance the next_billing_date
             # For simplicity, we assume monthly for now
             next_date = datetime.now(timezone.utc) + timedelta(days=30)
@@ -282,16 +288,51 @@ async def process_automated_renewals() -> None:
             else:
                 # Failed - mark past_due
                 await _update_tenant("id", tenant_id, {"subscription_status": "past_due"})
+                
+                failure_reason = charge.get('processor_response', 'Unknown error')
                 await add_transaction(
                     tenant_id=tenant_id,
                     amount=amount,
                     tx_type="subscription",
                     status="failed",
                     flw_ref=tx_ref,
-                    description=f"Auto-renewal failed: {charge.get('processor_response')}"
+                    description=f"Auto-renewal failed: {failure_reason}"
                 )
+                
+                # Send smart dunning notification
+                await notify_billing_failure(tenant_id, amount, failure_reason)
+                
         except Exception as e:
             logger.error("Failed to process renewal for tenant %s: %s", tenant_id, e)
+
+async def notify_billing_failure(tenant_id: str, amount: float, reason: str) -> None:
+    """Send a dunning notification (WhatsApp/Email) to the tenant's primary agent."""
+    db = get_supabase()
+    
+    def _get_agent():
+        return db.table("agents").select("whatsapp").eq("tenant_id", tenant_id).eq("active", True).limit(1).execute()
+        
+    try:
+        res = await asyncio.to_thread(_get_agent)
+        if not res.data:
+            logger.info("No active agent found for tenant %s; skipping WhatsApp dunning.", tenant_id)
+            return
+            
+        whatsapp = res.data[0].get("whatsapp")
+        if not whatsapp:
+            return
+            
+        from app.services.messaging import send_outbound_message
+        msg = (
+            f"⚠️ *Neoscona Billing Alert*\n\n"
+            f"Your automated subscription renewal of ₦{amount:,.0f} failed.\n"
+            f"Reason: {reason}\n\n"
+            f"Please update your payment method at https://app.neoscona.xyz/billing to avoid service interruption."
+        )
+        await send_outbound_message(whatsapp, msg, source="dunning")
+        logger.info("Sent WhatsApp dunning notification to %s for tenant %s", whatsapp, tenant_id)
+    except Exception as e:
+        logger.error("Failed to send dunning notice for tenant %s: %s", tenant_id, e)
 
 
 async def verify_pending_transaction(tx_ref: str) -> bool:
@@ -300,8 +341,56 @@ async def verify_pending_transaction(tx_ref: str) -> bool:
     return False
 
 
-async def apply_proration(tenant_id: str, new_plan: str) -> float:
-    """Calculate the remaining value of the current plan and credit it."""
-    # Placeholder
+async def apply_proration(tenant_id: str, old_plan: str) -> float:
+    """Calculate the remaining value of the old plan and issue it as account credit."""
+    db = get_supabase()
+    
+    def _get():
+        return db.table("tenants").select("next_billing_date").eq("id", tenant_id).limit(1).execute()
+        
+    try:
+        res = await asyncio.to_thread(_get)
+        if not res.data:
+            return 0.0
+            
+        next_billing_str = res.data[0].get("next_billing_date")
+        if not next_billing_str:
+            return 0.0
+            
+        amount = plan_amount_ngn(old_plan)
+        if not amount:
+            return 0.0
+            
+        # Time-based delta calculation
+        next_billing = datetime.fromisoformat(next_billing_str.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        
+        if next_billing <= now:
+            return 0.0
+            
+        days_remaining = (next_billing - now).days
+        total_days = 30 # 30-day billing cycles
+        if days_remaining > total_days:
+            days_remaining = total_days
+            
+        prorated_credit = amount * (days_remaining / total_days)
+        if prorated_credit > 0:
+            def _add_bal():
+                return db.rpc("increment_tenant_balance", {"p_tenant": tenant_id, "p_amount": prorated_credit}).execute()
+            await asyncio.to_thread(_add_bal)
+            
+            await add_transaction(
+                tenant_id=tenant_id,
+                amount=prorated_credit,
+                tx_type="adjustment",
+                status="successful",
+                description=f"Proration credit for unused time on {old_plan}"
+            )
+            logger.info("Prorated %s days of %s for tenant %s: +₦%.2f", days_remaining, old_plan, tenant_id, prorated_credit)
+            return prorated_credit
+            
+    except Exception as e:
+        logger.error("Proration calculation failed for %s: %s", tenant_id, e)
+        
     return 0.0
 

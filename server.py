@@ -210,6 +210,31 @@ async def billing_page(request: Request):
     user_data = {"email": session.get("user_email") or "Account", "balance": balance}
     return render_template(request, "billing.html", user=user_data)
 
+@app.get("/billing/invoice/{tx_id}", response_class=HTMLResponse)
+async def billing_invoice_page(request: Request, tx_id: str):
+    if not page_session_ok(request):
+        return RedirectResponse(url="/login")
+        
+    session = _template_session(request)
+    tenant_id = session.get("user_id")
+    
+    if tenant_id:
+        from app.db.supabase import get_supabase
+        import asyncio
+        db = get_supabase()
+        def _get_tx():
+            return db.table("billing_transactions").select("*").eq("id", tx_id).eq("tenant_id", tenant_id).limit(1).execute()
+        
+        try:
+            res = await asyncio.to_thread(_get_tx)
+            if res.data:
+                tx = res.data[0]
+                return render_template(request, "invoice.html", tx=tx, user={"email": session.get("user_email")})
+        except Exception as e:
+            logger.error(f"Failed to fetch transaction {tx_id}: {e}")
+            
+    return HTMLResponse(content="Invoice not found or access denied.", status_code=404)
+
 @app.get("/products/reva", response_class=HTMLResponse)
 async def reva_landing(request: Request):
     return render_template(request, "reva_landing.html")
