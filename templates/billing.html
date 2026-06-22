@@ -146,6 +146,136 @@
         border-bottom: 1px solid var(--border);
         font-size: 0.875rem;
       }
+
+      /* ─── TOP-UP MODAL ──────────────────────────────────────────────────────── */
+      .nd-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 20px;
+        animation: fadeIn 0.15s ease;
+      }
+      @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+      .nd-modal {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        animation: slideUp 0.2s ease;
+      }
+      @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+      .nd-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .nd-modal-header h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--heading);
+      }
+      .nd-modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--copy-75);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        transition: background 0.15s;
+      }
+      .nd-modal-close:hover { background: var(--bg-hover); }
+      .nd-modal-body { padding: 2rem; }
+      .nd-modal-amount-display {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+      .nd-modal-amount-display .currency { font-size: 1.25rem; color: var(--copy-75); font-weight: 600; }
+      .nd-modal-amount-display .amount { font-size: 2.25rem; font-weight: 700; color: var(--heading); font-family: "Inter Tight", sans-serif; }
+      .nd-pay-methods {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      .nd-pay-method {
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        padding: 0.875rem 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        background: var(--bg);
+      }
+      .nd-pay-method:hover { border-color: var(--primary); background: var(--primary-alt); }
+      .nd-pay-method.selected { border-color: var(--primary); background: var(--primary-alt); }
+      .nd-pay-method .pm-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+      .nd-pay-method .pm-label { font-size: 0.7rem; font-weight: 600; color: var(--copy); }
+      .nd-pay-method.selected .pm-label { color: var(--primary); }
+      .nd-modal-note {
+        font-size: 0.8rem;
+        color: var(--copy-50);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        line-height: 1.5;
+      }
+      .nd-modal-footer {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1.25rem 2rem;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+      }
+      .nd-modal-cancel {
+        flex: 0 0 auto;
+        padding: 0.75rem 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--copy);
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .nd-modal-cancel:hover { background: var(--bg-hover); }
+      .nd-modal-confirm {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        background: var(--primary);
+        color: var(--primary-text);
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: opacity 0.15s;
+      }
+      .nd-modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
   </head>
   <body>
@@ -319,23 +449,69 @@
           // Remove existing
           const existing = document.getElementById("topup-confirm-modal");
           if (existing) existing.remove();
+
           const overlay = document.createElement("div");
           overlay.id = "topup-confirm-modal";
-          overlay.style.cssText =
-            "position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px";
+          overlay.className = "nd-modal-overlay";
           overlay.innerHTML = `
-              <div style="background:var(--surface);padding:20px;border-radius:12px;max-width:460px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.25)">
-                <h3 style="margin:0 0 8px;font-size:16px">Confirm Top-up</h3>
-                <p style="margin:0 0 12px;color:var(--ink-muted)">You are about to add <strong>₦${Number(amount).toLocaleString()}</strong> to your balance. Minimum first payment is ₦14,000.</p>
-                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                  <button id="topup-cancel" class="btn">Cancel</button>
-                  <button id="topup-confirm" class="btn primary">Confirm</button>
+            <div class="nd-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+              <div class="nd-modal-header">
+                <h3 id="modal-title">Top up Balance</h3>
+                <button class="nd-modal-close" id="topup-modal-close" aria-label="Close">✕</button>
+              </div>
+              <div class="nd-modal-body">
+                <div class="nd-modal-amount-display">
+                  <span class="currency">₦</span>
+                  <span class="amount">${Number(amount).toLocaleString()}</span>
                 </div>
-              </div>`;
+
+                <p style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--copy-50);margin-bottom:0.75rem;">
+                  Pay with
+                </p>
+                <div class="nd-pay-methods">
+                  <button class="nd-pay-method selected" data-method="card">
+                    <div class="pm-icon">💳</div>
+                    <div class="pm-label">Card</div>
+                  </button>
+                  <button class="nd-pay-method" data-method="bank_transfer">
+                    <div class="pm-icon">🏦</div>
+                    <div class="pm-label">Bank Transfer</div>
+                  </button>
+                  <button class="nd-pay-method" data-method="ussd">
+                    <div class="pm-icon">📱</div>
+                    <div class="pm-label">USSD</div>
+                  </button>
+                </div>
+
+                <p class="nd-modal-note">
+                  You will be redirected to Flutterwave's secure checkout to complete your payment.<br>
+                  Minimum top-up: <strong>₦14,000</strong>
+                </p>
+              </div>
+              <div class="nd-modal-footer">
+                <button class="nd-modal-cancel" id="topup-cancel">Cancel</button>
+                <button class="nd-modal-confirm" id="topup-confirm">
+                  <span class="material-symbols-outlined" style="font-size:1rem;">lock</span>
+                  Pay ₦${Number(amount).toLocaleString()} securely
+                </button>
+              </div>
+            </div>`;
+
           document.body.appendChild(overlay);
-          document
-            .getElementById("topup-cancel")
-            .addEventListener("click", () => overlay.remove());
+
+          // Method selection
+          overlay.querySelectorAll(".nd-pay-method").forEach(btn => {
+            btn.addEventListener("click", () => {
+              overlay.querySelectorAll(".nd-pay-method").forEach(b => b.classList.remove("selected"));
+              btn.classList.add("selected");
+            });
+          });
+
+          // Close on overlay click or X
+          overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+          document.getElementById("topup-modal-close").addEventListener("click", () => overlay.remove());
+          document.getElementById("topup-cancel").addEventListener("click", () => overlay.remove());
+
           return document.getElementById("topup-confirm");
         }
 
