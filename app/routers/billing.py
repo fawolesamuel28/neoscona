@@ -1,4 +1,4 @@
-"""Billing endpoints — subscribe (Paystack checkout) + billing status."""
+"""Billing endpoints — subscribe (payments checkout) + billing status."""
 
 from __future__ import annotations
 
@@ -30,14 +30,14 @@ async def subscribe(
     body: SubscribeBody,
     principal: Principal = Depends(require_role("admin")),
 ):
-    """Start a Paystack checkout for the chosen plan; returns the authorization URL."""
+    """Start a Flutterwave checkout for the chosen plan; returns a payment link."""
     email = principal.email
-    callback = os.getenv("PAYSTACK_CALLBACK_URL")  # e.g. https://app.reva.ng/dashboard
+    callback = os.getenv("FLUTTERWAVE_CALLBACK_URL")  # e.g. https://app.neoscona.xyz/dashboard
     try:
         result = await start_subscription(principal.tenant_id, body.plan, email, callback)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except RuntimeError as exc:
-        logger.error("Paystack subscribe failed: %s", exc)
+        logger.error("Payment provider subscribe failed: %s", exc)
         raise HTTPException(status_code=502, detail="Payment provider error")
     return result

@@ -1,9 +1,4 @@
-"""Paystack webhook — verify signature (HMAC-SHA512), dedup, apply to tenant state.
-
-Mirrors the HMAC pattern in app/webhooks/gateway.py (Paystack uses SHA512 and the
-`x-paystack-signature` header). Always returns 200 quickly so Paystack does not retry
-on our processing errors; a 401 is returned only for a failed signature.
-"""
+"""Legacy Paystack webhook handler (kept for audit). Not registered in routers."""
 
 from __future__ import annotations
 
@@ -34,7 +29,6 @@ async def paystack_webhook(request: Request):
 
     event_type = payload.get("event", "")
     data = payload.get("data", {}) or {}
-    # Prefer a stable per-event id; fall back to the transaction reference.
     paystack_id = str(data.get("id") or data.get("reference") or "") or None
 
     try:

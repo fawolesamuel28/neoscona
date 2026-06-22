@@ -1,0 +1,15 @@
+1459523 Merge pull request #5 from fawolesamuel28/feat/multi-tenant-isolation
+0ad6294 fix(ui): use custom-cropped logo and increase sizes
+3327870 Merge pull request #4 from fawolesamuel28/feat/multi-tenant-isolation
+cbc5109 fix(ui): add cache-buster to favicon for immediate visibility
+6b161f9 feat: add logo as favicon and format title tag
+70bbd86 Merge pull request #3 from fawolesamuel28/feat/multi-tenant-isolation
+6dad828 chore: remove marketing copy referring to telegram
+219fb51 feat(tenancy): Phase 1 — user-token RLS client + mandatory   tenant scoping in services
+fe7b75d Merge pull request #2 from fawolesamuel28/feat/reva-nav-links
+30dc931 style(reva): consistent sidebar icons; add .gitattributes, CLAUDE.md, tenant-isolation skill
+2163dd5 Merge pull request #1 from fawolesamuel28/feat/reva-nav-links
+8a03b4e feat(reva): wire console nav to Hot Leads and Settings pages
+7e6b942 feat(reva): add hot leads and settings console pages
+ef9a10b style: remove live equalizer from branding and fix duplicate dashboard logo
+79bc2ba fix: restore file encoding and styling corrupted by script
