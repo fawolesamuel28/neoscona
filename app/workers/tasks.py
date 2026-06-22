@@ -239,3 +239,18 @@ def expire_trials_task():
 def check_inbox_sla_task():
     from app.jobs.inbox_sla import check_inbox_sla
     asyncio.run(check_inbox_sla())
+
+
+@celery_app.task(name="process_knowledge_document")
+def process_knowledge_document(doc_id: str, tenant_id: str):
+    """Process an uploaded knowledge document: chunk, embed, and mark ready.
+
+    Called by the web API after upload. Runs the `process_document` pipeline in
+    the service layer so embedding is performed by the worker.
+    """
+    try:
+        from app.services.knowledge import process_document
+        asyncio.run(process_document(doc_id, tenant_id))
+    except Exception as exc:
+        logger.error("process_knowledge_document failed for %s (tenant=%s): %s", doc_id, tenant_id, exc)
+        raise
