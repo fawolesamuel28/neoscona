@@ -142,3 +142,25 @@ async def delete_agent(agent_id: str) -> None:
         await _request("DELETE", f"/v1/convai/agents/{agent_id}")
     except ElevenLabsError as exc:
         logger.warning("delete_agent %s failed (ignored): %s", agent_id, exc)
+
+
+async def get_conversation_audio(conversation_id: str) -> bytes:
+    """Fetch the recorded call audio (MP3) for a conversation.
+
+    The post-call transcription webhook carries no recording URL, so the console
+    streams audio on demand from here. Returns raw MP3 bytes; raises ElevenLabsError
+    if the conversation has no audio or the request fails. The caller MUST verify
+    tenant ownership of the conversation before invoking this.
+    """
+    headers = {"xi-api-key": _api_key()}
+    url = f"{_BASE}/v1/convai/conversations/{conversation_id}/audio"
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.get(url, headers=headers)
+    except httpx.HTTPError as exc:
+        raise ElevenLabsError(f"GET conversation audio transport error: {exc}") from exc
+    if resp.status_code >= 400:
+        raise ElevenLabsError(
+            f"GET conversation audio -> {resp.status_code}: {resp.text[:300]}"
+        )
+    return resp.content

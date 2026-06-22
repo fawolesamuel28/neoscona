@@ -1,165 +1,587 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="light" data-product="reva">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Voice Calls — Neoscona Reva</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-<link rel="stylesheet" href="/static/tokens.css">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --sidebar-w: 228px; --topbar-h: 56px;
-    --font-body: 'Inter', sans-serif; --font-mono: ui-monospace, 'SF Mono', monospace;
-    --canvas: var(--bg); --canvas-soft: var(--bg-input); --surface: #fff;
-    --ink: var(--heading); --ink-body: var(--copy-75); --ink-muted: var(--copy); --ink-soft: #9ca3af;
-    --hairline: var(--border); --hairline-soft: rgba(0,0,0,0.05);
-    --ok: #16a34a; --warn: #d97706; --hot: #dc2626; --sky: #0284c7;
-    --shadow-card: rgba(0,0,0,0.06) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 4px, rgba(0,0,0,0.03) 0 6px 12px;
-    --shadow-inset: rgba(0,0,0,0.075) 0 0 0 0.5px inset;
-  }
-  html, body { height: 100%; background: var(--canvas); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
-  a { text-decoration: none; color: inherit; }
-  .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr; min-height: 100vh; }
-  .topbar { grid-column: 1 / -1; display: flex; align-items: center; height: var(--topbar-h); border-bottom: 1px solid var(--hairline); background: var(--nav-bg); backdrop-filter: blur(18px) saturate(140%); z-index: 100; }
-  .topbar-brand { display: flex; align-items: center; gap: 12px; width: var(--sidebar-w); padding: 0 24px; flex-shrink: 0; }
-  .topbar-center { flex: 1; display: flex; align-items: center; padding: 0 20px; gap: 4px; border-left: 1px solid var(--hairline); height: 100%; }
-  .search-wrap { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 9999px; background: var(--canvas-soft); box-shadow: var(--shadow-inset); width: 260px; }
-  .search-wrap input { border: none; background: transparent; font-family: var(--font-body); font-size: 13px; color: var(--ink); outline: none; width: 100%; }
-  .topbar-right { display: flex; align-items: center; gap: 8px; padding: 0 20px; border-left: 1px solid var(--hairline); height: 100%; margin-left: auto; }
-  .avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-alt); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--primary); }
-  .sidebar { border-right: 1px solid var(--hairline); background: var(--surface); padding: 20px 0; display: flex; flex-direction: column; overflow-y: auto; }
-  .nav-section { padding: 0 12px 16px; }
-  .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); padding: 0 8px 8px; }
-  .nav-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; font-size: 13px; font-weight: 400; color: var(--ink-body); transition: background .1s; position: relative; margin-bottom: 2px; }
-  .nav-item:hover { background: var(--canvas-soft); }
-  .nav-item.active { background: var(--canvas-soft); color: var(--ink); font-weight: 500; }
-  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; border-radius: 9999px; background: var(--primary); }
-  .nav-badge { margin-left: auto; font-size: 10px; font-weight: 500; background: var(--primary); color: #fff; padding: 1px 6px; border-radius: 9999px; min-width: 18px; text-align: center; }
-  .nav-badge.neutral { background: var(--ink); }
-  .nav-divider { height: 1px; background: var(--hairline); margin: 4px 12px 12px; }
-  .sidebar-footer { margin-top: auto; padding: 16px 20px; font-size: 11px; color: var(--ink-soft); }
-  .main { overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; background: var(--canvas); }
-  .page-header { display: flex; align-items: flex-end; justify-content: space-between; }
-  .page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); display: flex; align-items: center; gap: 10px; }
-  .page-subtitle { font-size: 13px; color: var(--ink-muted); margin-top: 4px; }
-  .stat-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--primary-alt); color: var(--primary); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; }
-  .calls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
-  .call-card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-card); padding: 18px 20px; border: 1.5px solid transparent; transition: border-color .2s, box-shadow .2s; position: relative; overflow: hidden; }
-  .call-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #8b5cf6); }
-  .call-card.is-new::after { content: 'NEW'; position: absolute; top: 12px; right: 14px; font-size: 9px; font-weight: 700; letter-spacing: .06em; color: var(--primary); background: var(--primary-alt); padding: 2px 6px; border-radius: 4px; }
-  .call-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-  .call-avatar { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--primary); }
-  .call-name { font-size: 14px; font-weight: 600; color: var(--ink); }
-  .call-phone { font-size: 12px; color: var(--ink-muted); margin-top: 1px; font-family: var(--font-mono); }
-  .call-summary { font-size: 12.5px; color: var(--ink-body); line-height: 1.55; margin-bottom: 12px; max-height: 96px; overflow: hidden; }
-  .call-fields { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-  .field-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: var(--ink-body); background: var(--canvas-soft); }
-  .call-meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 14px; }
-  .call-actions { display: flex; gap: 6px; }
-  .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 12px; border-radius: 7px; font-size: 12px; font-weight: 500; border: 1px solid var(--hairline); cursor: pointer; transition: all .15s; background: var(--surface); color: var(--ink-body); }
-  .action-btn:hover { background: var(--canvas-soft); color: var(--ink); }
-  .action-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .action-btn.primary:hover { background: var(--primary-dark); }
-  .empty-state { text-align: center; padding: 80px 40px; color: var(--ink-muted); }
-  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-  .empty-state p { font-size: 13px; max-width: 380px; margin: 0 auto; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 9999px; }
-</style>
-</head>
-<body>
-<div class="shell">
-  <header class="topbar">
-    <a href="/dashboard" class="topbar-brand">
-      <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 32px; object-fit: contain">
-    </a>
-    <div class="topbar-center">
-      <div class="search-wrap">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M11 11L14.5 14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <input type="text" placeholder="Search calls…" />
-      </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Calls — Neoscona Reva</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/tokens.css" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --sidebar-w: 228px;
+        --topbar-h: 56px;
+        --font-body: "Inter", sans-serif;
+        --font-mono: ui-monospace, "SF Mono", monospace;
+        --canvas: var(--bg);
+        --canvas-soft: var(--bg-input);
+        --surface: #fff;
+        --ink: var(--heading);
+        --ink-body: var(--copy-75);
+        --ink-muted: var(--copy);
+        --ink-soft: #9ca3af;
+        --hairline: var(--border);
+        --hairline-soft: rgba(0, 0, 0, 0.05);
+        --ok: #16a34a;
+        --warn: #d97706;
+        --hot: #dc2626;
+        --sky: #0284c7;
+        --shadow-card:
+          rgba(0, 0, 0, 0.06) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 4px,
+          rgba(0, 0, 0, 0.03) 0 6px 12px;
+        --shadow-inset: rgba(0, 0, 0, 0.075) 0 0 0 0.5px inset;
+      }
+      html,
+      body {
+        height: 100%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: var(--sidebar-w) 1fr;
+        grid-template-rows: var(--topbar-h) 1fr;
+        min-height: 100vh;
+      }
+      .topbar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        height: var(--topbar-h);
+        border-bottom: 1px solid var(--hairline);
+        background: var(--nav-bg);
+        backdrop-filter: blur(18px) saturate(140%);
+        z-index: 100;
+      }
+      .topbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: var(--sidebar-w);
+        padding: 0 24px;
+        flex-shrink: 0;
+      }
+      .topbar-center {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 4px;
+        border-left: 1px solid var(--hairline);
+        height: 100%;
+      }
+      .search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 9999px;
+        background: var(--canvas-soft);
+        box-shadow: var(--shadow-inset);
+        width: 260px;
+      }
+      .search-wrap input {
+        border: none;
+        background: transparent;
+        font-family: var(--font-body);
+        font-size: 13px;
+        color: var(--ink);
+        outline: none;
+        width: 100%;
+      }
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 20px;
+        border-left: 1px solid var(--hairline);
+        height: 100%;
+        margin-left: auto;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--primary-alt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--primary);
+      }
+      .sidebar {
+        border-right: 1px solid var(--hairline);
+        background: var(--surface);
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .nav-section {
+        padding: 0 12px 16px;
+      }
+      .nav-label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 0 8px 8px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--ink-body);
+        transition: background 0.1s;
+        position: relative;
+        margin-bottom: 2px;
+      }
+      .nav-item:hover {
+        background: var(--canvas-soft);
+      }
+      .nav-item.active {
+        background: var(--canvas-soft);
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .nav-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 16px;
+        border-radius: 9999px;
+        background: var(--primary);
+      }
+      .nav-badge {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 500;
+        background: var(--primary);
+        color: #fff;
+        padding: 1px 6px;
+        border-radius: 9999px;
+        min-width: 18px;
+        text-align: center;
+      }
+      .nav-badge.neutral {
+        background: var(--ink);
+      }
+      .nav-divider {
+        height: 1px;
+        background: var(--hairline);
+        margin: 4px 12px 12px;
+      }
+      .sidebar-footer {
+        margin-top: auto;
+        padding: 16px 20px;
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+      .main {
+        overflow-y: auto;
+        padding: 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: var(--canvas);
+      }
+      .page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+      .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .page-subtitle {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-top: 4px;
+      }
+      .stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--primary-alt);
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 9999px;
+      }
+      .calls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 12px;
+      }
+      .call-card {
+        background: var(--surface);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        padding: 18px 20px;
+        border: 1.5px solid transparent;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .call-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), #8b5cf6);
+      }
+      .call-card.is-new::after {
+        content: "NEW";
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--primary);
+        background: var(--primary-alt);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .call-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .call-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        font-size: 14px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: var(--primary);
+      }
+      .call-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .call-phone {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin-top: 1px;
+        font-family: var(--font-mono);
+      }
+      .call-summary {
+        font-size: 12.5px;
+        color: var(--ink-body);
+        line-height: 1.55;
+        margin-bottom: 12px;
+        max-height: 96px;
+        overflow: hidden;
+      }
+      .call-fields {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .field-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-body);
+        background: var(--canvas-soft);
+      }
+      .call-meta {
+        font-size: 11px;
+        color: var(--ink-soft);
+        margin-bottom: 14px;
+      }
+      .call-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 12px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--hairline);
+        cursor: pointer;
+        transition: all 0.15s;
+        background: var(--surface);
+        color: var(--ink-body);
+      }
+      .action-btn:hover {
+        background: var(--canvas-soft);
+        color: var(--ink);
+      }
+      .action-btn.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+      .action-btn.primary:hover {
+        background: var(--primary-dark);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        color: var(--ink-muted);
+      }
+      .empty-state h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+      .empty-state p {
+        font-size: 13px;
+        max-width: 380px;
+        margin: 0 auto;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--hairline);
+        border-radius: 9999px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a href="/dashboard" class="topbar-brand">
+          <img
+            src="/static/images/neoscona-logo.png"
+            alt="Neoscona"
+            style="height: 32px; object-fit: contain"
+          />
+        </a>
+        <div class="topbar-center">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <circle
+                cx="6.5"
+                cy="6.5"
+                r="5.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+              />
+              <path
+                d="M11 11L14.5 14.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+              />
+            </svg>
+            <input type="text" placeholder="Search calls…" />
+          </div>
+        </div>
+        <div class="topbar-right"><div class="avatar">JA</div></div>
+      </header>
+
+      <aside class="sidebar">
+        <div class="nav-section">
+          <div class="nav-label">Pipeline</div>
+          <a href="/products/reva/console" class="nav-item">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >dashboard</span
+            >
+            All Leads
+          </a>
+          <a href="/products/reva/hot-leads" class="nav-item">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 18px; color: var(--hot)"
+              >local_fire_department</span
+            >
+            Hot Leads
+          </a>
+          <a href="/products/reva/voice" class="nav-item active">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 18px; color: var(--primary)"
+              >call</span
+            >
+            Voice Calls
+            <span
+              class="nav-badge"
+              id="voice-badge"
+              role="status"
+              aria-live="polite"
+              >0</span
+            >
+          </a>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-section">
+          <div class="nav-label">Workspace</div>
+          <a href="/products/reva/settings" class="nav-item">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >settings</span
+            >
+            Settings
+          </a>
+        </div>
+        <div class="sidebar-footer">
+          Voice receptionist · ElevenLabs + KrosAI
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">
+              Voice Calls
+              <span class="stat-pill"
+                ><span id="voice-total" role="status" aria-live="polite"
+                  >0</span
+                >
+                captured</span
+              >
+            </div>
+            <div class="page-subtitle">
+              Inbound calls answered by your AI receptionist · transcripts &amp;
+              extracted leads
+            </div>
+          </div>
+        </div>
+
+        <div class="calls-grid" id="calls-grid">
+          <div class="empty-state" id="empty-state" style="grid-column: 1/-1">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 48px; color: var(--primary); opacity: 0.3"
+              >call</span
+            >
+            <h3>No voice calls yet</h3>
+            <p>
+              When callers reach your receptionist number, their transcript and
+              the details it captured will appear here. Enable your receptionist
+              in
+              <a href="/products/reva/settings" style="color: var(--primary)"
+                >Settings → Voice Receptionist</a
+              >.
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
-    <div class="topbar-right"><div class="avatar">JA</div></div>
-  </header>
+    <script src="/static/dashboard.js"></script>
+    <script>
+      function initials(name) {
+        return (name || "?")
+          .split(" ")
+          .map((w) => w[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase();
+      }
+      function esc(s) {
+        return (s == null ? "" : String(s)).replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      }
 
-  <aside class="sidebar">
-    <div class="nav-section">
-      <div class="nav-label">Pipeline</div>
-      <a href="/products/reva/console" class="nav-item">
-        <span class="material-symbols-outlined" style="font-size:18px">dashboard</span> All Leads
-      </a>
-      <a href="/products/reva/hot-leads" class="nav-item">
-        <span class="material-symbols-outlined" style="font-size:18px;color:var(--hot)">local_fire_department</span> Hot Leads
-      </a>
-      <a href="/products/reva/voice" class="nav-item active">
-        <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">call</span> Voice Calls
-        <span class="nav-badge" id="voice-badge">0</span>
-      </a>
-    </div>
-    <div class="nav-divider"></div>
-    <div class="nav-section">
-      <div class="nav-label">Workspace</div>
-      <a href="/products/reva/settings" class="nav-item">
-        <span class="material-symbols-outlined" style="font-size:18px">settings</span> Settings
-      </a>
-    </div>
-    <div class="sidebar-footer">Voice receptionist · ElevenLabs + KrosAI</div>
-  </aside>
+      function fieldTag(label, value) {
+        if (!value) return "";
+        return `<span class="field-tag"><strong>${esc(label)}:</strong> ${esc(value)}</span>`;
+      }
 
-  <main class="main">
-    <div class="page-header">
-      <div>
-        <div class="page-title">Voice Calls <span class="stat-pill"><span id="voice-total">0</span> captured</span></div>
-        <div class="page-subtitle">Inbound calls answered by your AI receptionist · transcripts &amp; extracted leads</div>
-      </div>
-    </div>
-
-    <div class="calls-grid" id="calls-grid">
-      <div class="empty-state" id="empty-state" style="grid-column:1/-1">
-        <span class="material-symbols-outlined" style="font-size:48px;color:var(--primary);opacity:.3">call</span>
-        <h3>No voice calls yet</h3>
-        <p>When callers reach your receptionist number, their transcript and the details it captured will appear here. Enable your receptionist in <a href="/products/reva/settings" style="color:var(--primary)">Settings → Voice Receptionist</a>.</p>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script>
-  function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase(); }
-  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-
-  function fieldTag(label, value) {
-    if (!value) return '';
-    return `<span class="field-tag"><strong>${esc(label)}:</strong> ${esc(value)}</span>`;
-  }
-
-  function renderCalls(leads) {
-    const grid = document.getElementById('calls-grid');
-    const empty = document.getElementById('empty-state');
-    if (!leads.length) { grid.innerHTML = ''; grid.appendChild(empty); empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-    grid.innerHTML = leads.map(l => {
-      const name = l.name || 'Unknown caller';
-      const captured = l.created_at ? new Date(l.created_at).toLocaleString('en-NG', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-      return `
-        <div class="call-card ${l.is_new ? 'is-new' : ''}">
+      function renderCalls(leads) {
+        const grid = document.getElementById("calls-grid");
+        const empty = document.getElementById("empty-state");
+        if (!leads.length) {
+          grid.innerHTML = "";
+          grid.appendChild(empty);
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+        grid.innerHTML = leads
+          .map((l) => {
+            const name = l.name || "Unknown caller";
+            const captured = l.created_at
+              ? new Date(l.created_at).toLocaleString("en-NG", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+            return `
+        <div class="call-card ${l.is_new ? "is-new" : ""}">
           <div class="call-top">
             <div class="call-avatar">${initials(name)}</div>
             <div>
               <div class="call-name">${esc(name)}</div>
-              <div class="call-phone">${esc(l.contact_phone || l.phone_number || '—')}</div>
+              <div class="call-phone">${esc(l.contact_phone || l.phone_number || "—")}</div>
             </div>
           </div>
-          <div class="call-summary">${esc(l.ai_summary || 'No summary captured for this call.')}</div>
+          <div class="call-summary">${esc(l.ai_summary || "No summary captured for this call.")}</div>
           <div class="call-fields">
-            ${fieldTag('Budget', l.budget)}
-            ${fieldTag('Location', l.location)}
-            ${fieldTag('Type', l.property_type)}
-            ${fieldTag('Timeline', l.timeline)}
+            ${fieldTag("Budget", l.budget)}
+            ${fieldTag("Location", l.location)}
+            ${fieldTag("Type", l.property_type)}
+            ${fieldTag("Timeline", l.timeline)}
           </div>
           <div class="call-meta">Captured ${esc(captured)}</div>
           <div class="call-actions">
@@ -168,31 +590,67 @@
             </button>
           </div>
         </div>`;
-    }).join('');
-  }
+          })
+          .join("");
+      }
 
-  async function importLead(id, btn) {
-    btn.disabled = true; btn.textContent = 'Importing…';
-    try {
-      const res = await fetch('/api/elevenlabs-leads/' + id + '/import', { method: 'POST' });
-      if (res.ok) { btn.textContent = '✓ Imported'; }
-      else { btn.disabled = false; btn.textContent = 'Import failed'; }
-    } catch (e) { btn.disabled = false; btn.textContent = 'Import failed'; }
-  }
+      async function importLead(id, btn) {
+        btn.disabled = true;
+        btn.textContent = "Importing…";
+        const _fetch = window.authedFetch || ((u, o) => fetch(u, o));
+        const base = (window.API || window.location.origin + "/api").replace(
+          /\/$/,
+          "",
+        );
+        try {
+          const res = await _fetch(
+            base + "/elevenlabs-leads/" + id + "/import",
+            { method: "POST" },
+          );
+          if (res.ok) {
+            btn.textContent = "✓ Imported";
+          } else {
+            btn.disabled = false;
+            btn.textContent = "Import failed";
+          }
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = "Import failed";
+        }
+      }
 
-  async function fetchVoiceLeads() {
-    try {
-      const res = await fetch('/api/elevenlabs-leads');
-      if (!res.ok) return;
-      const data = await res.json();
-      const leads = data.leads || [];
-      document.getElementById('voice-total').textContent = leads.length;
-      document.getElementById('voice-badge').textContent = (data.stats && data.stats.new) || 0;
-      renderCalls(leads);
-    } catch (e) { console.warn('Could not fetch voice leads:', e); }
-  }
+      async function fetchVoiceLeads() {
+        const _fetch = window.authedFetch || ((u, o) => fetch(u, o));
+        const base = (window.API || window.location.origin + "/api").replace(
+          /\/$/,
+          "",
+        );
+        try {
+          const res = await _fetch(base + "/elevenlabs-leads", {
+            cache: "no-store",
+          });
+          if (!res || !res.ok) return;
+          const data = await res.json();
+          const leads = data.leads || [];
+          const totalEl = document.getElementById("voice-total");
+          if (totalEl) totalEl.textContent = leads.length;
+          const badgeEl = document.getElementById("voice-badge");
+          if (badgeEl)
+            badgeEl.textContent = (data.stats && data.stats.new) || 0;
+          renderCalls(leads);
+        } catch (e) {
+          console.warn("Could not fetch voice leads:", e);
+        }
+      }
 
-  document.addEventListener('DOMContentLoaded', fetchVoiceLeads);
-</script>
-</body>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Wait for auth gate if present, then fetch leads.
+        (window.RevaAuth ? window.RevaAuth.ready : Promise.resolve()).then(
+          fetchVoiceLeads,
+        );
+        // Periodic refresh fallback for realtime updates (dashboard.js handles WS when available).
+        setInterval(fetchVoiceLeads, 60_000);
+      });
+    </script>
+  </body>
 </html>

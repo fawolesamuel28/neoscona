@@ -345,7 +345,7 @@
           <span class="material-symbols-outlined nd-nav-icon">forum</span>
           Neoscona Reva
         </a>
-        <a href="#" class="nd-nav-item" data-product="voice">
+        <a href="/products/voice/console" class="nd-nav-item" data-product="voice">
           <span class="material-symbols-outlined nd-nav-icon">call</span>
           Neoscona Voice
         </a>
@@ -492,8 +492,22 @@
             >
             Neoscona Voice
           </h3>
-          <p>AI Receptionist. No calls answered yet.</p>
-          <div class="nd-dash-badge">Inactive</div>
+          <p>AI receptionist — answers calls 24/7, captures and qualifies leads.</p>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div class="nd-dash-badge" id="voice-status-badge">Inactive</div>
+            <a
+              href="/products/voice/console"
+              class="nd-btn-primary"
+              style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+              >Open Voice</a
+            >
+          </div>
         </div>
         <!-- Reach -->
         <div class="nd-dash-card" data-product="reach">
@@ -616,6 +630,23 @@
           }
         } catch (err) {
           console.error("Failed to fetch profile:", err);
+        }
+
+        // Reflect live Neoscona Voice status on its product card.
+        try {
+          const vr = await fetch("/api/voice/receptionist", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (vr.ok) {
+            const { receptionist } = await vr.json();
+            const badge = document.getElementById("voice-status-badge");
+            if (badge && receptionist && receptionist.status === "active") {
+              badge.classList.add("active");
+              badge.textContent = "● Live";
+            }
+          }
+        } catch (err) {
+          /* non-fatal: leave the badge as "Inactive" */
         }
       }
 

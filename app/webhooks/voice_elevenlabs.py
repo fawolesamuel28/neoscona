@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -34,6 +35,7 @@ from app.services.elevenlabs_leads import (
     upsert_voice_lead,
 )
 from app.services.usage import record_usage
+from app.services.voice_calls import upsert_call_log
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["Voice Webhook (ElevenLabs)"])
@@ -98,6 +100,26 @@ def _collected(results: dict[str, Any], key: str) -> Optional[str]:
     return text or None
 
 
+def _iso_from_unix(secs: Any) -> Optional[str]:
+    """Convert a unix-seconds value to an ISO-8601 UTC string, or None."""
+    try:
+        return datetime.fromtimestamp(int(secs), tz=timezone.utc).isoformat()
+    except (TypeError, ValueError, OverflowError, OSError):
+        return None
+
+
+def _derive_call_status(analysis: dict[str, Any], transcript: Any, summary: Optional[str]) -> str:
+    """Map ElevenLabs' call_successful (+ presence of content) to our status enum."""
+    outcome = (analysis.get("call_successful") or "").lower()
+    if outcome == "success":
+        return "completed"
+    if outcome == "failure":
+        return "failed"
+    if not transcript and not summary:
+        return "no-data"
+    return "completed"
+
+
 @router.post("/voice/elevenlabs", response_model=WebhookAckResponse)
 async def elevenlabs_post_call(request: Request) -> WebhookAckResponse:
     """Receive ElevenLabs post-call events and route captures into the Reva pipeline."""
@@ -157,12 +179,38 @@ async def elevenlabs_post_call(request: Request) -> WebhookAckResponse:
 
     lead = await upsert_voice_lead(tenant_id, conversation_id, fields)
 
-    # 4. Meter voice minutes (best-effort; never blocks the pipeline).
+    # 4. Log the full call (transcript + status + timing) for the Voice console.
+    #    Best-effort and idempotent on (tenant_id, conversation_id); a failure here
+    #    must never regress the lead/usage/pipeline flow below.
     duration = metadata.get("call_duration_secs") or 0
+    transcript = data.get("transcript") if isinstance(data.get("transcript"), list) else []
+    started_at = _iso_from_unix(metadata.get("start_time_unix_secs"))
+    ended_at = _iso_from_unix((metadata.get("start_time_unix_secs") or 0) + duration) if (
+        started_at and duration
+    ) else None
+    await upsert_call_log(
+        tenant_id,
+        conversation_id,
+        {
+            "elevenlabs_agent_id": agent_id,
+            "caller_number": caller,
+            "e164": phone_call.get("agent_number"),
+            "direction": "inbound",
+            "status": _derive_call_status(analysis, transcript, analysis.get("transcript_summary")),
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "duration_secs": int(duration) or None,
+            "has_audio": bool(data.get("has_audio")),
+            "transcript": transcript,
+            "summary": analysis.get("transcript_summary"),
+        },
+    )
+
+    # 5. Meter voice minutes (best-effort; never blocks the pipeline).
     if duration:
         await record_usage(tenant_id, "voice_minute", round(duration / 60.0, 2))
 
-    # 5. Import into the unified leads pipeline → existing follow-up jobs take over.
+    # 6. Import into the unified leads pipeline → existing follow-up jobs take over.
     if lead and lead.get("id"):
         await import_elevenlabs_lead_to_pipeline(lead["id"], tenant_id)
 

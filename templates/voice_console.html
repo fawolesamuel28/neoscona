@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-product="voice">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Overview — Neoscona Voice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/tokens.css" />
+    <link rel="stylesheet" href="/static/voice.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a href="/dashboard" class="topbar-brand">
+          <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 30px; object-fit: contain" />
+        </a>
+        <div class="topbar-center">
+          <span class="product-tag"><span class="material-symbols-outlined" style="font-size:15px">call</span> Voice</span>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-btn" onclick="Voice.toggleTheme()" aria-label="Toggle theme">
+            <span class="material-symbols-outlined" style="font-size:18px">contrast</span>
+          </button>
+          <div class="avatar">{{ user.email[0].upper() if user.email else 'A' }}</div>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <div class="nav-section">
+          <div class="nav-label">Voice</div>
+          <a href="/products/voice/console" class="nav-item active">
+            <span class="material-symbols-outlined" style="color: var(--primary)">grid_view</span> Overview
+          </a>
+          <a href="/products/voice/calls" class="nav-item">
+            <span class="material-symbols-outlined">call_log</span> Calls
+            <span class="nav-badge" id="nav-calls-badge" role="status" aria-live="polite">0</span>
+          </a>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-section">
+          <div class="nav-label">Workspace</div>
+          <a href="/products/voice/settings" class="nav-item">
+            <span class="material-symbols-outlined">settings</span> Settings
+          </a>
+          <a href="/dashboard" class="nav-item">
+            <span class="material-symbols-outlined">arrow_back</span> All products
+          </a>
+        </div>
+        <div class="sidebar-footer">
+          <span class="status-dot" id="rcpt-foot"><i></i> Receptionist offline</span>
+          <div style="margin-top:8px">AI receptionist · ElevenLabs + KrosAI</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">
+              Overview
+              <span class="badge live" id="live-badge" style="display:none"><i></i> Live</span>
+            </div>
+            <div class="page-subtitle">Your AI voice receptionist at a glance — status, volume and the latest calls.</div>
+          </div>
+          <a href="/products/voice/settings" class="btn"><span class="material-symbols-outlined">tune</span> Manage receptionist</a>
+        </div>
+
+        <!-- Receptionist hero -->
+        <div id="hero-slot">
+          <div class="hero">
+            <div class="hero-icon skeleton" style="background:var(--canvas-soft)"></div>
+            <div class="hero-body"><div class="skeleton" style="height:18px;width:180px"></div><div class="skeleton" style="height:12px;width:240px;margin-top:8px"></div></div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-grid" id="stats">
+          <div class="stat-card"><div class="stat-label">Total calls</div><div class="stat-value" id="s-total">—</div><div class="stat-sub" id="s-total-sub">this week</div></div>
+          <div class="stat-card"><div class="stat-label">Calls today</div><div class="stat-value" id="s-today">—</div><div class="stat-sub">since midnight</div></div>
+          <div class="stat-card"><div class="stat-label">Voice minutes</div><div class="stat-value" id="s-mins">—</div><div class="stat-sub" id="s-mins-sub">this week</div></div>
+          <div class="stat-card"><div class="stat-label">Avg duration</div><div class="stat-value" id="s-avg">—</div><div class="stat-sub">per answered call</div></div>
+        </div>
+
+        <!-- Volume + recent -->
+        <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:16px; align-items:start" id="lower-grid">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Call volume</div><div class="card-meta" id="vol-period">Last 7 days</div></div>
+            <div class="card-pad">
+              <div class="spark" id="spark"></div>
+              <div class="spark-labels" id="spark-labels"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Recent calls</div><a href="/products/voice/calls" class="card-meta" style="color:var(--primary)">View all →</a></div>
+            <div class="card-pad" id="recent" style="display:flex; flex-direction:column; gap:10px">
+              <div class="skeleton" style="height:54px"></div><div class="skeleton" style="height:54px"></div><div class="skeleton" style="height:54px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Locked (no voice plan) -->
+        <div class="locked">
+          <div class="empty-state">
+            <span class="material-symbols-outlined">lock</span>
+            <h3>Voice isn't on your plan yet</h3>
+            <p>The AI receptionist is available on the Professional plan and above. <a href="/billing">Upgrade to enable Voice →</a></p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      window.__VOICE_BOOT__ = { supabaseUrl: "{{ supabase_url }}", supabaseAnonKey: "{{ supabase_anon_key }}" };
+    </script>
+    <script src="/static/voice.js"></script>
+    <script>
+      function renderHero(r) {
+        var slot = document.getElementById("hero-slot");
+        var foot = document.getElementById("rcpt-foot");
+        var live = document.getElementById("live-badge");
+        if (r && r.status === "active") {
+          live.style.display = "";
+          foot.className = "status-dot live"; foot.innerHTML = '<i></i> Receptionist online';
+          slot.innerHTML =
+            '<div class="hero">' +
+            '  <div class="hero-icon"><span class="material-symbols-outlined">support_agent</span></div>' +
+            '  <div class="hero-body">' +
+            '    <div class="hero-num">' + Voice.esc(r.e164 || "Number provisioning…") + '</div>' +
+            '    <div class="hero-sub">Persona: ' + Voice.esc(r.persona_source || "dedicated") + ' · Language: ' + Voice.esc((r.language || "en").toUpperCase()) + '</div>' +
+            '  </div>' +
+            '  <span class="badge ok"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span> Active</span>' +
+            '</div>';
+        } else {
+          slot.innerHTML =
+            '<div class="hero">' +
+            '  <div class="hero-icon"><span class="material-symbols-outlined">add_call</span></div>' +
+            '  <div class="hero-body">' +
+            '    <div class="hero-num" style="font-family:var(--font-body);font-size:16px">Set up your receptionist</div>' +
+            '    <div class="hero-sub">Provision a number and an AI persona to start answering calls 24/7.</div>' +
+            '  </div>' +
+            '  <a href="/products/voice/settings" class="btn primary"><span class="material-symbols-outlined">bolt</span> Set up</a>' +
+            '</div>';
+        }
+      }
+
+      function renderSpark(byDay) {
+        var spark = document.getElementById("spark");
+        var labels = document.getElementById("spark-labels");
+        if (!byDay || !byDay.length) { spark.innerHTML = '<div style="color:var(--ink-soft);font-size:12px;margin:auto">No calls in this window.</div>'; labels.innerHTML = ""; return; }
+        var max = Math.max(1, Math.max.apply(null, byDay.map(function (d) { return d.calls; })));
+        spark.innerHTML = byDay.map(function (d) {
+          var h = Math.round((d.calls / max) * 100);
+          return '<div class="bar" title="' + d.date + ': ' + d.calls + ' calls" style="height:' + Math.max(4, h) + '%"><span></span></div>';
+        }).join("");
+        // Label only a few points to avoid clutter.
+        labels.innerHTML = byDay.map(function (d, i) {
+          var show = i === 0 || i === byDay.length - 1 || i === Math.floor(byDay.length / 2);
+          return '<span>' + (show ? d.date.slice(5) : "") + '</span>';
+        }).join("");
+      }
+
+      function recentCard(c) {
+        var name = c.caller_number || "Unknown caller";
+        var badge = c.status === "failed" ? '<span class="badge hot">failed</span>'
+          : c.status === "no-data" ? '<span class="badge warn">no data</span>'
+          : '<span class="badge ok">completed</span>';
+        return '<div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--hairline-soft)">' +
+          '<div class="call-avatar" style="width:34px;height:34px;font-size:12px">' + Voice.initials(c.caller_number) + '</div>' +
+          '<div style="flex:1; min-width:0">' +
+          '  <div style="font-size:13px;font-weight:600;color:var(--ink);font-family:var(--font-mono)">' + Voice.esc(name) + '</div>' +
+          '  <div style="font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + Voice.esc(c.summary || "No summary") + '</div>' +
+          '</div>' +
+          '<div style="text-align:right">' + badge + '<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">' + Voice.fmtDuration(c.duration_secs) + '</div></div>' +
+          '</div>';
+      }
+
+      async function load() {
+        var rcpt = await Voice.getJSON("/voice/receptionist");
+        if (rcpt) renderHero(rcpt.receptionist);
+
+        var a = await Voice.getJSON("/voice/analytics?period=week");
+        if (a) {
+          document.getElementById("s-total").textContent = a.total_calls;
+          document.getElementById("s-mins").textContent = a.voice_minutes;
+          document.getElementById("s-avg").textContent = Voice.fmtDuration(a.avg_duration_secs);
+          var bd = a.by_day || [];
+          var todayKey = new Date().toISOString().slice(0, 10);
+          var todayObj = bd.filter(function (d) { return d.date === todayKey; })[0];
+          document.getElementById("s-today").textContent = todayObj ? todayObj.calls : 0;
+          renderSpark(bd);
+        }
+
+        var list = await Voice.getJSON("/voice/calls?period=week");
+        var recent = document.getElementById("recent");
+        if (list) {
+          var calls = (list.calls || []).slice(0, 6);
+          document.getElementById("nav-calls-badge").textContent = (list.stats && list.stats.total_calls) || calls.length;
+          recent.innerHTML = calls.length
+            ? calls.map(recentCard).join("")
+            : '<div style="color:var(--ink-soft);font-size:13px;padding:18px 0;text-align:center">No calls yet. They appear here the moment your receptionist answers one.</div>';
+        }
+      }
+
+      Voice.ready.then(load);
+      setInterval(load, 60000);
+    </script>
+  </body>
+</html>

@@ -351,6 +351,51 @@ CREATE TABLE public.voice_agents (
 
 
 --
+-- Name: voice_calls; Type: TABLE; Schema: public; Owner: -
+--
+-- Full per-tenant call log written by the ElevenLabs post-call webhook (service role)
+-- and read by the Neoscona Voice console. See migration 006 and app/services/voice_calls.py.
+-- The block below (table + constraints + indexes + RLS) is maintained by migration 006.
+--
+
+CREATE TABLE public.voice_calls (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    elevenlabs_agent_id text,
+    voice_agent_id uuid,
+    conversation_id text NOT NULL,
+    caller_number text,
+    e164 text,
+    direction text DEFAULT 'inbound'::text NOT NULL,
+    status text DEFAULT 'completed'::text NOT NULL,
+    started_at timestamp with time zone,
+    ended_at timestamp with time zone,
+    duration_secs integer,
+    has_audio boolean DEFAULT false NOT NULL,
+    recording_url text,
+    transcript jsonb DEFAULT '[]'::jsonb NOT NULL,
+    summary text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY public.voice_calls
+    ADD CONSTRAINT voice_calls_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.voice_calls
+    ADD CONSTRAINT voice_calls_tenant_conversation_key UNIQUE (tenant_id, conversation_id);
+ALTER TABLE ONLY public.voice_calls
+    ADD CONSTRAINT voice_calls_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.voice_calls
+    ADD CONSTRAINT voice_calls_voice_agent_id_fkey FOREIGN KEY (voice_agent_id) REFERENCES public.voice_agents(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_voice_calls_tenant ON public.voice_calls USING btree (tenant_id);
+CREATE INDEX idx_voice_calls_tenant_created ON public.voice_calls USING btree (tenant_id, created_at DESC);
+CREATE INDEX idx_voice_calls_conversation ON public.voice_calls USING btree (conversation_id);
+
+ALTER TABLE public.voice_calls ENABLE ROW LEVEL SECURITY;
+CREATE POLICY voice_calls_tenant ON public.voice_calls TO authenticated USING ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids))) WITH CHECK ((tenant_id IN ( SELECT public.user_tenant_ids() AS user_tenant_ids)));
+
+
+--
 -- Name: elevenlabs_leads_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 

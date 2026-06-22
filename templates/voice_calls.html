@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-product="voice">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calls — Neoscona Voice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/tokens.css" />
+    <link rel="stylesheet" href="/static/voice.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a href="/dashboard" class="topbar-brand">
+          <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 30px; object-fit: contain" />
+        </a>
+        <div class="topbar-center">
+          <span class="product-tag"><span class="material-symbols-outlined" style="font-size:15px">call</span> Voice</span>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-btn" onclick="Voice.toggleTheme()" aria-label="Toggle theme">
+            <span class="material-symbols-outlined" style="font-size:18px">contrast</span>
+          </button>
+          <div class="avatar">{{ user.email[0].upper() if user.email else 'A' }}</div>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <div class="nav-section">
+          <div class="nav-label">Voice</div>
+          <a href="/products/voice/console" class="nav-item">
+            <span class="material-symbols-outlined">grid_view</span> Overview
+          </a>
+          <a href="/products/voice/calls" class="nav-item active">
+            <span class="material-symbols-outlined" style="color: var(--primary)">call_log</span> Calls
+            <span class="nav-badge" id="nav-calls-badge" role="status" aria-live="polite">0</span>
+          </a>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-section">
+          <div class="nav-label">Workspace</div>
+          <a href="/products/voice/settings" class="nav-item">
+            <span class="material-symbols-outlined">settings</span> Settings
+          </a>
+          <a href="/dashboard" class="nav-item">
+            <span class="material-symbols-outlined">arrow_back</span> All products
+          </a>
+        </div>
+        <div class="sidebar-footer">AI receptionist · ElevenLabs + KrosAI</div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Calls <span class="stat-pill"><span id="calls-total">0</span> total</span></div>
+            <div class="page-subtitle">Every call your receptionist answered — full transcript, summary and outcome.</div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="chips" id="chips">
+            <button class="chip active" data-f="all">All</button>
+            <button class="chip" data-f="today">Today</button>
+            <button class="chip" data-f="week">This week</button>
+            <button class="chip" data-f="completed">Completed</button>
+            <button class="chip" data-f="failed">Failed</button>
+            <button class="chip" data-f="no-data">No data</button>
+          </div>
+          <div class="search-wrap">
+            <span class="material-symbols-outlined" style="font-size:16px">search</span>
+            <input id="search" type="text" placeholder="Search caller or summary…" />
+          </div>
+        </div>
+
+        <div class="calls-grid" id="grid">
+          <div class="skeleton" style="height:200px"></div><div class="skeleton" style="height:200px"></div><div class="skeleton" style="height:200px"></div>
+        </div>
+
+        <div class="empty-state" id="empty" style="display:none">
+          <span class="material-symbols-outlined">call</span>
+          <h3>No calls yet</h3>
+          <p>When callers reach your receptionist number, each conversation appears here with its transcript and the details it captured. Set one up in <a href="/products/voice/settings">Settings</a>.</p>
+        </div>
+
+        <div class="locked">
+          <div class="empty-state">
+            <span class="material-symbols-outlined">lock</span>
+            <h3>Voice isn't on your plan yet</h3>
+            <p>Available on the Professional plan and above. <a href="/billing">Upgrade to enable Voice →</a></p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Transcript drawer -->
+    <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <div style="font-size:15px;font-weight:600" id="d-name">Call</div>
+          <div style="font-size:12px;color:var(--ink-soft)" id="d-meta"></div>
+        </div>
+        <button class="theme-btn" onclick="closeDrawer()" aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="drawer-body" id="d-body"></div>
+      <div style="padding:14px 20px;border-top:1px solid var(--hairline);display:flex;gap:8px">
+        <button class="btn primary" id="d-import" style="flex:1"><span class="material-symbols-outlined">move_to_inbox</span> Import to pipeline</button>
+      </div>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>window.__VOICE_BOOT__ = { supabaseUrl: "{{ supabase_url }}", supabaseAnonKey: "{{ supabase_anon_key }}" };</script>
+    <script src="/static/voice.js"></script>
+    <script>
+      var state = { filter: "all", search: "", calls: [] };
+
+      function statusBadge(s) {
+        if (s === "failed") return '<span class="badge hot">failed</span>';
+        if (s === "no-data") return '<span class="badge warn">no data</span>';
+        return '<span class="badge ok">completed</span>';
+      }
+
+      function callCard(c) {
+        var name = c.caller_number || "Unknown caller";
+        return '<div class="call-card">' +
+          '<div class="call-top">' +
+          '  <div class="call-avatar">' + Voice.initials(c.caller_number) + '</div>' +
+          '  <div style="flex:1;min-width:0"><div class="call-name" style="font-family:var(--font-mono)">' + Voice.esc(name) + '</div>' +
+          '  <div class="call-phone">' + Voice.fmtDate(c.created_at) + '</div></div>' +
+          statusBadge(c.status) +
+          '</div>' +
+          '<div class="call-summary">' + Voice.esc(c.summary || "No summary captured for this call.") + '</div>' +
+          '<div class="call-meta">' +
+          '  <span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">schedule</span> ' + Voice.fmtDuration(c.duration_secs) + '</span>' +
+          '  <span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">forum</span> ' + (c.turn_count || 0) + ' turns</span>' +
+          (c.has_audio ? '  <span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">graphic_eq</span> audio</span>' : '') +
+          '</div>' +
+          '<div class="call-actions">' +
+          '  <button class="btn" onclick="openDrawer(\'' + Voice.esc(c.conversation_id) + '\')"><span class="material-symbols-outlined">description</span> Transcript</button>' +
+          '  <button class="btn primary" onclick="importCall(\'' + Voice.esc(c.conversation_id) + '\', this)"><span class="material-symbols-outlined">move_to_inbox</span> Import</button>' +
+          '</div></div>';
+      }
+
+      function render() {
+        var grid = document.getElementById("grid");
+        var empty = document.getElementById("empty");
+        var calls = state.calls;
+        if (!calls.length) { grid.innerHTML = ""; empty.style.display = "block"; return; }
+        empty.style.display = "none";
+        grid.innerHTML = calls.map(callCard).join("");
+      }
+
+      function query() {
+        var p = [];
+        if (state.filter === "completed" || state.filter === "failed" || state.filter === "no-data") p.push("status=" + state.filter);
+        if (state.filter === "today") p.push("period=week"); // narrowed client-side to today below
+        if (state.filter === "week") p.push("period=week");
+        if (state.search) p.push("search=" + encodeURIComponent(state.search));
+        return "/voice/calls" + (p.length ? "?" + p.join("&") : "");
+      }
+
+      async function load() {
+        var data = await Voice.getJSON(query());
+        if (!data) { return; }
+        var calls = data.calls || [];
+        if (state.filter === "today") {
+          var t = new Date().toISOString().slice(0, 10);
+          calls = calls.filter(function (c) { return (c.created_at || "").slice(0, 10) === t; });
+        }
+        state.calls = calls;
+        document.getElementById("calls-total").textContent = (data.stats && data.stats.total_calls) || calls.length;
+        document.getElementById("nav-calls-badge").textContent = (data.stats && data.stats.total_calls) || calls.length;
+        render();
+      }
+
+      // ─── Drawer ───
+      var current = null;
+      async function openDrawer(convId) {
+        var body = document.getElementById("d-body");
+        body.innerHTML = '<div class="skeleton" style="height:60px"></div><div class="skeleton" style="height:60px"></div>';
+        document.getElementById("scrim").classList.add("open");
+        document.getElementById("drawer").classList.add("open");
+        document.getElementById("d-import").onclick = function () { importCall(convId, this); };
+        current = convId;
+        var data = await Voice.getJSON("/voice/calls/" + encodeURIComponent(convId));
+        if (!data || !data.call) { body.innerHTML = '<p style="color:var(--ink-soft)">Could not load transcript.</p>'; return; }
+        var c = data.call;
+        document.getElementById("d-name").textContent = c.caller_number || "Unknown caller";
+        document.getElementById("d-meta").textContent = Voice.fmtDate(c.created_at) + " · " + Voice.fmtDuration(c.duration_secs) + " · " + (c.status || "");
+        var html = "";
+        if (c.has_audio) {
+          html += '<audio controls preload="none" style="width:100%" src="' + Voice.api + '/voice/calls/' + encodeURIComponent(convId) + '/recording"></audio>';
+        }
+        if (c.summary) html += '<div style="font-size:12.5px;color:var(--ink-body);background:var(--canvas-soft);padding:12px;border-radius:10px"><strong>Summary.</strong> ' + Voice.esc(c.summary) + '</div>';
+        var turns = c.transcript || [];
+        if (turns.length) {
+          html += turns.map(function (t) {
+            var role = (t.role === "agent" || t.role === "assistant") ? "agent" : "user";
+            var msg = t.message || t.text || t.content || "";
+            if (!msg) return "";
+            return '<div class="turn ' + role + '"><span class="who">' + (role === "agent" ? "Receptionist" : "Caller") + '</span><span class="msg">' + Voice.esc(msg) + '</span></div>';
+          }).join("");
+        } else if (!c.summary) {
+          html += '<p style="color:var(--ink-soft);font-size:13px">No transcript was captured for this call.</p>';
+        }
+        body.innerHTML = html;
+      }
+      function closeDrawer() {
+        document.getElementById("scrim").classList.remove("open");
+        document.getElementById("drawer").classList.remove("open");
+        current = null;
+      }
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
+
+      async function importCall(convId, btn) {
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Importing…'; }
+        try {
+          var r = await Voice.authedFetch("/voice/calls/" + encodeURIComponent(convId) + "/import", { method: "POST" });
+          if (r.ok) { Voice.toast("Imported to pipeline", "ok"); if (btn) btn.innerHTML = '<span class="material-symbols-outlined">check</span> Imported'; }
+          else {
+            var d = await r.json().catch(function () { return {}; });
+            Voice.toast(d.detail || "Import failed", "err");
+            if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">move_to_inbox</span> Import'; }
+          }
+        } catch (e) {
+          Voice.toast("Import failed", "err");
+          if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">move_to_inbox</span> Import'; }
+        }
+      }
+
+      // ─── Wire filters ───
+      document.getElementById("chips").addEventListener("click", function (e) {
+        var b = e.target.closest(".chip"); if (!b) return;
+        document.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+        b.classList.add("active");
+        state.filter = b.dataset.f;
+        load();
+      });
+      var searchTimer;
+      document.getElementById("search").addEventListener("input", function (e) {
+        clearTimeout(searchTimer);
+        var v = e.target.value.trim();
+        searchTimer = setTimeout(function () { state.search = v; load(); }, 300);
+      });
+
+      Voice.ready.then(load);
+      setInterval(load, 60000);
+    </script>
+  </body>
+</html>

@@ -144,6 +144,37 @@ async def get_elevenlabs_lead(lead_id: int, tenant_id: str | None = None) -> dic
         return None
 
 
+async def get_elevenlabs_lead_by_call_id(call_id: str, tenant_id: str | None = None) -> dict[str, Any] | None:
+    """Fetch a voice lead by its ElevenLabs call/conversation id, scoped to tenant.
+
+    Lets the Voice console import a lead using the conversation id it already has
+    (the call log and the lead share it), without exposing the integer lead id.
+    """
+    tenant_id = require_tenant(tenant_id)
+    if not call_id:
+        return None
+    try:
+        db = get_supabase()
+
+        def _fetch():
+            return (
+                db.table("elevenlabs_leads")
+                .select("*")
+                .eq("call_id", call_id)
+                .eq("tenant_id", tenant_id)
+                .limit(1)
+                .execute()
+            )
+
+        result = await asyncio.to_thread(_fetch)
+        rows = result.data or []
+        return normalize_elevenlabs_lead(rows[0]) if rows else None
+
+    except Exception as exc:
+        logger.error("Failed to fetch elevenlabs lead by call_id %s: %s", call_id, exc)
+        return None
+
+
 async def mark_elevenlabs_lead_viewed(lead_id: int, tenant_id: str | None = None) -> dict[str, Any] | None:
     tenant_id = require_tenant(tenant_id)
     try:
