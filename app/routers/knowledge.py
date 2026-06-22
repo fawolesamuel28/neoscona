@@ -7,9 +7,10 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
 
 from app.core.logger import get_logger
+from app.core.auth import Principal, get_current_principal
 from app.services.knowledge import (
     delete_document,
     list_documents,
@@ -42,13 +43,15 @@ def _tenant_id() -> str:
 @router.post("/upload", summary="Upload a knowledge document")
 async def upload_knowledge_doc(
     file: UploadFile = File(...),
+    principal: Principal = Depends(get_current_principal),
     tenant_id: str = Form(None),
 ):
     """
     Upload a PDF, DOCX, TXT, or MD file.
     The document is stored and queued for async chunking + embedding.
     """
-    tid = tenant_id or _tenant_id()
+    # Resolve tenant from authenticated principal (ignore form override in production)
+    tid = (tenant_id or principal.tenant_id)
 
     # Validate extension
     filename = file.filename or "unknown.txt"
@@ -95,9 +98,8 @@ async def upload_knowledge_doc(
 # ---------------------------------------------------------------------------
 
 @router.get("/documents", summary="List knowledge documents")
-async def list_knowledge_docs(tenant_id: str | None = None):
-    tid = tenant_id or _tenant_id()
-    docs = await list_documents(tid)
+async def list_knowledge_docs(principal: Principal = Depends(get_current_principal)):
+    docs = await list_documents(principal.tenant_id)
     return {"documents": docs}
 
 
@@ -106,9 +108,8 @@ async def list_knowledge_docs(tenant_id: str | None = None):
 # ---------------------------------------------------------------------------
 
 @router.get("/documents/{doc_id}", summary="Get document details")
-async def get_knowledge_doc(doc_id: str, tenant_id: str | None = None):
-    tid = tenant_id or _tenant_id()
-    doc = await get_document(doc_id, tid)
+async def get_knowledge_doc(doc_id: str, principal: Principal = Depends(get_current_principal)):
+    doc = await get_document(doc_id, principal.tenant_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return {"document": doc}
@@ -119,9 +120,8 @@ async def get_knowledge_doc(doc_id: str, tenant_id: str | None = None):
 # ---------------------------------------------------------------------------
 
 @router.delete("/documents/{doc_id}", summary="Delete a document and its chunks")
-async def delete_knowledge_doc(doc_id: str, tenant_id: str | None = None):
-    tid = tenant_id or _tenant_id()
-    deleted = await delete_document(doc_id, tid)
+async def delete_knowledge_doc(doc_id: str, principal: Principal = Depends(get_current_principal)):
+    deleted = await delete_document(doc_id, principal.tenant_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Document not found or already deleted")
     return {"status": "deleted", "id": doc_id}
@@ -134,9 +134,8 @@ async def delete_knowledge_doc(doc_id: str, tenant_id: str | None = None):
 @router.post("/search", summary="Search the knowledge base (debug)")
 async def search_knowledge_docs(
     query: str = Form(...),
-    tenant_id: str = Form(None),
     top_k: int = Form(5),
+    principal: Principal = Depends(get_current_principal),
 ):
-    tid = tenant_id or _tenant_id()
-    results = await search_knowledge(tid, query, top_k=top_k)
+    results = await search_knowledge(principal.tenant_id, query, top_k=top_k)
     return {"query": query, "results": results}

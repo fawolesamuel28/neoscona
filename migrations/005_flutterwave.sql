@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS flutterwave_events (
 
 -- RLS: service role only
 ALTER TABLE flutterwave_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service-only" ON flutterwave_events;
 CREATE POLICY "service-only" ON flutterwave_events USING (false);
 
 -- Keep paystack_* columns — read-only history, drop in v2

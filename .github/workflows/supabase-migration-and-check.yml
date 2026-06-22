@@ -1,0 +1,53 @@
+name: Supabase migration + smoke check
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    name: Apply migration and verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply migration
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "SUPABASE_DATABASE_URL secret is not set" >&2
+            exit 1
+          fi
+          echo "Applying migration: migrations/005_flutterwave.sql"
+          psql "$DATABASE_URL" -f migrations/005_flutterwave.sql
+
+      - name: Verify flutterwave_events table exists
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          exists=$(psql "$DATABASE_URL" -tAc "SELECT to_regclass('public.flutterwave_events');")
+          if [ -z "$exists" ] || [ "$exists" = "" ]; then
+            echo "flutterwave_events table not found" >&2
+            exit 1
+          fi
+          echo "flutterwave_events found: $exists"
+
+      - name: Verify flw_* columns on leads
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          cnt=$(psql "$DATABASE_URL" -tAc "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='leads' AND column_name LIKE 'flw%';")
+          echo "Found flw_* columns count: $cnt"
+          if [ -z "$cnt" ] || [ "$cnt" -lt 1 ]; then
+            echo "No flw_* columns found on leads table" >&2
+            exit 1
+          fi
+
+      - name: Success
+        run: echo "Migration applied and basic smoke checks passed."

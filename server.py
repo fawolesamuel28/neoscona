@@ -36,6 +36,7 @@ from app.routers.config import router as config_router
 from app.routers.health import router as health_router
 from app.routers.voice import router as voice_router
 from app.routers.elevenlabs_leads import router as elevenlabs_leads_router
+from app.routers.voice_calls import router as voice_calls_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -114,6 +115,7 @@ app.include_router(config_router, prefix="/api", tags=["Configuration"])
 app.include_router(health_router, prefix="/api", tags=["System"])
 app.include_router(voice_router, prefix="/api", tags=["Voice Receptionist"])
 app.include_router(elevenlabs_leads_router, prefix="/api", tags=["Voice Leads"])
+app.include_router(voice_calls_router, prefix="/api", tags=["Voice Calls"])
 
 # ─── Marketing & Platform Routes ───────────────────────────────────────────
 
@@ -230,6 +232,32 @@ async def reva_voice(request: Request):
     if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
         return RedirectResponse(url="/login")
     return render_template(request, "reva_voice.html")
+
+# ─── Neoscona Voice product console ────────────────────────────────────────
+# Three surfaces (overview / calls / settings), powered by the existing voice +
+# elevenlabs-leads + voice-calls APIs. Same localhost-dev-bypass + page_session_ok
+# guard as the Reva pages so the sidebar is navigable locally and gated remotely.
+
+@app.get("/products/voice/console", response_class=HTMLResponse)
+async def voice_console(request: Request):
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "voice_console.html")
+
+@app.get("/products/voice/calls", response_class=HTMLResponse)
+async def voice_calls_page(request: Request):
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "voice_calls.html")
+
+@app.get("/products/voice/settings", response_class=HTMLResponse)
+async def voice_settings_page(request: Request):
+    client_host = getattr(request.client, 'host', None)
+    if client_host not in ("127.0.0.1", "::1") and not page_session_ok(request):
+        return RedirectResponse(url="/login")
+    return render_template(request, "voice_settings.html")
 
 @app.get("/healthz")
 async def healthz():
