@@ -155,6 +155,12 @@ async def _update_tenant(match_col: str, match_val: str, updates: dict) -> None:
     await asyncio.to_thread(_upd)
 
 
+async def _credit_balance(tenant_id: str, amount: float) -> None:
+    db = get_supabase()
+    def _upd():
+        return db.rpc("credit_balance", {"p_tenant": tenant_id, "p_amount": amount}).execute()
+    await asyncio.to_thread(_upd)
+
 async def apply_flw_event(event_type: str, data: dict) -> None:
     """Map a verified Flutterwave event to a tenant subscription change."""
     if event_type == "charge.completed":
