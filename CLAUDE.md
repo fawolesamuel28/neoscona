@@ -18,8 +18,8 @@ lead qualification & nurture, powered by the "Amara AI" agent) is the live produ
 - `app/core/` — auth, SSO, tenancy, middleware, dashboard websockets, state machine.
 - `app/routers/` — `/api/*` REST routers. `app/services/` — business logic.
 - `app/webhooks/` — inbound provider webhooks (whatsapp, instagram, vapi, voice/elevenlabs,
-  calendly, paystack). `app/db/supabase.py` — the single Supabase client.
-- `templates/` — Jinja pages served by `server.py` (dashboard, reva_*, marketing).
+  calendly, flutterwave). `app/db/supabase.py` — the single Supabase client.
+- `templates/` — Jinja pages served by `server.py` (dashboard, reva\_\*, marketing).
 - `ai-leads-dashboard.html` (repo root) — the static **Reva Console** SPA, served at
   `/products/reva/console`.
 

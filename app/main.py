@@ -13,7 +13,7 @@ load_dotenv()
 
 from app.webhooks.whatsapp import router as whatsapp_router
 from app.webhooks.calendly import router as calendly_router
-from app.webhooks.paystack import router as paystack_webhook_router
+# Paystack webhook handler removed; Flutterwave is used instead in the platform.
 from app.routers.leads import router as leads_router
 from app.routers.elevenlabs_leads import router as elevenlabs_leads_router
 from app.routers.inventory import router as inventory_router
@@ -106,7 +106,7 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 app.include_router(whatsapp_router, prefix="/webhook")
 app.include_router(calendly_router, prefix="/webhook")
-app.include_router(paystack_webhook_router, prefix="/webhook")
+# Paystack webhook router removed; use Flutterwave webhook in server.py
 app.include_router(leads_router, prefix="/api")
 app.include_router(elevenlabs_leads_router, prefix="/api")
 app.include_router(inventory_router, prefix="/api")

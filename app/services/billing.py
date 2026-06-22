@@ -1,21 +1,21 @@
-"""Billing state transitions — bridges Paystack events to tenant subscription state.
+"""Billing state transitions — bridges Flutterwave events to tenant subscription state.
 
-Onboarding-first: start a subscription checkout and react to webhooks
-(charge.success → activate; subscription.disable → past_due). Idempotency is
-enforced via the paystack_events table (unique paystack_id).
+This module initializes Flutterwave checkouts and applies webhook-driven state
+changes. Idempotency is enforced via the `flutterwave_events` table (unique flw_id).
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
+from uuid import uuid4
 
-from app.billing.plans import get_plan, paystack_plan_code
+from app.billing.plans import get_plan, plan_amount_ngn
 from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
-from app.services.paystack import initialize_transaction
+from app.services.flutterwave import initialize_payment, tokenized_charge
 from app.services.usage import get_usage
 
 logger = logging.getLogger(__name__)
@@ -28,22 +28,25 @@ def _now() -> str:
 async def start_subscription(
     tenant_id: str, plan: str, email: str, callback_url: Optional[str] = None
 ) -> dict[str, Any]:
-    """Initialize a Paystack checkout for a selectable plan. Returns the auth URL."""
+    """Initialize a Flutterwave checkout for a selectable plan. Returns link + tx_ref."""
     tenant_id = require_tenant(tenant_id)
     cfg = get_plan(plan)
-    if not cfg.get("selectable") or cfg.get("price_kobo") is None:
+    amount_ngn = plan_amount_ngn(plan)
+    if not cfg.get("selectable") or amount_ngn is None:
         raise ValueError(f"plan '{plan}' is not self-serve purchasable")
     if not email:
         raise ValueError("a billing email is required to subscribe")
 
-    data = await initialize_transaction(
+    tx_ref = f"neo-{tenant_id}-{uuid4().hex[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+    data = await initialize_payment(
         email=email,
-        amount_kobo=cfg["price_kobo"],
-        plan_code=paystack_plan_code(plan),
-        callback_url=callback_url,
+        amount_ngn=amount_ngn,
+        tx_ref=tx_ref,
+        redirect_url=callback_url,
         metadata={"tenant_id": tenant_id, "plan": plan},
     )
-    return {"authorization_url": data["authorization_url"], "reference": data["reference"]}
+    # Flutterwave returns a hosted link under `link` in the data object
+    return {"payment_link": data.get("link"), "tx_ref": tx_ref}
 
 
 async def get_billing(tenant_id: str) -> dict[str, Any]:
@@ -54,8 +57,10 @@ async def get_billing(tenant_id: str) -> dict[str, Any]:
     def _get():
         return (
             db.table("tenants")
-            .select("plan, subscription_status, trial_ends_at, billing_email, "
-                    "paystack_subscription_code")
+            .select(
+                "plan, subscription_status, trial_ends_at, billing_email, "
+                "flw_customer_id, flw_tx_ref, flw_card_token, flw_token_email, next_billing_date"
+            )
             .eq("id", tenant_id)
             .limit(1)
             .execute()
@@ -68,15 +73,15 @@ async def get_billing(tenant_id: str) -> dict[str, Any]:
 
 
 # ── Webhook-driven state ──────────────────────────────────────────────────────
-async def record_paystack_event(paystack_id: Optional[str], event_type: str, payload: dict) -> bool:
+async def record_flw_event(flw_id: Optional[str], event_type: str, payload: dict) -> bool:
     """Insert the event for idempotency/audit. Returns False if already processed."""
-    if not paystack_id:
-        return True  # nothing to dedup on; let the handler run
+    if not flw_id:
+        return True
     db = get_supabase()
 
     def _ins():
-        return db.table("paystack_events").insert({
-            "paystack_id": paystack_id,
+        return db.table("flutterwave_events").insert({
+            "flw_id": flw_id,
             "event_type": event_type,
             "payload": payload,
         }).execute()
@@ -85,8 +90,7 @@ async def record_paystack_event(paystack_id: Optional[str], event_type: str, pay
         await asyncio.to_thread(_ins)
         return True
     except Exception:
-        # Unique violation on paystack_id → duplicate delivery.
-        logger.info("Paystack event %s already processed; skipping", paystack_id)
+        logger.info("Flutterwave event %s already processed; skipping", flw_id)
         return False
 
 
@@ -100,30 +104,41 @@ async def _update_tenant(match_col: str, match_val: str, updates: dict) -> None:
     await asyncio.to_thread(_upd)
 
 
-async def apply_paystack_event(event_type: str, data: dict) -> None:
-    """Map a verified Paystack event to a tenant subscription change."""
-    if event_type in ("charge.success", "subscription.create"):
-        meta = data.get("metadata") or {}
+async def apply_flw_event(event_type: str, data: dict) -> None:
+    """Map a verified Flutterwave event to a tenant subscription change."""
+    # Example: event_type == 'charge.completed'
+    if event_type == "charge.completed":
+        status = data.get("status")
+        meta = data.get("meta") or {}
         tenant_id = meta.get("tenant_id")
         plan = meta.get("plan")
-        customer = (data.get("customer") or {}).get("customer_code")
-        sub_code = data.get("subscription_code")
-        if tenant_id and plan:
-            updates = {"plan": plan, "subscription_status": "active"}
-            if customer:
-                updates["paystack_customer_code"] = customer
-            if sub_code:
-                updates["paystack_subscription_code"] = sub_code
+        card_token = (data.get("card") or {}).get("token")
+        email = (data.get("customer") or {}).get("email")
+        flw_customer = (data.get("customer") or {}).get("id") or data.get("customer_id")
+        flw_tx_ref = data.get("tx_ref") or data.get("reference")
+
+        if status == "successful" and tenant_id and plan:
+            updates: dict[str, Any] = {"plan": plan, "subscription_status": "active"}
+            if flw_customer:
+                updates["flw_customer_id"] = flw_customer
+            if flw_tx_ref:
+                updates["flw_tx_ref"] = flw_tx_ref
+            if card_token:
+                updates["flw_card_token"] = card_token
+            if email:
+                updates["flw_token_email"] = email
             await _update_tenant("id", tenant_id, updates)
-            logger.info("Activated subscription for tenant %s (%s)", tenant_id, plan)
+            logger.info("Activated subscription for tenant %s (%s) via Flutterwave", tenant_id, plan)
         else:
-            logger.warning("charge.success without tenant metadata; skipping activation")
+            logger.warning("Flutterwave charge not successful or missing metadata: %s", data)
 
     elif event_type in ("subscription.disable", "subscription.not_renew"):
-        sub_code = data.get("subscription_code")
-        email = (data.get("customer") or {}).get("email")
+        # Map to tenant cancellation / past_due
         status = "canceled" if event_type == "subscription.disable" else "past_due"
-        if sub_code:
-            await _update_tenant("paystack_subscription_code", sub_code, {"subscription_status": status})
+        sub_ref = data.get("tx_ref") or data.get("reference")
+        email = (data.get("customer") or {}).get("email")
+        if sub_ref:
+            await _update_tenant("flw_tx_ref", sub_ref, {"subscription_status": status})
         elif email:
             await _update_tenant("billing_email", email, {"subscription_status": status})
+

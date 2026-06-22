@@ -26,7 +26,7 @@ from app.core.dashboard_ws import dashboard_ws_manager
 from app.core.sso import router as sso_router, page_session_ok, ACCESS_COOKIE
 from app.core.auth import _decode_token, _auth_disabled
 from app.webhooks.whatsapp import router as whatsapp_router
-from app.webhooks.paystack import router as paystack_webhook_router
+from app.webhooks.flutterwave import router as flutterwave_webhook_router
 from app.webhooks.voice_elevenlabs import router as voice_webhook_router
 from app.routers.leads import router as leads_router
 from app.routers.billing import router as billing_router
@@ -53,6 +53,13 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to start Redis listener: {e}")
             ping_task = None
+        # Scheduler: optional APScheduler job registration for recurring charges
+        try:
+            from app.billing import scheduler as billing_scheduler
+            billing_scheduler.setup_scheduler()
+            logger.info("Billing scheduler registered")
+        except Exception:
+            logger.info("Billing scheduler not registered (optional)")
         
     yield
     # Shutdown tasks
@@ -97,7 +104,7 @@ app.include_router(sso_router)  # /auth/session, /auth/refresh, /auth/logout
 
 # ─── Include Reva Routers ──────────────────────────────────────────────────
 app.include_router(whatsapp_router, prefix="/webhook", tags=["Webhooks"])
-app.include_router(paystack_webhook_router, prefix="/webhook", tags=["Webhooks"])
+app.include_router(flutterwave_webhook_router, prefix="/webhook", tags=["Webhooks"])
 app.include_router(voice_webhook_router, prefix="/webhook", tags=["Webhooks"])
 app.include_router(leads_router, prefix="/api", tags=["Leads"])
 app.include_router(billing_router, prefix="/api", tags=["Billing"])

@@ -20,33 +20,33 @@ PLANS: dict[str, dict] = {
     "trial": {
         "label": "Free trial",
         "price_kobo": 0,
+        "price_ngn": 0,
         "limits": {"messages": 2_000, "seats": 3, "voice_minutes": 500},
         "features": {"whatsapp", "voice", "followups", "calendar"},
-        "paystack_plan_env": None,
         "selectable": False,  # not directly purchasable
     },
     "starter": {
         "label": "Starter",
         "price_kobo": 35_000_00,   # ₦35,000 / mo
+        "price_ngn": 35000,
         "limits": {"messages": 500, "seats": 1, "voice_minutes": 0},
         "features": {"whatsapp"},
-        "paystack_plan_env": "PAYSTACK_PLAN_STARTER",
         "selectable": True,
     },
     "growth": {
         "label": "Growth",
         "price_kobo": 180_000_00,  # ₦180,000 / mo
+        "price_ngn": 180000,
         "limits": {"messages": 2_000, "seats": 3, "voice_minutes": 500},
         "features": {"whatsapp", "voice", "followups", "calendar"},
-        "paystack_plan_env": "PAYSTACK_PLAN_GROWTH",
         "selectable": True,
     },
     "scale": {
         "label": "Scale",
         "price_kobo": None,        # custom / contact sales
+        "price_ngn": None,
         "limits": {"messages": None, "seats": None, "voice_minutes": None},
         "features": set(FEATURES),
-        "paystack_plan_env": None,
         "selectable": False,
     },
 }
@@ -73,15 +73,19 @@ def feature_enabled(plan: Optional[str], feature: str) -> bool:
     return feature in get_plan(plan)["features"]
 
 
-def paystack_plan_code(plan: Optional[str]) -> Optional[str]:
-    """Paystack plan code for a selectable plan, read from its configured env var."""
-    env = get_plan(plan).get("paystack_plan_env")
-    return os.getenv(env) if env else None
-
 
 def naira(price_kobo: Optional[int]) -> Optional[int]:
     """Convert kobo to whole naira for display (None stays None for custom plans)."""
     return None if price_kobo is None else price_kobo // 100
+
+
+def plan_amount_ngn(plan: Optional[str]) -> Optional[int]:
+    """Return the whole Naira amount for a plan (preferred for Flutterwave operations)."""
+    p = get_plan(plan)
+    # Prefer explicit `price_ngn` when present, otherwise convert `price_kobo`.
+    if p.get("price_ngn") is not None:
+        return p.get("price_ngn")
+    return None if p.get("price_kobo") is None else p.get("price_kobo") // 100
 
 
 def public_catalog() -> list[dict]:
@@ -104,3 +108,4 @@ def trial_days() -> int:
         return int(os.getenv("TRIAL_DAYS", "14"))
     except ValueError:
         return 14
+

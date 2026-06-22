@@ -1,9 +1,8 @@
-"""Paystack client (NGN) + webhook signature verification.
+"""Legacy Paystack client preserved for historical reference.
 
-Onboarding-first: we implement subscribe (initialize a transaction against a plan)
-and webhook verification. Overage/dunning are Phase 2b.
-
-All amounts are kobo (₦1 = 100 kobo). Keys from PAYSTACK_SECRET_KEY.
+This file is a read-only legacy copy retained under a `_legacy` name and is
+no longer imported by the running application. Do not rely on this for new
+development; use `app/services/flutterwave.py` instead.
 """
 
 from __future__ import annotations
