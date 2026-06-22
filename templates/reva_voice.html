@@ -496,6 +496,13 @@
                 >
                 captured</span
               >
+              <button
+                id="oneclick-voice-btn"
+                class="btn primary"
+                style="margin-left: 12px; font-size: 12px; padding: 6px 10px"
+              >
+                One‑Click Activate Receptionist
+              </button>
             </div>
             <div class="page-subtitle">
               Inbound calls answered by your AI receptionist · transcripts &amp;
@@ -526,6 +533,116 @@
     </div>
     <script src="/static/dashboard.js"></script>
     <script>
+      // Minimal toast for this page
+      function showToastVoice(msg, isError) {
+        const t = document.createElement("div");
+        t.textContent = msg;
+        t.style.cssText = `position:fixed;bottom:24px;left:24px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;background:${isError ? "var(--hot)" : "var(--ok)"};box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+      }
+
+      async function oneClickActivate() {
+        const _fetch = window.authedFetch || ((u, o) => fetch(u, o));
+        const base = (window.API || window.location.origin + "/api").replace(
+          /\/$/,
+          "",
+        );
+        const country = "NG";
+        try {
+          showToastVoice("Looking up available numbers…");
+          const invRes = await _fetch(
+            base +
+              `/voice/numbers/available?country=${encodeURIComponent(country)}&type=local`,
+          );
+          if (!invRes.ok) {
+            showToastVoice("Could not lookup numbers.", true);
+            return;
+          }
+          const invData = await invRes.json();
+          const nums = invData.numbers || [];
+          if (!nums.length) {
+            showToastVoice("No available numbers found.", true);
+            return;
+          }
+          const pick = nums[0];
+          const inventory_id = pick.inventory_id || pick.id;
+          showToastVoice(
+            `Attempting to provision ${pick.e164 || pick.phone_number}…`,
+          );
+          const body = { inventory_id, persona_source: "reva", country };
+          const provRes = await _fetch(base + "/voice/receptionist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!provRes.ok) {
+            const err = await provRes.json().catch(() => ({}));
+            if (provRes.status === 402) {
+              // Payment required: start checkout and poll for activation
+              try {
+                localStorage.setItem("voice_last_inventory", inventory_id);
+              } catch (e) {}
+              showToastVoice(
+                err.detail || "Payment required — opening checkout.",
+                true,
+              );
+              const cb = window.location.origin; // redirect back after payment
+              const subRes = await _fetch("/api/billing/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan: "growth" }),
+              });
+              if (subRes.ok) {
+                const d = await subRes.json();
+                const link = d.payment_link || d.link || d.paymentLink;
+                if (link) window.open(link, "_blank");
+                pollForActivationOnConsole(120000, 8000);
+              } else {
+                showToastVoice("Could not start checkout.", true);
+              }
+            } else {
+              showToastVoice(err.detail || "Provisioning failed.", true);
+            }
+            return;
+          }
+          showToastVoice("Provisioning started — refreshing status.");
+          pollForActivationOnConsole(90000, 8000);
+        } catch (e) {
+          showToastVoice("Provisioning failed.", true);
+        }
+      }
+
+      function pollForActivationOnConsole(
+        timeoutMs = 60000,
+        intervalMs = 5000,
+      ) {
+        const start = Date.now();
+        const id = setInterval(async () => {
+          try {
+            const res = await fetch("/api/voice/receptionist", {
+              cache: "no-store",
+            });
+            if (res.ok) {
+              const { receptionist } = await res.json();
+              if (receptionist && receptionist.status === "active") {
+                showToastVoice("Receptionist is active. Reloading…");
+                clearInterval(id);
+                setTimeout(() => location.reload(), 800);
+                return;
+              }
+            }
+          } catch (e) {}
+          if (Date.now() - start > timeoutMs) {
+            clearInterval(id);
+            showToastVoice(
+              "Activation not detected yet. You can retry from Settings.",
+              true,
+            );
+          }
+        }, intervalMs);
+      }
+
       function initials(name) {
         return (name || "?")
           .split(" ")
