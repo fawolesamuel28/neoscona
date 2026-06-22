@@ -199,12 +199,49 @@
         </p>
 
         <div class="nd-topup-grid">
-          <button class="nd-topup-btn">+ ₦10k</button>
-          <button class="nd-topup-btn">+ ₦50k</button>
-          <button class="nd-topup-btn">+ ₦100k</button>
+          <button class="nd-topup-btn" data-amount="10000">+ ₦10,000</button>
+          <button class="nd-topup-btn" data-amount="50000">+ ₦50,000</button>
+          <button class="nd-topup-btn" data-amount="100000">+ ₦100,000</button>
         </div>
 
-        <button class="nd-btn-primary">Top up via Flutterwave</button>
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+            max-width: 600px;
+          "
+        >
+          <input
+            id="custom-amount"
+            class="form-input"
+            type="number"
+            min="14000"
+            placeholder="Enter amount in NGN (min ₦14,000)"
+            style="
+              flex: 1;
+              padding: 10px;
+              border-radius: 8px;
+              border: 1px solid var(--border);
+            "
+          />
+          <button
+            id="custom-topup-btn"
+            class="nd-btn-primary"
+            style="width: auto; padding: 10px 16px"
+          >
+            Top up
+          </button>
+        </div>
+
+        <button id="quick-topup-btn" class="nd-btn-primary">
+          Top up via Flutterwave
+        </button>
+        <p style="margin-top: 8px; color: var(--copy-75); font-size: 0.9rem">
+          Minimum first payment: $10 (~₦14,000). We process payments via
+          Flutterwave (NGN only).
+        </p>
       </div>
 
       <h3
@@ -251,6 +288,178 @@
         if (saved) {
           document.documentElement.setAttribute("data-theme", saved);
         }
+      })();
+      // Billing top-up handlers with confirmation modal and loading states
+      (function () {
+        const API = window.location.origin + "/api";
+        function showToast(msg, isError) {
+          const t = document.createElement("div");
+          t.textContent = msg;
+          t.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;background:${isError ? "var(--hot)" : "var(--ok)"};box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;`;
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 3500);
+        }
+
+        function createConfirmModal(amount) {
+          // Remove existing
+          const existing = document.getElementById("topup-confirm-modal");
+          if (existing) existing.remove();
+          const overlay = document.createElement("div");
+          overlay.id = "topup-confirm-modal";
+          overlay.style.cssText =
+            "position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px";
+          overlay.innerHTML = `
+              <div style="background:var(--surface);padding:20px;border-radius:12px;max-width:460px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.25)">
+                <h3 style="margin:0 0 8px;font-size:16px">Confirm Top-up</h3>
+                <p style="margin:0 0 12px;color:var(--ink-muted)">You are about to add <strong>₦${Number(amount).toLocaleString()}</strong> to your balance. Minimum first payment is ₦14,000.</p>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                  <button id="topup-cancel" class="btn">Cancel</button>
+                  <button id="topup-confirm" class="btn primary">Confirm</button>
+                </div>
+              </div>`;
+          document.body.appendChild(overlay);
+          document
+            .getElementById("topup-cancel")
+            .addEventListener("click", () => overlay.remove());
+          return document.getElementById("topup-confirm");
+        }
+
+        async function performTopUp(amount, btn) {
+          if (!amount || Number(amount) < 14000) {
+            showToast("Minimum top-up is ₦14,000", true);
+            return;
+          }
+          const disableBtns = (disable) => {
+            document
+              .querySelectorAll(".nd-topup-btn")
+              .forEach((b) => (b.disabled = disable));
+            const customBtn = document.getElementById("custom-topup-btn");
+            if (customBtn) customBtn.disabled = disable;
+            const quick = document.getElementById("quick-topup-btn");
+            if (quick) quick.disabled = disable;
+            if (btn) {
+              btn.disabled = disable;
+              btn.textContent = disable ? "Processing…" : "Confirm";
+            }
+          };
+          try {
+            disableBtns(true);
+            const res = await fetch(API + "/billing/topup", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ amount_ngn: Math.floor(Number(amount)) }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              showToast(err.detail || "Could not start checkout.", true);
+              return;
+            }
+            const data = await res.json();
+            const link = data.payment_link || data.link || data.paymentLink;
+            if (link) {
+              window.open(link, "_blank");
+              showToast("Opened checkout. Complete payment to top up.");
+            } else showToast("Checkout started.", false);
+            // If backend returned a tx_ref, poll billing to detect webhook confirmation
+            const txRef = data && (data.tx_ref || data.flw_tx_ref);
+            if (txRef) pollForTopUp(txRef, 3 * 60_000, 5_000);
+          } catch (e) {
+            showToast("Could not start checkout.", true);
+          } finally {
+            disableBtns(false);
+            const m = document.getElementById("topup-confirm-modal");
+            if (m) m.remove();
+          }
+        }
+
+        // Poll for a top-up confirmation by tx_ref (updated by webhook)
+        async function pollForTopUp(
+          txRef,
+          timeoutMs = 120000,
+          intervalMs = 5000,
+        ) {
+          if (!txRef) return;
+          const start = Date.now();
+          const check = async () => {
+            try {
+              const res = await fetch(API + "/billing");
+              if (!res.ok) return false;
+              const data = await res.json();
+              const billing = data && data.billing;
+              if (billing && billing.flw_tx_ref) {
+                if (
+                  billing.flw_tx_ref === txRef ||
+                  billing.flw_tx_ref.indexOf(txRef) !== -1
+                ) {
+                  showToast("Top-up confirmed. Updating balance...");
+                  // If backend returned a numeric balance, update the UI in-place
+                  try {
+                    const balEl = document.querySelector(".nd-balance-val");
+                    if (
+                      balEl &&
+                      typeof billing.balance !== "undefined" &&
+                      billing.balance !== null
+                    ) {
+                      // billing.balance assumed to be a number (whole or fractional)
+                      balEl.textContent =
+                        "₦" + Number(billing.balance).toLocaleString();
+                    } else {
+                      // Fallback: reload to pick up changes
+                      setTimeout(() => location.reload(), 800);
+                    }
+                  } catch (e) {
+                    setTimeout(() => location.reload(), 800);
+                  }
+                  return true;
+                }
+              }
+            } catch (e) {}
+            return false;
+          };
+          if (await check()) return;
+          const id = setInterval(async () => {
+            if (Date.now() - start > timeoutMs) {
+              clearInterval(id);
+              showToast(
+                "Top-up not confirmed yet. Check back in a few minutes.",
+                true,
+              );
+              return;
+            }
+            if (await check()) clearInterval(id);
+          }, intervalMs);
+        }
+
+        // Wire preset buttons to open confirm modal
+        document.querySelectorAll(".nd-topup-btn").forEach((b) =>
+          b.addEventListener("click", (e) => {
+            const a = e.currentTarget.getAttribute("data-amount");
+            if (!a) return;
+            const confirmBtn = createConfirmModal(a);
+            confirmBtn.addEventListener("click", () =>
+              performTopUp(a, confirmBtn),
+            );
+          }),
+        );
+        const customBtn = document.getElementById("custom-topup-btn");
+        if (customBtn)
+          customBtn.addEventListener("click", () => {
+            const v = document.getElementById("custom-amount").value;
+            const confirmBtn = createConfirmModal(v || "0");
+            confirmBtn.addEventListener("click", () =>
+              performTopUp(v, confirmBtn),
+            );
+          });
+        const quick = document.getElementById("quick-topup-btn");
+        if (quick)
+          quick.addEventListener("click", () => {
+            const v = document.getElementById("custom-amount").value;
+            const amt = v || 14000;
+            const confirmBtn = createConfirmModal(amt);
+            confirmBtn.addEventListener("click", () =>
+              performTopUp(amt, confirmBtn),
+            );
+          });
       })();
     </script>
   </body>

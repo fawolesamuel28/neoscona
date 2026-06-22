@@ -58,7 +58,7 @@ async def get_billing(tenant_id: str) -> dict[str, Any]:
         return (
             db.table("tenants")
             .select(
-                "plan, subscription_status, trial_ends_at, billing_email, "
+                "plan, subscription_status, trial_ends_at, billing_email, balance, "
                 "flw_customer_id, flw_tx_ref, flw_card_token, flw_token_email, next_billing_date"
             )
             .eq("id", tenant_id)
