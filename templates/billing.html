@@ -24,7 +24,13 @@
         --glass-border: rgba(0, 0, 0, 0.05);
       }
 
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
       body {
         font-family: "Inter", sans-serif;
         background-color: var(--bg);
@@ -59,18 +65,49 @@
         font-weight: 500;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .nd-nav-item:hover { background: var(--bg-hover); color: var(--heading); }
-      .nd-nav-item.active { background: var(--primary-alt); color: var(--primary); font-weight: 600; }
-      .nd-nav-item span { font-size: 1.25rem; }
+      .nd-nav-item:hover {
+        background: var(--bg-hover);
+        color: var(--heading);
+      }
+      .nd-nav-item.active {
+        background: var(--primary-alt);
+        color: var(--primary);
+        font-weight: 600;
+      }
+      .nd-nav-item span {
+        font-size: 1.25rem;
+      }
 
       /* ─── MAIN CONTENT ──────────────────────────────────────────────────── */
-      .nd-main { flex: 1; padding: 4rem; max-width: 1200px; margin: 0 auto; width: 100%; }
-      
-      .nd-header { margin-bottom: 3.5rem; }
-      .nd-header h1 { font-family: "Inter Tight", sans-serif; font-size: 2.5rem; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; margin-bottom: 0.5rem; }
-      .nd-header p { color: var(--copy-75); font-size: 1.1rem; }
+      .nd-main {
+        flex: 1;
+        padding: 4rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+      }
 
-      .nd-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
+      .nd-header {
+        margin-bottom: 3.5rem;
+      }
+      .nd-header h1 {
+        font-family: "Inter Tight", sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--heading);
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+      }
+      .nd-header p {
+        color: var(--copy-75);
+        font-size: 1.1rem;
+      }
+
+      .nd-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 2rem;
+      }
 
       /* ─── CARDS ─────────────────────────────────────────────────────────── */
       .nd-card {
@@ -82,100 +119,302 @@
         overflow: hidden;
       }
       .nd-card::before {
-        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-        background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--glass-border),
+          transparent
+        );
       }
 
-      .nd-balance-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--copy-50); margin-bottom: 0.75rem; }
-      .nd-balance-amount { font-family: "Inter Tight", sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--heading); margin-bottom: 2rem; display: flex; align-items: baseline; gap: 0.5rem; }
-      .nd-balance-amount span { font-size: 1.5rem; color: var(--copy-50); font-weight: 600; }
+      .nd-balance-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--copy-50);
+        margin-bottom: 0.75rem;
+      }
+      .nd-balance-amount {
+        font-family: "Inter Tight", sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--heading);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+      .nd-balance-amount span {
+        font-size: 1.5rem;
+        color: var(--copy-50);
+        font-weight: 600;
+      }
 
       .nd-plan-badge {
-        display: inline-flex; align-items: center; gap: 0.5rem;
-        padding: 0.4rem 0.8rem; border-radius: 20px;
-        background: var(--primary-alt); color: var(--primary);
-        font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        background: var(--primary-alt);
+        color: var(--primary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
         margin-bottom: 1.5rem;
       }
 
       /* ─── USAGE METER ───────────────────────────────────────────────────── */
-      .nd-usage-section { margin-top: 3rem; }
-      .nd-usage-row { margin-bottom: 1.5rem; }
-      .nd-usage-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.6rem; font-weight: 500; }
-      .nd-usage-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-      .nd-usage-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; width: 0%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-      .nd-usage-bar-fill.warn { background: #f59e0b; }
-      .nd-usage-bar-fill.critical { background: #ef4444; }
+      .nd-usage-section {
+        margin-top: 3rem;
+      }
+      .nd-usage-row {
+        margin-bottom: 1.5rem;
+      }
+      .nd-usage-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        margin-bottom: 0.6rem;
+        font-weight: 500;
+      }
+      .nd-usage-bar-bg {
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .nd-usage-bar-fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .nd-usage-bar-fill.warn {
+        background: #f59e0b;
+      }
+      .nd-usage-bar-fill.critical {
+        background: #ef4444;
+      }
 
       /* ─── TRANSACTION LEDGER ────────────────────────────────────────────── */
-      .nd-ledger { margin-top: 4rem; }
-      .nd-ledger h3 { font-family: "Inter Tight", sans-serif; font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--heading); }
-      .nd-table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
-      .nd-table th { text-align: left; padding: 1rem; color: var(--copy-50); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
-      .nd-table tr { transition: transform 0.2s; }
-      .nd-table tr:not(.no-hover):hover { transform: translateY(-2px); }
-      .nd-table td { padding: 1.25rem 1rem; background: var(--bg-input); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-      .nd-table td:first-child { border-left: 1px solid var(--border); border-radius: 12px 0 0 12px; }
-      .nd-table td:last-child { border-right: 1px solid var(--border); border-radius: 0 12px 12px 0; text-align: right; }
-      
-      .status-pill { padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-      .status-successful { background: rgba(52, 211, 153, 0.15); color: #059669; }
-      .status-failed { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
-      .status-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+      .nd-ledger {
+        margin-top: 4rem;
+      }
+      .nd-ledger h3 {
+        font-family: "Inter Tight", sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading);
+      }
+      .nd-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 0.5rem;
+      }
+      .nd-table th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--copy-50);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .nd-table tr {
+        transition: transform 0.2s;
+      }
+      .nd-table tr:not(.no-hover):hover {
+        transform: translateY(-2px);
+      }
+      .nd-table td {
+        padding: 1.25rem 1rem;
+        background: var(--bg-input);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+      .nd-table td:first-child {
+        border-left: 1px solid var(--border);
+        border-radius: 12px 0 0 12px;
+      }
+      .nd-table td:last-child {
+        border-right: 1px solid var(--border);
+        border-radius: 0 12px 12px 0;
+        text-align: right;
+      }
+
+      .status-pill {
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .status-successful {
+        background: rgba(52, 211, 153, 0.15);
+        color: #059669;
+      }
+      .status-failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+      }
+      .status-pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: #d97706;
+      }
 
       /* ─── BUTTONS ───────────────────────────────────────────────────────── */
       .btn {
-        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-        padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
-        cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        text-decoration: none;
       }
-      .btn-primary { background: var(--primary); color: var(--primary-text); box-shadow: 0 4px 12px var(--primary-alt); }
-      .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
-      .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--heading); }
-      .btn-outline:hover { background: var(--bg-hover); }
+      .btn-primary {
+        background: var(--primary);
+        color: var(--primary-text);
+        box-shadow: 0 4px 12px var(--primary-alt);
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+      }
+      .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--heading);
+      }
+      .btn-outline:hover {
+        background: var(--bg-hover);
+      }
 
       /* ─── TOPUP GRID ────────────────────────────────────────────────────── */
-      .nd-topup-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
-      .nd-topup-item {
-        background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
-        padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;
+      .nd-topup-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin: 1.5rem 0;
       }
-      .nd-topup-item:hover { border-color: var(--primary); background: var(--primary-alt); }
-      .nd-topup-item span { display: block; font-size: 1.1rem; font-weight: 700; color: var(--heading); }
-      .nd-topup-item small { font-size: 0.7rem; color: var(--copy-50); }
+      .nd-topup-item {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .nd-topup-item:hover {
+        border-color: var(--primary);
+        background: var(--primary-alt);
+      }
+      .nd-topup-item span {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--heading);
+      }
+      .nd-topup-item small {
+        font-size: 0.7rem;
+        color: var(--copy-50);
+      }
 
       /* ─── MODALS ────────────────────────────────────────────────────────── */
-      #topup-confirm-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s; }
-      .modal-content { background: var(--bg-input); border: 1px solid var(--border); border-radius: 28px; width: 100%; max-width: 440px; padding: 2.5rem; box-shadow: 0 32px 64px -12px rgba(0,0,0,0.5); transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-      
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      #topup-confirm-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.3s;
+      }
+      .modal-content {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        width: 100%;
+        max-width: 440px;
+        padding: 2.5rem;
+        box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.5);
+        transform: translateY(0);
+        animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(40px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
 
       /* ─── MOBILE RESPONSIVE ─────────────────────────────────────────────── */
       @media (max-width: 1024px) {
-        .nd-grid { grid-template-columns: 1fr; }
-        .nd-sidebar { display: none; }
-        .nd-main { padding: 2rem; }
+        .nd-grid {
+          grid-template-columns: 1fr;
+        }
+        .nd-sidebar {
+          display: none;
+        }
+        .nd-main {
+          padding: 2rem;
+        }
       }
     </style>
   </head>
-  <body data-theme="dark">
+  <body data-theme="light">
     <aside class="nd-sidebar">
       <div style="margin-bottom: 3rem">
-        <img src="/static/images/neoscona-logo.png" alt="Neoscona" style="height: 42px; width: auto;" />
+        <img
+          src="/static/images/neoscona-logo.png"
+          alt="Neoscona"
+          style="height: 42px; width: auto"
+        />
       </div>
       <nav style="flex: 1">
         <a href="/dashboard" class="nd-nav-item">
           <span class="material-symbols-outlined">dashboard</span> Overview
         </a>
         <a href="/billing" class="nd-nav-item active">
-          <span class="material-symbols-outlined">payments</span> Billing & Credits
+          <span class="material-symbols-outlined">payments</span> Billing &
+          Credits
         </a>
         <a href="/voice" class="nd-nav-item">
-            <span class="material-symbols-outlined">call</span> Voice Console
+          <span class="material-symbols-outlined">call</span> Voice Console
         </a>
         <a href="/docs" class="nd-nav-item">
-          <span class="material-symbols-outlined">auto_stories</span> Documentation
+          <span class="material-symbols-outlined">auto_stories</span>
+          Documentation
         </a>
       </nav>
       <div style="padding-top: 2rem; border-top: 1px solid var(--border)">
@@ -187,10 +426,19 @@
 
     <main class="nd-main">
       <header class="nd-header">
-        <div style="display: flex; justify-content: space-between; align-items: center">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
           <div>
             <h1>Billing & Credits</h1>
-            <p>Your unified balance and subscription across all Neoscona services.</p>
+            <p>
+              Your unified balance and subscription across all Neoscona
+              services.
+            </p>
           </div>
           <button class="btn btn-outline" onclick="location.reload()">
             <span class="material-symbols-outlined">refresh</span> Refresh
@@ -203,12 +451,15 @@
           <div class="nd-card">
             <div class="nd-balance-title">Available Balance</div>
             <div class="nd-balance-amount">
-                <span>₦</span><div id="balance-val">--</div>
+              <span>₦</span>
+              <div id="balance-val">--</div>
             </div>
-            
+
             <div class="nd-plan-badge" id="plan-badge">
-                <span class="material-symbols-outlined" style="font-size: 1rem">verified</span>
-                <span id="plan-label">Loading...</span>
+              <span class="material-symbols-outlined" style="font-size: 1rem"
+                >verified</span
+              >
+              <span id="plan-label">Loading...</span>
             </div>
 
             <div class="nd-usage-section">
@@ -233,8 +484,15 @@
             </div>
 
             <div style="margin-top: 2.5rem; display: flex; gap: 1rem">
-                <a href="/plans" class="btn btn-primary" style="flex: 1">Manage Subscription</a>
-                <button class="btn btn-outline" onclick="window.scrollTo({top: 800, behavior:'smooth'})">View Ledger</button>
+              <a href="/plans" class="btn btn-primary" style="flex: 1"
+                >Manage Subscription</a
+              >
+              <button
+                class="btn btn-outline"
+                onclick="window.scrollTo({ top: 800, behavior: 'smooth' })"
+              >
+                View Ledger
+              </button>
             </div>
           </div>
 
@@ -251,7 +509,16 @@
               </thead>
               <tbody id="tx-tbody">
                 <tr class="no-hover">
-                    <td colspan="4" style="text-align: center; color: var(--copy-50); padding: 3rem">Fetching transactions...</td>
+                  <td
+                    colspan="4"
+                    style="
+                      text-align: center;
+                      color: var(--copy-50);
+                      padding: 3rem;
+                    "
+                  >
+                    Fetching transactions...
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -260,9 +527,19 @@
 
         <div class="nd-column">
           <div class="nd-card" style="position: sticky; top: 2.5rem">
-            <h3 style="margin-bottom: 1.5rem; font-family: 'Inter Tight'">Top Up Credits</h3>
-            <p style="font-size: 0.9rem; color: var(--copy-75); line-height: 1.6">
-              Credits are shared across Reva, Reach, and Voice. Minimum top-up is <strong>₦14,000</strong>.
+            <h3
+              style="
+                margin-bottom: 1.5rem;
+                font-family: &quot;Inter Tight&quot;;
+              "
+            >
+              Top Up Credits
+            </h3>
+            <p
+              style="font-size: 0.9rem; color: var(--copy-75); line-height: 1.6"
+            >
+              Credits are shared across Reva, Reach, and Voice. Minimum top-up
+              is <strong>₦14,000</strong>.
             </p>
 
             <div class="nd-topup-grid">
@@ -281,28 +558,102 @@
             </div>
 
             <div style="margin-bottom: 1.5rem">
-                <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--copy-50); display: block; margin-bottom: 0.5rem">Custom Amount</label>
-                <div style="position: relative">
-                    <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--copy-50)">₦</span>
-                    <input type="number" id="custom-amt" placeholder="14000" min="14000" style="width: 100%; padding: 1rem 1rem 1rem 2.5rem; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--heading); font-weight: 600; font-size: 1.1rem; outline: none; transition: border-color 0.2s" />
-                </div>
+              <label
+                style="
+                  font-size: 0.75rem;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  color: var(--copy-50);
+                  display: block;
+                  margin-bottom: 0.5rem;
+                "
+                >Custom Amount</label
+              >
+              <div style="position: relative">
+                <span
+                  style="
+                    position: absolute;
+                    left: 1rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-weight: 600;
+                    color: var(--copy-50);
+                  "
+                  >₦</span
+                >
+                <input
+                  type="number"
+                  id="custom-amt"
+                  placeholder="14000"
+                  min="14000"
+                  style="
+                    width: 100%;
+                    padding: 1rem 1rem 1rem 2.5rem;
+                    border-radius: 12px;
+                    border: 1px solid var(--border);
+                    background: var(--bg);
+                    color: var(--heading);
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                    outline: none;
+                    transition: border-color 0.2s;
+                  "
+                />
+              </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; padding: 1.25rem" id="pay-btn">
-                <span class="material-symbols-outlined">bolt</span>
-                Pay with Flutterwave
+            <button
+              class="btn btn-primary"
+              style="width: 100%; padding: 1.25rem"
+              id="pay-btn"
+            >
+              <span class="material-symbols-outlined">bolt</span>
+              Pay with Flutterwave
             </button>
 
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border)">
-                <div style="display: flex; align-items: center; gap: 0.75rem">
-                    <div style="width: 40px; height: 40px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center">
-                        <span class="material-symbols-outlined" style="color: var(--copy-50)">credit_card</span>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--heading)" id="card-last4">No card on file</div>
-                        <div style="font-size: 0.7rem; color: var(--copy-50)">Automatic renewals: <span id="auto-renew-status">Disabled</span></div>
-                    </div>
+            <div
+              style="
+                margin-top: 2rem;
+                padding-top: 2rem;
+                border-top: 1px solid var(--border);
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 0.75rem">
+                <div
+                  style="
+                    width: 40px;
+                    height: 40px;
+                    background: var(--bg);
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="color: var(--copy-50)"
+                    >credit_card</span
+                  >
                 </div>
+                <div>
+                  <div
+                    style="
+                      font-size: 0.85rem;
+                      font-weight: 600;
+                      color: var(--heading);
+                    "
+                    id="card-last4"
+                  >
+                    No card on file
+                  </div>
+                  <div style="font-size: 0.7rem; color: var(--copy-50)">
+                    Automatic renewals:
+                    <span id="auto-renew-status">Disabled</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,143 +661,172 @@
     </main>
 
     <script>
-      (function(){
+      (function () {
         const API = window.location.origin + "/api";
-        const state = { loading: true, billing: {}, usage: {}, transactions: [] };
+        const state = {
+          loading: true,
+          billing: {},
+          usage: {},
+          transactions: [],
+        };
 
         async function init() {
           try {
-            const res = await fetch(API + "/billing");
-            if(res.ok) {
+            const res = await fetch(API + "/billing", { credentials: "include" });
+            if (res.ok) {
               const data = await res.json();
               Object.assign(state, data);
               render();
             }
-          } catch(e) { console.error(e); }
+          } catch (e) {
+            console.error(e);
+          }
         }
 
         function render() {
           const { billing, usage, transactions } = state;
-          
-          const balEl = document.getElementById('balance-val');
-          if (balEl) balEl.textContent = Number(billing.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-          
-          const planEl = document.getElementById('plan-label');
-          if (planEl) planEl.textContent = (billing.plan || 'trial') + ' plan';
-          
+
+          const balEl = document.getElementById("balance-val");
+          if (balEl)
+            balEl.textContent = Number(billing.balance || 0).toLocaleString(
+              undefined,
+              { minimumFractionDigits: 2 },
+            );
+
+          const planEl = document.getElementById("plan-label");
+          if (planEl) planEl.textContent = (billing.plan || "trial") + " plan";
+
           // Usage
-          const msgs = usage.messages || {used: 0, limit: 1, pct: 0};
-          const msgsText = document.getElementById('usage-msgs-text');
-          if (msgsText) msgsText.textContent = `${msgs.used} / ${msgs.limit || '∞'}`;
-          const msgsBar = document.getElementById('usage-msgs-bar');
+          const msgs = usage.messages || { used: 0, limit: 1, pct: 0 };
+          const msgsText = document.getElementById("usage-msgs-text");
+          if (msgsText)
+            msgsText.textContent = `${msgs.used} / ${msgs.limit || "∞"}`;
+          const msgsBar = document.getElementById("usage-msgs-bar");
           if (msgsBar) {
-            msgsBar.style.width = (msgs.pct * 100 || 0) + '%';
-            if(msgs.pct > 0.9) msgsBar.classList.add('critical');
+            msgsBar.style.width = (msgs.pct * 100 || 0) + "%";
+            if (msgs.pct > 0.9) msgsBar.classList.add("critical");
           }
-          
-          const voice = usage.voice_minutes || {used: 0, limit: 1, pct: 0};
-          const voiceText = document.getElementById('usage-voice-text');
-          if (voiceText) voiceText.textContent = `${Math.round(voice.used)} / ${voice.limit || '∞'} min`;
-          const voiceBar = document.getElementById('usage-voice-bar');
-          if (voiceBar) voiceBar.style.width = (voice.pct * 100 || 0) + '%';
-          
+
+          const voice = usage.voice_minutes || { used: 0, limit: 1, pct: 0 };
+          const voiceText = document.getElementById("usage-voice-text");
+          if (voiceText)
+            voiceText.textContent = `${Math.round(voice.used)} / ${voice.limit || "∞"} min`;
+          const voiceBar = document.getElementById("usage-voice-bar");
+          if (voiceBar) voiceBar.style.width = (voice.pct * 100 || 0) + "%";
+
           // Card
-          if(billing.flw_card_token) {
-              document.getElementById('card-last4').textContent = "Stored Card Token";
-              const autoStatus = document.getElementById('auto-renew-status');
-              autoStatus.textContent = "Enabled";
-              autoStatus.style.color = "var(--live)";
+          if (billing.flw_card_token) {
+            document.getElementById("card-last4").textContent =
+              "Stored Card Token";
+            const autoStatus = document.getElementById("auto-renew-status");
+            autoStatus.textContent = "Enabled";
+            autoStatus.style.color = "var(--live)";
           }
 
           // Transactions
-          const tbody = document.getElementById('tx-tbody');
-          if(transactions.length === 0) {
-            tbody.innerHTML = '<tr class="no-hover"><td colspan="4" style="text-align: center; color: var(--copy-50); padding: 3rem">No transactions found.</td></tr>';
+          const tbody = document.getElementById("tx-tbody");
+          if (transactions.length === 0) {
+            tbody.innerHTML =
+              '<tr class="no-hover"><td colspan="4" style="text-align: center; color: var(--copy-50); padding: 3rem">No transactions found.</td></tr>';
           } else {
-            tbody.innerHTML = transactions.map(tx => `
+            tbody.innerHTML = transactions
+              .map(
+                (tx) => `
               <tr>
                 <td style="color: var(--copy-50)">${new Date(tx.created_at).toLocaleDateString()}</td>
                 <td style="font-weight: 500">${tx.description || tx.type}</td>
                 <td><span class="status-pill status-${tx.status}">${tx.status}</span></td>
                 <td style="font-weight: 700">
                     ₦${Number(tx.amount).toLocaleString()}<br/>
-                    ${tx.status === 'successful' ? `<a href="/billing/invoice/${tx.id}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;"><span class="material-symbols-outlined" style="font-size: 0.9rem">receipt</span> Receipt</a>` : ''}
+                    ${tx.status === "successful" ? `<a href="/billing/invoice/${tx.id}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;"><span class="material-symbols-outlined" style="font-size: 0.9rem">receipt</span> Receipt</a>` : ""}
                 </td>
               </tr>
-            `).join('');
+            `,
+              )
+              .join("");
           }
         }
 
         window.selectTopup = (amt) => {
-            const input = document.getElementById('custom-amt');
-            if (input) {
-                input.value = amt;
-                document.getElementById('pay-btn').click();
-            }
+          const input = document.getElementById("custom-amt");
+          if (input) {
+            input.value = amt;
+            document.getElementById("pay-btn").click();
+          }
         };
 
         const showToast = (msg, isErr) => {
-            const t = document.createElement('div');
-            t.style.cssText = `position:fixed;bottom:2rem;right:2rem;padding:1rem 2rem;background:${isErr?'#ef4444':'var(--primary)'};color:#fff;border-radius:12px;box-shadow:0 12px 24px rgba(0,0,0,0.2);z-index:10000;font-weight:600;font-size:0.9rem;animation:slideUp 0.3s;`;
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
+          const t = document.createElement("div");
+          t.style.cssText = `position:fixed;bottom:2rem;right:2rem;padding:1rem 2rem;background:${isErr ? "#ef4444" : "var(--primary)"};color:#fff;border-radius:12px;box-shadow:0 12px 24px rgba(0,0,0,0.2);z-index:10000;font-weight:600;font-size:0.9rem;animation:slideUp 0.3s;`;
+          t.textContent = msg;
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 4000);
         };
 
-        window.onerror = function(msg, url, line) {
-            showToast("System Error: " + msg, true);
-            return false;
+        window.onerror = function (msg, url, line) {
+          showToast("System Error: " + msg, true);
+          return false;
         };
 
-        const payBtn = document.getElementById('pay-btn');
+        const payBtn = document.getElementById("pay-btn");
         if (payBtn) {
-            payBtn.onclick = async () => {
-                const amtInput = document.getElementById('custom-amt');
-                const amt = amtInput ? amtInput.value : "";
-                
-                if(!amt || Number(amt) < 14000) return showToast("Minimum top-up is ₦14,000", true);
-                
-                payBtn.disabled = true;
-                const originalText = payBtn.innerHTML;
-                payBtn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite">sync</span> Processing...';
+          payBtn.onclick = async () => {
+            const amtInput = document.getElementById("custom-amt");
+            const amt = amtInput ? amtInput.value : "";
 
-                try {
-                    console.log("Initiating top-up for amount:", amt);
-                    const res = await fetch(API + "/billing/topup", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ amount_ngn: Number(amt) }),
-                    });
-                    
-                    if (!res.ok) {
-                        const err = await res.json();
-                        throw new Error(err.detail || "Payment initialization failed");
-                    }
+            if (!amt || Number(amt) < 14000)
+              return showToast("Minimum top-up is ₦14,000", true);
 
-                    const data = await res.json();
-                    console.log("Top-up response:", data);
-                    
-                    if(data.payment_link) {
-                        window.location.href = data.payment_link;
-                    } else {
-                        showToast("Payment link not found in response", true);
-                        payBtn.disabled = false;
-                        payBtn.innerHTML = originalText;
-                    }
-                } catch(e) {
-                    console.error("Top-up error:", e);
-                    showToast(e.message || "Connection error. Try again.", true);
-                    payBtn.disabled = false;
-                    payBtn.innerHTML = originalText;
-                }
-            };
+            payBtn.disabled = true;
+            const originalText = payBtn.innerHTML;
+            payBtn.innerHTML =
+              '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite">sync</span> Processing...';
+
+            try {
+              console.log("Initiating top-up for amount:", amt);
+              const res = await fetch(API + "/billing/topup", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount_ngn: Number(amt) }),
+              });
+
+              if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Payment initialization failed");
+              }
+
+              const data = await res.json();
+              console.log("Top-up response:", data);
+
+              if (data.payment_link) {
+                window.location.href = data.payment_link;
+              } else {
+                showToast("Payment link not found in response", true);
+                payBtn.disabled = false;
+                payBtn.innerHTML = originalText;
+              }
+            } catch (e) {
+              console.error("Top-up error:", e);
+              showToast(e.message || "Connection error. Try again.", true);
+              payBtn.disabled = false;
+              payBtn.innerHTML = originalText;
+            }
+          };
         }
 
         init();
       })();
     </script>
     <style>
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </body>
 </html>
