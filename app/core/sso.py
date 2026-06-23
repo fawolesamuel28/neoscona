@@ -33,6 +33,8 @@ from pydantic import BaseModel
 
 from app.core import auth as _auth
 from app.core.auth import SSO_COOKIE_NAME, _decode_token
+from app.services.onboarding import membership_tenant_id, provision_workspace
+import asyncio
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -149,9 +151,33 @@ class SessionBody(BaseModel):
 async def create_session(body: SessionBody):
     """Bridge a Supabase JS session into parent-domain SSO cookies. The access
     token is verified before we trust it."""
-    _decode_token(body.access_token)  # raises 401 if invalid/expired
+    claims = _decode_token(body.access_token)  # raises 401 if invalid/expired
     resp = JSONResponse({"ok": True})
     set_session_cookies(resp, body.access_token, body.refresh_token)
+
+    # Provision a workspace in the background for signups/logins that bypass
+    # the explicit /api/signup flow (e.g. OAuth or JS flows that only bridge
+    # the session). This is best-effort and must not block the response.
+    async def _bg_provision():
+        try:
+            user_id = claims.get("sub")
+            email = claims.get("email")
+            if not user_id:
+                return
+            # If the user already has a membership, nothing to do.
+            existing = await membership_tenant_id(user_id)
+            if existing:
+                return
+            # Provision with an empty company_name -> defaults to "My Workspace".
+            await provision_workspace(user_id, email, "")
+        except Exception:
+            logger.exception("Background workspace provisioning failed for user %s", claims.get("sub"))
+
+    try:
+        asyncio.create_task(_bg_provision())
+    except Exception:
+        logger.exception("Failed to spawn background provisioning task")
+
     return resp
 
 
