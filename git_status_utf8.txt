@@ -1,0 +1,21 @@
+﻿On branch feat/redesign-voice-console
+Your branch is up to date with 'origin/feat/redesign-voice-console'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .claude/settings.local.json
+	modified:   app/routers/billing.py
+	modified:   app/services/billing.py
+	modified:   templates/billing.html
+	modified:   templates/reva_settings.html
+	modified:   templates/reva_voice.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.pr_body_update.md
+	git_diff.txt
+	git_diff_utf8.txt
+	git_status_utf8.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
