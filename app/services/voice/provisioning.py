@@ -245,6 +245,53 @@ async def provision_receptionist(
         raise
 
 
+async def auto_provision_for_tenant(tenant_id: str, country: str = "NG") -> Optional[dict[str, Any]]:
+    """Server-side, no-human-in-the-loop provisioning path.
+
+    Called from the billing webhook when a tenant's first (or renewal) payment
+    activates a voice-enabled plan. Picks a persona from the tenant's Reva agent
+    config (falls back to a generic dedicated persona if none exists yet) and
+    auto-selects the first available KrosAI number for `country` — the two UI
+    flows (`reva_voice.html`, `voice_settings.html`) let a human pick both of
+    these; this is the first path that picks them automatically.
+
+    Returns None (without raising) if there's simply no number inventory for
+    `country` right now — there's no ops-alerting channel in this codebase to
+    page anyone, so this logs and gives the caller (the Celery task) a signal
+    to retry later rather than treating an empty inventory as a hard failure.
+    """
+    tenant_id = require_tenant(tenant_id)
+    existing = await get_voice_agent(tenant_id)
+    if existing and existing.get("status") == "active":
+        return existing
+
+    try:
+        persona = await build_persona_from_reva(tenant_id)
+    except Exception:
+        persona = build_persona_from_form({})
+
+    numbers = await krosai.list_available_numbers(country)
+    if not numbers:
+        logger.error(
+            "Auto-provisioning skipped for tenant %s: no KrosAI inventory for country=%s",
+            tenant_id, country,
+        )
+        return None
+
+    inventory_id = numbers[0].get("id") or numbers[0].get("inventory_id")
+    if not inventory_id:
+        logger.error("Auto-provisioning skipped for tenant %s: malformed inventory row %s", tenant_id, numbers[0])
+        return None
+
+    return await provision_receptionist(
+        tenant_id,
+        persona=persona,
+        inventory_id=inventory_id,
+        persona_source="reva",
+        country=country,
+    )
+
+
 async def deprovision_receptionist(tenant_id: str) -> bool:
     """Tear down the tenant's voice receptionist: release number, delete endpoint+agent,
     deactivate the channel, and mark the row disabled. Returns True if one existed."""

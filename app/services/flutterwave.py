@@ -67,6 +67,20 @@ async def verify_transaction(tx_id: str) -> dict[str, Any]:
     return data.get("data", {})
 
 
+async def verify_transaction_by_reference(tx_ref: str) -> dict[str, Any]:
+    """Look up a transaction by our `tx_ref` (used for reconciliation before we
+    have Flutterwave's numeric transaction id, which only arrives via webhook)."""
+    async with httpx.AsyncClient(timeout=20) as client:
+        resp = await client.get(
+            f"{FLW_BASE}/v3/transactions/verify_by_reference",
+            params={"tx_ref": tx_ref},
+            headers=_headers(),
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    return data.get("data", {})
+
+
 async def tokenized_charge(token: str, email: str, amount_ngn: int, tx_ref: str) -> dict[str, Any]:
     """Charge a saved card token (used for renewals). Returns charge response data."""
     payload = {

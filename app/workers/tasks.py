@@ -235,6 +235,67 @@ def expire_trials_task():
     from app.jobs.billing import expire_trials
     asyncio.run(expire_trials())
 
+@celery_app.task(name="process_renewals_task")
+def process_renewals_task():
+    from app.core.lock import with_lock
+    from app.services.billing import process_automated_renewals
+
+    async def _run():
+        async with with_lock("billing:renewals", ttl_seconds=1800) as acquired:
+            if not acquired:
+                logger.info("process_renewals_task: another instance holds the lock; skipping")
+                return
+            await process_automated_renewals()
+
+    asyncio.run(_run())
+
+@celery_app.task(name="process_dunning_task")
+def process_dunning_task():
+    from app.core.lock import with_lock
+    from app.services.dunning import process_dunning
+
+    async def _run():
+        async with with_lock("billing:dunning", ttl_seconds=1800) as acquired:
+            if not acquired:
+                logger.info("process_dunning_task: another instance holds the lock; skipping")
+                return
+            await process_dunning()
+
+    asyncio.run(_run())
+
+@celery_app.task(name="reconcile_pending_transactions_task")
+def reconcile_pending_transactions_task():
+    from app.core.lock import with_lock
+    from app.services.billing import reconcile_pending_transactions
+
+    async def _run():
+        async with with_lock("billing:reconcile", ttl_seconds=600) as acquired:
+            if not acquired:
+                logger.info("reconcile_pending_transactions_task: another instance holds the lock; skipping")
+                return
+            await reconcile_pending_transactions()
+
+    asyncio.run(_run())
+
+@celery_app.task(name="auto_provision_voice_task", bind=True, max_retries=3, default_retry_delay=60)
+def auto_provision_voice_task(self, tenant_id: str):
+    """Triggered from the Flutterwave webhook when a voice-enabled plan activates.
+
+    Retries a few times for transient KrosAI/ElevenLabs failures; gives up
+    (logs, does not raise further) once retries are exhausted or the provider
+    reports empty number inventory, since there's no ops-alerting channel in
+    this codebase to page anyone for a manual follow-up.
+    """
+    from app.services.voice.provisioning import auto_provision_for_tenant
+
+    try:
+        result = asyncio.run(auto_provision_for_tenant(tenant_id))
+        if result is None:
+            logger.warning("auto_provision_voice_task: no provisioning result for tenant %s", tenant_id)
+    except Exception as exc:
+        logger.error("auto_provision_voice_task failed for tenant %s: %s", tenant_id, exc)
+        raise self.retry(exc=exc)
+
 @celery_app.task(name="check_inbox_sla_task")
 def check_inbox_sla_task():
     from app.jobs.inbox_sla import check_inbox_sla

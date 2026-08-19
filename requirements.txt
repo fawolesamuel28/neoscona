@@ -7,7 +7,6 @@ pydantic-settings
 httpx
 redis[hiredis]
 supabase
-apscheduler
 openai
 anthropic
 psycopg2-binary

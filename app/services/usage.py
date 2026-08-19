@@ -14,9 +14,10 @@ import logging
 from datetime import date, timedelta
 from typing import Any, Optional
 
-from app.billing.plans import limit as plan_limit
+from app.billing.plans import limit as plan_limit, overage_price_kobo
 from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
+from app.services import ledger
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,13 @@ _EVENT_TO_COLUMN = {
     "message": "p_messages",
     "voice_minute": "p_voice",
     "seat": "p_seats",
+}
+
+# usage_event type -> (usage_counters read column, plan limit/overage key). Seats
+# aren't overage-billed (no per-seat metered pricing today).
+_EVENT_TO_LIMIT_KEY = {
+    "message": ("messages", "messages"),
+    "voice_minute": ("voice_minutes", "voice_minutes"),
 }
 
 
@@ -51,6 +59,13 @@ async def record_usage(tenant_id: Optional[str], event_type: str = "message", qu
         start, end = current_period()
         col = _EVENT_TO_COLUMN.get(event_type, "p_messages")
 
+        limit_info = _EVENT_TO_LIMIT_KEY.get(event_type)
+        prior_value = 0.0
+        if limit_info:
+            counter_col, _ = limit_info
+            counter = await _fetch_counter(tenant_id)
+            prior_value = counter.get(counter_col, 0) or 0
+
         def _write():
             db.table("usage_events").insert({
                 "tenant_id": tenant_id,
@@ -68,8 +83,41 @@ async def record_usage(tenant_id: Optional[str], event_type: str = "message", qu
             }).execute()
 
         await asyncio.to_thread(_write)
+        await _debit_overage(tenant_id, event_type, limit_info, prior_value, quantity)
     except Exception as exc:  # metering must never break the pipeline
         logger.warning("record_usage failed for tenant %s (%s): %s", tenant_id, event_type, exc)
+
+
+async def _debit_overage(
+    tenant_id: str,
+    event_type: str,
+    limit_info: Optional[tuple[str, str]],
+    prior_value: float,
+    quantity: float,
+) -> None:
+    """Charge the tenant's balance for the portion of this event over their plan quota."""
+    if not limit_info:
+        return
+    _, limit_key = limit_info
+    plan = await _plan_for_tenant(tenant_id)
+    cap = plan_limit(plan, limit_key)
+    if cap is None:
+        return
+    after_value = prior_value + quantity
+    overage_units = max(0.0, after_value - max(prior_value, cap))
+    if overage_units <= 0:
+        return
+    price_kobo = overage_price_kobo(plan, limit_key)
+    if not price_kobo:
+        return
+    amount_ngn = overage_units * price_kobo / 100
+    await ledger.debit(
+        tenant_id,
+        amount_ngn,
+        "usage_overage",
+        ref_type="usage_event",
+        metadata={"event_type": event_type, "overage_units": overage_units, "plan": plan},
+    )
 
 
 async def _fetch_counter(tenant_id: str) -> dict[str, Any]:

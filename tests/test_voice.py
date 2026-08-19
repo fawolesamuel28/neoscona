@@ -211,3 +211,69 @@ def test_build_persona_from_form_defaults_prompt():
     persona = provisioning.build_persona_from_form({"name": "Tola", "company_name": "Acme"})
     assert persona["name"] == "Tola"
     assert "Tola" in persona["prompt"] and "Acme" in persona["prompt"]
+
+
+# ─── auto_provision_for_tenant (billing-triggered, no human in the loop) ─────────
+
+def test_auto_provision_returns_existing_active_without_calling_krosai(monkeypatch):
+    async def _existing(_tenant):
+        return {"status": "active", "id": "va_1"}
+
+    async def _boom(*a, **k):
+        raise AssertionError("should not reach KrosAI when already active")
+
+    monkeypatch.setattr(provisioning, "get_voice_agent", _existing)
+    monkeypatch.setattr(provisioning.krosai, "list_available_numbers", _boom)
+
+    result = asyncio.run(provisioning.auto_provision_for_tenant("11111111-1111-4111-8111-aaaaaaaaaaaa"))
+    assert result == {"status": "active", "id": "va_1"}
+
+
+def test_auto_provision_skips_gracefully_on_empty_inventory(monkeypatch):
+    async def _no_existing(_tenant):
+        return None
+
+    async def _empty(*a, **k):
+        return []
+
+    async def _boom(*a, **k):
+        raise AssertionError("should not attempt provisioning with no inventory")
+
+    monkeypatch.setattr(provisioning, "get_voice_agent", _no_existing)
+    async def _persona(_tenant):
+        return provisioning.build_persona_from_form({})
+
+    monkeypatch.setattr(provisioning, "build_persona_from_reva", _persona)
+    monkeypatch.setattr(provisioning.krosai, "list_available_numbers", _empty)
+    monkeypatch.setattr(provisioning, "provision_receptionist", _boom)
+
+    result = asyncio.run(provisioning.auto_provision_for_tenant("11111111-1111-4111-8111-aaaaaaaaaaaa"))
+    assert result is None
+
+
+def test_auto_provision_picks_first_available_number(monkeypatch):
+    calls = {}
+
+    async def _no_existing(_tenant):
+        return None
+
+    async def _numbers(country, **k):
+        return [{"id": "inv_42", "e164": "+2341234"}]
+
+    async def _provision(tenant_id, *, persona, inventory_id, persona_source, country=None, label=None):
+        calls.update(tenant_id=tenant_id, inventory_id=inventory_id, persona_source=persona_source, country=country)
+        return {"status": "active", "id": "va_new"}
+
+    monkeypatch.setattr(provisioning, "get_voice_agent", _no_existing)
+    async def _persona(_tenant):
+        return provisioning.build_persona_from_form({})
+
+    monkeypatch.setattr(provisioning, "build_persona_from_reva", _persona)
+    monkeypatch.setattr(provisioning.krosai, "list_available_numbers", _numbers)
+    monkeypatch.setattr(provisioning, "provision_receptionist", _provision)
+
+    result = asyncio.run(provisioning.auto_provision_for_tenant("11111111-1111-4111-8111-aaaaaaaaaaaa", country="NG"))
+    assert result == {"status": "active", "id": "va_new"}
+    assert calls["inventory_id"] == "inv_42"
+    assert calls["persona_source"] == "reva"
+    assert calls["country"] == "NG"
