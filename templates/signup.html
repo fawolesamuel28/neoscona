@@ -377,7 +377,12 @@
                     data: {
                       first_name: firstName,
                       last_name: lastName
-                    }
+                    },
+                    // Relative to whatever host this signup happened on, so the
+                    // confirmation email lands back on the same domain the user
+                    // is actually testing/using (Supabase otherwise falls back
+                    // to the project's fixed Site URL for every environment).
+                    emailRedirectTo: window.location.origin + "/login"
                   }
                 });
 
