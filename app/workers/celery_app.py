@@ -57,6 +57,21 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.check_inbox_sla_task",
         "schedule": crontab(minute="*/5"),
     },
+    # Replaces the old APScheduler-in-web-dyno cron (app/billing/scheduler.py),
+    # which double-fired with gunicorn --workers 2 and didn't run at all if beat
+    # isn't deployed. Same 08:00 Lagos time; guarded by a Redis lock (app/core/lock.py).
+    "renewals-daily": {
+        "task": "app.workers.tasks.process_renewals_task",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "dunning-daily": {
+        "task": "app.workers.tasks.process_dunning_task",
+        "schedule": crontab(hour=9, minute=0),
+    },
+    "reconcile-pending-transactions": {
+        "task": "app.workers.tasks.reconcile_pending_transactions_task",
+        "schedule": crontab(minute="*/30"),
+    },
 }
 
 if __name__ == "__main__":

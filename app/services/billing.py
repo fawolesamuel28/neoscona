@@ -12,17 +12,39 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 from uuid import uuid4
 
-from app.billing.plans import get_plan, plan_amount_ngn
+from app.billing.plans import get_plan, plan_amount_ngn, feature_enabled
 from app.core.tenant import require_tenant
 from app.db.supabase import get_supabase
-from app.services.flutterwave import initialize_payment, tokenized_charge, verify_transaction
+from app.services import ledger
+from app.services.flutterwave import (
+    initialize_payment,
+    tokenized_charge,
+    verify_transaction_by_reference,
+)
 from app.services.usage import get_usage
 
 logger = logging.getLogger(__name__)
 
+# How long a checkout-initiated payment can sit unresolved before reconciliation
+# starts polling Flutterwave for it, and how long before it's given up on.
+PENDING_RECONCILE_AFTER = timedelta(minutes=15)
+PENDING_EXPIRE_AFTER = timedelta(hours=24)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _enqueue_voice_provisioning(tenant_id: str) -> None:
+    """Fire-and-forget: enqueue receptionist provisioning for a tenant whose plan
+    includes the `voice` feature. Never raises — a webhook handler must stay fast
+    and must not fail the payment flow over a Celery/Redis hiccup."""
+    try:
+        from app.workers.celery_app import celery_app
+
+        celery_app.send_task("auto_provision_voice_task", args=[tenant_id])
+    except Exception as exc:
+        logger.warning("Failed to enqueue voice auto-provisioning for tenant %s: %s", tenant_id, exc)
 
 
 async def start_subscription(
@@ -53,6 +75,7 @@ async def start_subscription(
         redirect_url=callback_url,
         metadata=meta,
     )
+    await create_pending_transaction(tenant_id, amount_ngn, "subscription", tx_ref, metadata=meta)
     return {"payment_link": data.get("link"), "tx_ref": tx_ref}
 
 
@@ -124,6 +147,86 @@ async def add_transaction(
     return res.data[0]["id"] if res.data else ""
 
 
+async def create_pending_transaction(
+    tenant_id: str, amount: float, tx_type: str, tx_ref: str, metadata: Optional[dict] = None
+) -> str:
+    """Record a checkout-initiated payment before its webhook arrives.
+
+    This is what makes reconciliation possible: without a `pending` row to
+    resolve, there's nothing for `verify_pending_transaction` to check.
+    """
+    return await add_transaction(
+        tenant_id=tenant_id,
+        amount=amount,
+        tx_type=tx_type,
+        status="pending",
+        flw_ref=tx_ref,
+        description=f"Awaiting Flutterwave confirmation ({tx_type})",
+        metadata=metadata,
+    )
+
+
+async def _resolve_transaction(
+    tx_ref: Optional[str],
+    *,
+    tenant_id: str,
+    amount: float,
+    tx_type: str,
+    status: str,
+    currency: str = "NGN",
+    description: Optional[str] = None,
+    metadata: Optional[dict] = None,
+) -> str:
+    """Resolve the pending transaction for `tx_ref` to `status`, or insert a new
+    row if none was pre-registered (e.g. events with no matching checkout)."""
+    db = get_supabase()
+
+    if tx_ref:
+        def _find():
+            return (
+                db.table("billing_transactions")
+                .select("id")
+                .eq("flw_ref", tx_ref)
+                .eq("status", "pending")
+                .limit(1)
+                .execute()
+            )
+
+        res = await asyncio.to_thread(_find)
+        if res.data:
+            row_id = res.data[0]["id"]
+            updates = {
+                "status": status,
+                "amount": amount,
+                "currency": currency,
+                "description": description,
+                "metadata": metadata or {},
+                "updated_at": _now(),
+            }
+
+            def _upd():
+                return db.table("billing_transactions").update(updates).eq("id", row_id).execute()
+
+            await asyncio.to_thread(_upd)
+            return row_id
+
+    return await add_transaction(
+        tenant_id=tenant_id,
+        amount=amount,
+        tx_type=tx_type,
+        status=status,
+        currency=currency,
+        flw_ref=tx_ref,
+        description=description,
+        metadata=metadata,
+    )
+
+
+# Receipts already exist: GET /billing/invoice/{tx_id} (server.py) renders a
+# billing_transactions row via templates/invoice.html, linked from billing.html's
+# transaction table for every 'successful' row — no separate invoice record needed.
+
+
 # ── Webhook-driven state ──────────────────────────────────────────────────────
 async def record_flw_event(flw_id: Optional[str], event_type: str, payload: dict) -> bool:
     """Insert the event for idempotency/audit. Returns False if already processed."""
@@ -144,6 +247,13 @@ async def record_flw_event(flw_id: Optional[str], event_type: str, payload: dict
     except Exception:
         logger.info("Flutterwave event %s already processed; skipping", flw_id)
         return False
+
+
+async def update_tenant_billing_fields(tenant_id: str, updates: dict) -> None:
+    """Public entry point for other billing-adjacent modules (e.g. dunning) to
+    update tenant billing/subscription columns without reaching into the
+    module-private `_update_tenant`."""
+    await _update_tenant("id", tenant_id, updates)
 
 
 async def _update_tenant(match_col: str, match_val: str, updates: dict) -> None:
@@ -202,35 +312,40 @@ async def apply_flw_event(event_type: str, data: dict) -> None:
             updates["next_billing_date"] = next_date.isoformat()
             
             await _update_tenant("id", tenant_id, updates)
-            
-            # 2. Record Transaction
-            await add_transaction(
+
+            # 2. Resolve the pending transaction (or insert one if none was pre-registered)
+            tx_type = "subscription" if plan else "topup"
+            tx_id = await _resolve_transaction(
+                flw_tx_ref,
                 tenant_id=tenant_id,
                 amount=amount,
-                tx_type="subscription" if plan else "topup",
+                tx_type=tx_type,
                 status="successful",
                 currency=currency,
-                flw_ref=str(flw_id) if flw_id else flw_tx_ref,
-                description=f"Flutterwave {plan or 'Balance'} Payment"
+                description=f"Flutterwave {plan or 'Balance'} Payment",
             )
-            
+
             # 3. Update Balance (if it was a manual topup not tied to a specific plan)
             if not plan:
-                db = get_supabase()
-                def _add_bal():
-                    return db.rpc("increment_tenant_balance", {"p_tenant": tenant_id, "p_amount": amount}).execute()
-                await asyncio.to_thread(_add_bal)
+                await ledger.credit(
+                    tenant_id, amount, "topup", ref_type="billing_transaction", ref_id=tx_id
+                )
+
+            # 4. Successful subscription payment on a voice-enabled plan auto-provisions
+            #    a receptionist (idempotent — safe on renewals too, not just first payment).
+            if plan and feature_enabled(plan, "voice"):
+                _enqueue_voice_provisioning(tenant_id)
 
             logger.info("Processed successful charge for tenant %s via Flutterwave", tenant_id)
         else:
             if tenant_id:
-                await add_transaction(
+                await _resolve_transaction(
+                    flw_tx_ref,
                     tenant_id=tenant_id,
                     amount=amount or 0,
                     tx_type="subscription",
                     status="failed",
-                    flw_ref=flw_tx_ref,
-                    description=f"Failed transaction: {data.get('processor_response', 'Unknown error')}"
+                    description=f"Failed transaction: {data.get('processor_response', 'Unknown error')}",
                 )
             logger.warning("Flutterwave charge failed or missing metadata: %s", data)
 
@@ -292,9 +407,14 @@ async def process_automated_renewals() -> None:
                     description=f"Auto-renewal for {plan} plan"
                 )
             else:
-                # Failed - mark past_due
-                await _update_tenant("id", tenant_id, {"subscription_status": "past_due"})
-                
+                # Failed - mark past_due and hand off to the staged dunning flow
+                # (dunning.process_dunning drives the day+3/+7/+10 retry/cancel schedule).
+                await _update_tenant("id", tenant_id, {
+                    "subscription_status": "past_due",
+                    "dunning_stage": 1,
+                    "dunning_next_action_at": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+                })
+
                 failure_reason = charge.get('processor_response', 'Unknown error')
                 await add_transaction(
                     tenant_id=tenant_id,
@@ -304,47 +424,79 @@ async def process_automated_renewals() -> None:
                     flw_ref=tx_ref,
                     description=f"Auto-renewal failed: {failure_reason}"
                 )
-                
-                # Send smart dunning notification
+
+                # Immediate first-stage dunning notice
+                from app.services.dunning import notify_billing_failure
                 await notify_billing_failure(tenant_id, amount, failure_reason)
-                
+
         except Exception as e:
             logger.error("Failed to process renewal for tenant %s: %s", tenant_id, e)
 
-async def notify_billing_failure(tenant_id: str, amount: float, reason: str) -> None:
-    """Send a dunning notification (WhatsApp/Email) to the tenant's primary agent."""
-    db = get_supabase()
-    
-    def _get_agent():
-        return db.table("agents").select("whatsapp").eq("tenant_id", tenant_id).eq("active", True).limit(1).execute()
-        
+
+async def verify_pending_transaction(tx_ref: str) -> Optional[str]:
+    """Pull transaction status from Flutterwave for a checkout that never got a
+    webhook, and resolve it via the same state-transition path as the webhook.
+
+    Returns the resolved status ('successful'/'failed') or None if Flutterwave
+    has no record of it yet (still genuinely in-flight).
+    """
     try:
-        res = await asyncio.to_thread(_get_agent)
-        if not res.data:
-            logger.info("No active agent found for tenant %s; skipping WhatsApp dunning.", tenant_id)
-            return
-            
-        whatsapp = res.data[0].get("whatsapp")
-        if not whatsapp:
-            return
-            
-        from app.services.messaging import send_outbound_message
-        msg = (
-            f"⚠️ *Neoscona Billing Alert*\n\n"
-            f"Your automated subscription renewal of ₦{amount:,.0f} failed.\n"
-            f"Reason: {reason}\n\n"
-            f"Please update your payment method at https://app.neoscona.xyz/billing to avoid service interruption."
+        data = await verify_transaction_by_reference(tx_ref)
+    except Exception as exc:
+        logger.info("verify_pending_transaction: no resolution yet for %s: %s", tx_ref, exc)
+        return None
+
+    status = data.get("status")
+    if status not in ("successful", "failed"):
+        return None
+
+    await apply_flw_event("charge.completed", data)
+    return status
+
+
+async def reconcile_pending_transactions() -> None:
+    """Sweep `pending` billing_transactions and resolve the ones a webhook missed.
+
+    Rows younger than PENDING_RECONCILE_AFTER are left alone (the webhook is
+    still the fast path); rows older than PENDING_EXPIRE_AFTER with no
+    resolution from Flutterwave are marked 'expired' so they stop being polled.
+    """
+    db = get_supabase()
+    now = datetime.now(timezone.utc)
+    cutoff = (now - PENDING_RECONCILE_AFTER).isoformat()
+
+    def _get_pending():
+        return (
+            db.table("billing_transactions")
+            .select("id, tenant_id, flw_ref, created_at")
+            .eq("status", "pending")
+            .lte("created_at", cutoff)
+            .execute()
         )
-        await send_outbound_message(whatsapp, msg, source="dunning")
-        logger.info("Sent WhatsApp dunning notification to %s for tenant %s", whatsapp, tenant_id)
-    except Exception as e:
-        logger.error("Failed to send dunning notice for tenant %s: %s", tenant_id, e)
 
-
-async def verify_pending_transaction(tx_ref: str) -> bool:
-    """Manually pull transaction status from Flutterwave (fallback for missing webhooks)."""
-    # ... placeholder
-    return False
+    res = await asyncio.to_thread(_get_pending)
+    rows = res.data or []
+    for row in rows:
+        tx_ref = row.get("flw_ref")
+        if not tx_ref:
+            continue
+        resolved = await verify_pending_transaction(tx_ref)
+        if resolved is None:
+            created_at = row.get("created_at")
+            try:
+                age = now - datetime.fromisoformat((created_at or "").replace("Z", "+00:00"))
+            except Exception:
+                age = timedelta(0)
+            if age > PENDING_EXPIRE_AFTER:
+                def _expire(row_id=row["id"]):
+                    return (
+                        db.table("billing_transactions")
+                        .update({"status": "expired", "updated_at": _now()})
+                        .eq("id", row_id)
+                        .execute()
+                    )
+                await asyncio.to_thread(_expire)
+                logger.info("Expired unresolved pending transaction %s (tx_ref=%s)", row["id"], tx_ref)
 
 
 async def apply_proration(tenant_id: str, old_plan: str) -> float:
@@ -381,10 +533,7 @@ async def apply_proration(tenant_id: str, old_plan: str) -> float:
             
         prorated_credit = amount * (days_remaining / total_days)
         if prorated_credit > 0:
-            def _add_bal():
-                return db.rpc("increment_tenant_balance", {"p_tenant": tenant_id, "p_amount": prorated_credit}).execute()
-            await asyncio.to_thread(_add_bal)
-            
+            await ledger.credit(tenant_id, prorated_credit, "proration", metadata={"old_plan": old_plan})
             await add_transaction(
                 tenant_id=tenant_id,
                 amount=prorated_credit,

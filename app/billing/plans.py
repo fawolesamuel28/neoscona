@@ -24,6 +24,8 @@ PLANS: dict[str, dict] = {
         "limits": {"messages": 2_000, "seats": 3, "voice_minutes": 500},
         "features": {"whatsapp", "voice", "followups", "calendar"},
         "selectable": False,  # not directly purchasable
+        # No overage charge on trial — a trial tenant has no payment method on file.
+        "overage_kobo": {"messages": None, "voice_minutes": None},
     },
     "starter": {
         "label": "Starter",
@@ -32,6 +34,8 @@ PLANS: dict[str, dict] = {
         "limits": {"messages": 500, "seats": 1, "voice_minutes": 0},
         "features": {"whatsapp"},
         "selectable": True,
+        # Overage price (kobo) once a metered key exceeds `limits` this cycle.
+        "overage_kobo": {"messages": 50, "voice_minutes": None},
     },
     "growth": {
         "label": "Growth",
@@ -40,6 +44,7 @@ PLANS: dict[str, dict] = {
         "limits": {"messages": 2_000, "seats": 3, "voice_minutes": 500},
         "features": {"whatsapp", "voice", "followups", "calendar"},
         "selectable": True,
+        "overage_kobo": {"messages": 40, "voice_minutes": 3000},
     },
     "scale": {
         "label": "Scale",
@@ -48,6 +53,7 @@ PLANS: dict[str, dict] = {
         "limits": {"messages": None, "seats": None, "voice_minutes": None},
         "features": set(FEATURES),
         "selectable": False,
+        "overage_kobo": {"messages": None, "voice_minutes": None},
     },
 }
 
@@ -67,6 +73,15 @@ def plan_for(tenant: dict) -> dict:
 def limit(plan: Optional[str], key: str) -> Optional[int]:
     """Quota for a metered key ('messages'|'seats'|'voice_minutes'). None = unlimited."""
     return get_plan(plan)["limits"].get(key)
+
+
+def overage_price_kobo(plan: Optional[str], key: str) -> Optional[int]:
+    """Per-unit kobo price charged once `key` exceeds its quota this cycle.
+
+    None means no overage charge is levied for this plan/key (unlimited plan,
+    trial, or a metered key this plan doesn't bill for).
+    """
+    return get_plan(plan).get("overage_kobo", {}).get(key)
 
 
 def feature_enabled(plan: Optional[str], feature: str) -> bool:

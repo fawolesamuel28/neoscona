@@ -54,14 +54,11 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to start Redis listener: {e}")
             ping_task = None
-        # Scheduler: optional APScheduler job registration for recurring charges
-        try:
-            from app.billing import scheduler as billing_scheduler
-            billing_scheduler.setup_scheduler()
-            logger.info("Billing scheduler registered")
-        except Exception:
-            logger.info("Billing scheduler not registered (optional)")
-        
+        # Billing's renewal/dunning/reconciliation cron now runs via Celery beat
+        # (app/workers/celery_app.py beat_schedule), not an in-process scheduler here.
+        # Running it per-web-dyno (as APScheduler did) double-fires under multiple
+        # gunicorn workers; beat is a single dedicated process instead.
+
     yield
     # Shutdown tasks
     if ping_task:

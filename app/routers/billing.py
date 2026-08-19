@@ -14,7 +14,7 @@ from app.services.onboarding import membership_tenant_id, provision_workspace
 from fastapi import status
 import asyncio
 from typing import Optional
-from app.services.billing import get_billing, start_subscription
+from app.services.billing import get_billing, start_subscription, create_pending_transaction
 from app.services.flutterwave import initialize_payment
 from pydantic import BaseModel, Field
 
@@ -122,8 +122,10 @@ async def topup(
         raise HTTPException(status_code=400, detail="Minimum top-up is ₦14,000")
 
     tx_ref = f"neo-topup-{tenant_id}-{os.urandom(4).hex()}-{int(__import__('time').time())}"
+    metadata = {"tenant_id": tenant_id, "topup": True}
     try:
-        data = await initialize_payment(email=principal.email, amount_ngn=amount, tx_ref=tx_ref, redirect_url=None, metadata={"tenant_id": tenant_id, "topup": True})
+        data = await initialize_payment(email=principal.email, amount_ngn=amount, tx_ref=tx_ref, redirect_url=None, metadata=metadata)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Payment init failed: {exc}")
+    await create_pending_transaction(tenant_id, amount, "topup", tx_ref, metadata=metadata)
     return {"payment_link": data.get("link"), "tx_ref": tx_ref}
